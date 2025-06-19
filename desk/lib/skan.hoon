@@ -27,6 +27,7 @@
   =<  +
   =|  gen=state
   =|  stack=(list (trel sock * @uxsite))
+  =/  sub=sock-source  [bus ~]
   |-  ^-  [sock-source state]
   =*  eval-loop  $
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
@@ -80,7 +81,7 @@
       ::  equal formulas, not in the blacklist, quasi matching subjects
       ::
       ?.  ?&  =(q.i.s data.sock.fol1)
-              !(~(has ju block.gen) here-site future-site)
+              !(~(has ju blocklist) here-site future-site)
               (close sock.sub p.i.s)
           ==
         stack-loop(s t.s)
