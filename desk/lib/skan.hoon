@@ -4,34 +4,35 @@
 =*  one  `@`1
 ::
 |%
++$  blocklist  (jug @uxsite @uxsite)       ::  redo blacklist parent -> children
 +$  state
   $:  =evals
       juggled=(set @uxsite)                ::  evalsites whose product is used as code
       site=@uxsite                         ::  current evalsite index
-      stack=(list (trel sock * @uxsite))
       quasi=(list (pair @uxsite @uxsite))  ::  supposedly equal child and parent of recursive loop
-      block=(jug @uxsite @uxsite)          ::  redo blacklist parent -> children
   ==
 ::  +juggle: walk the formula, generating eval sites
 ::  and recording products of which evalsites are used as code
 ::
 ++  juggle
+  =|  =blocklist
   |=  [bus=sock fol=*]
-  =|  gen=state
-  ::
-  |-  ^+  gen
+  ^-  state
   =*  redo-loop  $
-  =/  sub=sock-source  [bus ~]
-  =;  gen1
-    =^  redo=(list (pair @uxsite @uxsite))  gen1  (final gen1)
-    ?~  redo  gen1
-    redo-loop(block.gen (~(gas ju block.gen) redo))
+  =;  gen
+    =^  redo=(list (pair @uxsite @uxsite))  gen  (final gen)
+    ?~  redo  gen
+    redo-loop(blocklist (~(gas ju blocklist) redo))
+  ::
   =<  +
-  |-  ^-  [sock-source _gen]
+  =|  gen=state
+  =|  stack=(list (trel sock * @uxsite))
+  |-  ^-  [sock-source state]
   =*  eval-loop  $
-  =.  sites.evals.gen  (~(put by sites.evals.gen) site.gen sock.sub fol)
-  =.  calls.evals.gen  (~(add ja calls.evals.gen) fol site.gen sock.sub)
-  =.  stack.gen  [[sock.sub fol site.gen] stack.gen]
+  =^  here-site  gen  [site.gen gen(site +(site.gen))]
+  =.  sites.evals.gen  (~(put by sites.evals.gen) here-site sock.sub fol)
+  =.  calls.evals.gen  (~(add ja calls.evals.gen) fol here-site sock.sub)
+  =.  stack  [[sock.sub fol here-site] stack]
   ::
   |^  ^-  [sock-source _gen]
   =*  fol-loop  $
@@ -40,7 +41,7 @@
     =^  a=sock-source  gen  $(fol p.fol)
     =^  b=sock-source  gen  $(fol q.fol)
     :_  gen
-    [(~(knit so sock.a) sock.b) [one site.gen]~ source.a source.b]
+    [(~(knit so sock.a) sock.b) [one here-site]~ source.a source.b]
   ::  %0, %1
   ::  ...
   ::
@@ -70,8 +71,8 @@
     ::    if they are, the guess was wrong, redo the analysis, putting the sock
     ::    in the blacklist
     ::
-    =/  new-site=@uxsite  +(site.gen)
-    =/  s  stack.gen
+    =/  future-site  site.gen
+    =/  s  stack
     |-  ^-  [sock-source _gen]
     =*  stack-loop  $
     ?^  s
@@ -79,26 +80,25 @@
       ::  equal formulas, not in the blacklist, quasi matching subjects
       ::
       ?.  ?&  =(q.i.s data.sock.fol1)
-              !(~(has ju block.gen) site.gen new-site)
+              !(~(has ju block.gen) here-site future-site)
               (close sock.sub p.i.s)
           ==
         stack-loop(s t.s)
       =*  f  data.sock.fol1
-      =.  sites.evals.gen  (~(put by sites.evals.gen) new-site sock.sub f)
-      =.  calls.evals.gen  (~(add ja calls.evals.gen) f new-site sock.sub)
-      =.  quasi.gen  [[new-site site.gen] quasi.gen]
+      =.  sites.evals.gen  (~(put by sites.evals.gen) future-site sock.sub f)
+      =.  calls.evals.gen  (~(add ja calls.evals.gen) f future-site sock.sub)
+      =.  quasi.gen  [[future-site here-site] quasi.gen]
       [[|+~ ~] gen]
     ::  non-loop case: analyse through, attach provenance info
     ::
     =^  res  gen
       %=  eval-loop
-        site.gen  new-site
-        sub       sub1
-        fol       data.sock.fol1
+        sub  sub1
+        fol  data.sock.fol1
       ==
     :_  gen
     :-  sock.res
-    =/  from-here=[@axis @uxsite]  [one new-site]
+    =/  from-here=[@axis @uxsite]  [one future-site]
     ?~  source.res  [~[from-here] ~ ~]
     =*  src  source.res
     [[from-here n.src] l.src r.src]
