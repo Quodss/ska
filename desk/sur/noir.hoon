@@ -57,6 +57,9 @@
   ==
 ::  provenance tree, BUT!!! axis of the RESULT of evalsite, not subject
 ::
-+$  source  (tree (list (pair @axis @uxsite)))
-+$  sock-source  [=sock =source]
++$  from-pro  (tree (list (pair @axis @uxsite)))
+::  provenance tree: axes of the SUBJECT of evalsite
+::
++$  from-sub  from-pro
++$  sock-anno  [=sock sik=from-pro src=from-sub]
 --
