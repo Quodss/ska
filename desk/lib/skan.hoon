@@ -1,12 +1,14 @@
 /-  *noir
 ::
+::  TODO:
+::    move redo-loop into arm-loop
+::    nock formula cases fill
+::    final, memo, process (prob noop/identity)
+::    
 =*  stub  !!
 =*  one  `@`1
 =/  dunno  [|+~ ~ ~]  ::  ignorant sock-anno
 ::
-::  from-pro remove 
-::  whole analysis w/o loops (no meloization, no heuristics)
-::  
 |%
 ::  redo blocklist parent -> children
 ::
@@ -76,13 +78,18 @@
   |-  ^-  (error [[site=@uxsite res=sock-anno loopy=?] gen=state])
   =*  eval-loop  $
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
-  =-  ?:  ?=(%| -<)  -  &+[[here-site -.p] +.p]
+  =;  tagless-res
+    ?:  ?=(%| -.tagless-res)  tagless-res
+    &+[[here-site -.p.tagless-res] +.p.tagless-res]
   ^-  (error [[sock-anno ?] state])
   ::  record current evalsite in the subject provenance tree
   ::
   =.  src.sub
     ?~  src.sub  [[one here-site]~ ~ ~]
     src.sub(n [[one here-site] n.src.sub])
+  ::  start tracking subject capture
+  ::
+  =.  tok.sub  1
   ::  register evalsite in bidirectional mapping
   ::
   =.  sites.evals.gen  (~(put by sites.evals.gen) here-site sock.sub fol ~)
@@ -90,9 +97,6 @@
   ::  check memo cache
   ::
   ?^  m=(memo here-site fol sub gen)  &+[[pro.u.m |] gen.u.m]
-  ::  start tracking subject capture
-  ::
-  =.  tok.sub  1
   =.  list.stack  [here-site list.stack]
   =/  res-fol=(error [[code=nomm prod=sock-anno loopy=?] gen1=state])
     |-  ^-  (error [[nomm sock-anno ?] state])
