@@ -8,9 +8,7 @@
 +$  nomm
   $^  [nomm nomm]                             ::  autocons
   $%  [%1 p=*]                                ::  Nock 1
-  ::                                          ::  Nock 2
-      [%f2 p=nomm func=@uxfunc]               ::    call function with compatible subject
-      [%r2 p=nomm q=nomm site=@uxsite]        ::    raw Nock 2: not done or code object construction or indirect
+      [%2 p=nomm q=nomm site=@uxsite]        ::  Nock 2
       [%3 p=nomm]                             ::  Nock 3
       [%4 p=nomm]                             ::  Nock 4
       [%5 p=nomm q=nomm]                      ::  Nock 5
@@ -18,48 +16,44 @@
       [%7 p=nomm q=nomm]                      ::  Nock 7
       [%10 p=[p=@ q=nomm] q=nomm]             ::  Nock 10
       [%s11 p=@ q=nomm]                       ::  Nock 11 (static)
-      [%d11 p=[p=@ q=nomm] q=nomm]            ::  Nock 11 (dynamic)
+      [%d11 p=[p=@ q=nomm] q=nomm]            ::  Nock 11 (dynamic)  XX hit formula info?
       [%12 p=nomm q=nomm]                     ::  "Nock 12"
       [%0 p=@]                                ::  Nock 0
   ==
-::  a call product is either used as code or not
-::  if it is not used as code, it is associated with a function object
-::  described with [sub=sock fol=*]
+::  +$  took  $~  ~
+::            $@  ?(~ @)
+::            [took took]
+::  describes what parts of subject are contained in the product
+::  ~  new noun/unknown
+::  @  subject axis
+::  ^  cons
 ::
-::  the result of analysis of outer call is assumed to not be used as code,
-::  which needs to be reconsidered for +poke:arvo analysis
-::
-+$  functions
-  $:
-    ::  callsites <--> functions
-    ::
-    sites=(map @uxsite @uxfunc)
-    calls=(jar @uxfunc @uxsite)
-  ::::
-    ::  Function definitions
-    ::
-    codes=(map @uxfunc nomm)
-  ::::
-    ::  functions <--> [sub=sock fol=*] XX not necessary?
-    ::  can be built by composing mappings of evals with functions
-    ::
-    :: forms=(jar * [func=@uxfunc sub=sock])  ::  search by formula
-    :: bells=(jar @uxfunc [sub=sock fol=*])   ::  search by function label
-  ==
-::  generic call info
++$  took  *
+::  generic info at evalsites
 ::
 +$  evals
   $:
     ::  evalsites <--> sub/fol pairs
     ::
-    sites=(map @uxsite [sub=sock fol=*])
-    calls=(jar * [site=@uxsite sub=sock])
+    sites=(map @uxsite [sub=sock fol=* out=(unit outcome)])
+    calls=(jar * [site=@uxsite sub=sock out=(unit outcome)])
   ==
-::  provenance tree, BUT!!! axis of the RESULT of evalsite, not subject
+::  analysis results
 ::
-+$  from-pro  (tree (list (pair @axis @uxsite)))
-::  provenance tree: axes of the SUBJECT of evalsite
++$  results  (map @uxsite [=nomm prod=sock-anno])
+::  info about an analyzed evalsite:
+::    parts of the subject it needs for code
+::    generated nomm
+::    parts of the subject that ended up being captured in the product
 ::
-+$  from-sub  from-pro
-+$  sock-anno  [=sock sik=from-pro src=from-sub]
++$  outcome
+  $:  need=cape
+      =nomm
+      prod=sock-anno
+      =took
+  ==
+::  provenance tree: axes of the subject of evalsite
+::
++$  from-sub  (tree (list (pair @axis @uxsite)))
++$  sock-anno  [=sock src=from-sub tok=took]
 --
