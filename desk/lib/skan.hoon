@@ -1,8 +1,9 @@
 /-  *noir
 ::
 ::  TODO:
-::    final, memo, process, close (prob noop/identity)
+::    final, memo, process (prob noop/identity), close 
 ::    %2 push need in direct branch
+::    memoization: track directness
 ::    
 =*  stub  !!
 =*  one  `@`1
