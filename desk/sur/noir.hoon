@@ -177,6 +177,7 @@
     $(a r.a, b r.b)
   ::
   ++  mask
+    ::  XX no pushing down? suspicious...
     |=  [src=source cap=cape]
     ^-  source
     ::

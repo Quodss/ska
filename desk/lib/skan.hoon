@@ -1,7 +1,8 @@
 /-  *noir
 ::
 ::  TODO:
-::    final, memo, process (prob noop/identity)
+::    final, memo, process, close (prob noop/identity)
+::    %2 push need in direct branch
 ::    
 =*  stub  !!
 =*  one  `@`1
@@ -141,6 +142,7 @@
       ::  direct call
       ::
       =/  fol-new  data.sock.f-prod
+      ::  XX push need
       ::
       ::  check for loop:
       ::    Check if there is formula in the stack above us that has a
