@@ -7,16 +7,11 @@
   ::
   ++  cut
     ^-  cape
-    ?-  one
-        %|  |
-        %&  &
-        ^
-      =/  l  cut(one -.one)
-      =/  r  cut(one +.one)
-      ?:  ?&(=(| l) =(| r))  |
-      ?:  ?&(=(& l) =(& r))  &
-      [l r]
-    ==
+    ?@  one  one
+    =/  l  cut(one -.one)
+    =/  r  cut(one +.one)
+    ?:  &(?=(@ l) =(l r))  l
+    [l r]
   ::  list of known axes
   ::
   ++  yea

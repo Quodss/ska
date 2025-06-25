@@ -38,6 +38,8 @@
     ?.  ?=([p=took q=took] a)  a
     =.  p.a  ~=(p.a $(a p.a))
     =.  q.a  ~=(q.a $(a q.a))
+    ::  [2n 2n+1] --> n
+    ::
     ?:  &(!=(0 p.a) ?=(@ p.a) ?=(@ q.a) =(+(p.a) q.a) =(0 (end 0 p.a)))
       (rsh 0 p.a)
     a
@@ -45,8 +47,6 @@
     |=  [a=took b=took]
     ^-  took
     ?:  &(=(~ a) =(~ b))  ~
-    ::  [2n 2n+1] --> n
-    ::
     ?:  &(!=(0 a) ?=(@ a) ?=(@ b) =(+(a) b) =(0 (end 0 a)))
       (rsh 0 a)
     [a b]
@@ -62,27 +62,19 @@
     =.  a  a1
     =.  b  b1
     ::
-    ?@  a
-      ?@  b  ?:(=(a b) a ~)
-      =/  a-l  (lsh 0 a)
-      =/  a-r  +(a-l)
-      =/  l  $(a a-l, b -.b)
-      =/  r  $(a a-r, b +.b)
-      ?:  &(=(~ l) =(~ r))  ~
-      ?:  &(!=(0 l) ?=(@ l) ?=(@ r) =(+(l) r) =(0 (end 0 l)))
-        (rsh 0 l)
-      [l r]
-    ?^  b
-      =/  l  $(a -.a, b -.b)
-      =/  r  $(a +.a, b +.b)
-      ?:  &(=(~ l) =(~ r))  ~
-      ?:  &(!=(0 l) ?=(@ l) ?=(@ r) =(+(l) r) =(0 (end 0 l)))
-        (rsh 0 l)
-      [l r]
-    =/  b-l  (lsh 0 b)
-    =/  b-r  +(b-l)
-    =/  l  $(a -.a, b b-l)
-    =/  r  $(a +.a, b b-r)
+    ?:  &(?=(@ a) ?=(@ b))  ?:(=(a b) a ~)
+    =/  [l-a=took r-a=took]
+      ?^  a  a
+      =/  l-a  (lsh 0 a)
+      [l-a +(l-a)]
+    ::
+    =/  [l-b=took r-b=took]
+      ?^  b  b
+      =/  l-b  (lsh 0 b)
+      [l-b +(l-b)]
+    ::
+    =/  l  $(a l-a, b l-b)
+    =/  r  $(a r-a, b r-b)
     ?:  &(=(~ l) =(~ r))  ~
     ?:  &(!=(0 l) ?=(@ l) ?=(@ r) =(+(l) r) =(0 (end 0 l)))
       (rsh 0 l)
@@ -94,16 +86,11 @@
     ?:  =(0 ax)  !!
     ?:  =(1 ax)  a
     ?~  a  ~
-    =^  dir=?(%2 %3)  ax  [(cap ax) (mas ax)]
-    =/  [p=took q=took]
-      ?^  a  a
-      =/  p  (lsh 0 a)
-      =/  q  +(p)
-      [p q]
-    ::
-    ?:  ?=(%2 dir)
-      $(a p)
-    $(a q)
+    ?@  a  (peg a ax)
+    ?-  (cap ax)
+      %2  $(a -.a, ax (mas ax))
+      %3  $(a +.a, ax (mas ax))
+    ==
   ::
   ++  edit
     |=  [rec=took ax=@ don=took]
@@ -113,13 +100,34 @@
       ?^  rec  rec
       ?~  rec  [~ ~]
       =/  p  (lsh 0 rec)
-      =/  q  +(p)
-      [p q]
+      [p +(p)]
     ::
     ?-  (cap ax)
       %2  [$(rec p, ax (mas ax)) q]
       %3  [p $(rec q, ax (mas ax))]
     ==
+  ::  relocate new subject sock into old product with `took` 
+  ::
+  ++  relo-sock
+    |=  [sub=sock pro=sock tok=took]
+    ^-  sock
+    ?~  tok  pro
+    ?@  tok  (~(pull so sub) tok)
+    =/  l  $(tok -.tok, pro (~(pull so pro) 2))
+    =/  r  $(tok +.tok, pro (~(pull so pro) 3))
+    (~(knit so l) r)
+  ::  relocate new subject provenance into old product with `took` 
+  ::
+  ++  relo-src
+    |=  [sub=source pro=source tok=took]
+    ^-  source
+    ?~  tok  pro
+    ?@  tok  (slot:source sub tok)
+    ::   XX performance? defer provenance pushing like in slot?
+    ::
+    =/  l  $(tok -.tok, pro (slot:source pro 2))
+    =/  r  $(tok -.tok, pro (slot:source pro 3))
+    (cons:source l r)
   --
 ::  generic info at evalsites
 ::
@@ -127,22 +135,19 @@
   $:
     ::  evalsites <--> sub/fol pairs
     ::
-    sites=(map @uxsite [sub=sock fol=* out=(unit outcome)])
-    calls=(jar * [site=@uxsite sub=sock out=(unit outcome)])
+    sites=(map @uxsite [sub=sock fol=*])
+    calls=(jar * [site=@uxsite sub=sock])
   ==
 ::  analysis results
 ::
-+$  results  (map @uxsite [=nomm prod=sock-anno])
-::  info about an analyzed evalsite:
-::    parts of the subject it needs for code
-::    generated nomm
-::    parts of the subject that ended up being captured in the product
-::
-+$  outcome
-  $:  need=cape
-      =nomm
-      prod=sock-anno
-      =took
++$  results
+  $:
+    ::  all evalsite results
+    ::
+    every=(map @uxsite [=nomm prod=sock-anno])
+    ::  fully direct ones for memoization
+    ::
+    direct=(map @uxsite sock-anno)
   ==
 ::  provenance tree: axes of the subject of evalsite
 ::
@@ -150,7 +155,7 @@
   |^  source
   ::
   +$  source  (tree (list peon))
-  +$  peon  (pair @axis @uxsite)
+  +$  peon    [ax=@axis sit=@uxsite]
   ++  norm
     |=  a=source
     ^-  source
@@ -192,7 +197,7 @@
     =/  l  $(src l.src, cap -.cap)
     =/  r  $(src r.src, cap +.cap)
     ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
-    [n.src l r]
+    [n.src l r]  ::  preserve root provenance even though l and r might get masked down. dubious
   ::
   ++  slot
     |=  [src=source ax=@]
@@ -217,9 +222,9 @@
       =/  rel  (hub ax rev)
       %+  roll  l
       |:  [p=*peon out=out]
-      [p(p (peg p.p rel)) out]
+      [p(ax (peg ax.p rel)) out]
     ::
-    ?:  ?&(?=(~ n) ?=(~ l) ?=(~ r))  ~
+    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
     [n l r]
   ::
   ++  edit
@@ -234,19 +239,35 @@
       =.  n.r
         %+  roll  n.r
         |:  [p=*peon out=n.r]
-        [p(p (peg p.p 3)) out]
+        [p(ax (peg ax.p 3)) out]
       ::
-      [~ $(rec l, ax (mas ax)) r]
+      [~ $(rec l, ax (mas ax)) ?:(=([~ ~ ~] r) ~ r)]
     ::
         %3
       =/  l=[n=(list peon) l=source r=source]  ?~(l [~ ~ ~] l)
       =.  n.l
         %+  roll  n.l
         |:  [p=*peon out=n.l]
-        [p(p (peg p.p 2)) out]
+        [p(ax (peg ax.p 2)) out]
       ::
-      [~ l $(rec r, ax (mas ax))]
+      [~ ?:(=([~ ~ ~] l) ~ l) $(rec r, ax (mas ax))]
     ==
+  ::
+  ++  want
+    !.
+    =/  unica  |=([@uxsite a=cape b=cape] (~(uni ca a) b))
+    |=  [src=source cap=cape]
+    ^-  (map @uxsite cape)
+    ?:  |(?=(%| cap) ?=(~ src))  ~
+    =/  n
+      %+  roll  n.src
+      |=  [p=peon m=(map @uxsite cape)]
+      (~(put by m) sit.p (~(pat ca cap) ax.p))
+    ::
+    =+  [p q]=?@(cap [& &] cap)
+    =/  l  $(src l.src, cap p)
+    =/  r  $(src r.src, cap q)
+    ((~(uno by ((~(uno by l) r) unica)) n) unica)
   --
 ::
 ::    axis after axis
