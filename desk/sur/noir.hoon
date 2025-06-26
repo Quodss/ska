@@ -8,7 +8,7 @@
 +$  nomm
   $^  [nomm nomm]                             ::  autocons
   $%  [%1 p=*]                                ::  Nock 1
-      [%2 p=nomm q=nomm site=@uxsite]        ::  Nock 2
+      [%2 p=nomm q=nomm site=@uxsite]         ::  Nock 2
       [%3 p=nomm]                             ::  Nock 3
       [%4 p=nomm]                             ::  Nock 4
       [%5 p=nomm q=nomm]                      ::  Nock 5
@@ -142,12 +142,13 @@
 ::
 +$  results
   $:
-    ::  all evalsite results
+    ::  all direct call analysis results
     ::
     every=(map @uxsite [=nomm prod=sock-anno])
-    ::  fully direct ones for memoization
+    ::  memoized results: finalized, fully direct
+    ::  product, subject mask
     ::
-    direct=(map @uxsite sock-anno)
+    memo=(map @uxsite [=nomm prod=sock-anno want=cape])
   ==
 ::  provenance tree: axes of the subject of evalsite
 ::
