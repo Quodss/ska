@@ -11,8 +11,23 @@
 ::  default flags: not loopy, fully direct
 ::
 =/  deff  [| &]
+=/  verb  &
+=/  bars  0
 ::
 |%
+++  scux  ^~((cury scot %ux))
+::  print analysis stack
+::
+++  ps
+  |=  [tag=cord comment=cord diff=@s]
+  ^+  bars
+  ?.  verb  bars
+  %-  (slog (rap 3 tag ' ' (fil 3 bars '|') ' ' comment ~) ~)
+  ?+  diff  ~|(%weird-diff !!)
+    %--0  bars
+    %--1  (succ bars)
+    %-1   ~|  %bars-underrun  (dec bars)
+  ==
 ::  redo blocklist parent -> children
 ::
 +$  blocklist  (jug @uxsite @uxsite)
@@ -51,32 +66,41 @@
 +$  frond  (deep [par=@uxsite kid=@uxsite])
 +$  cycle  [entry=@uxsite latch=@uxsite =frond]
 ::
+++  dive
+  |*  [a=(deep) b=*]
+  ^+  a
+  ?-  -.a
+    %list  a(p [b p.a])
+    %deep  a(p $(a p.a))
+  ==
+::
 ++  fold-deep
   |*  [a=(deep) g=_=>(~ |=([* *] +<+))]
   |-  ^+  ,.+<+.g
   ?-  -.a
     %list  (roll p.a g)
-    %deep  $(a q.a, g g(+<+ $(a p.a)))
+    %deep  $(a q.a, +<+.g $(a p.a))
   ==
 ::
 ++  add-frond
   |=  [par=@uxsite kid=@uxsite cycles=(list cycle)]
   ^-  (list cycle)
-  ?~  cycles  [par kid %list [par kid] ~]~
-  ?:  (gth par latch.i.cycles)
+  ?:  |(?=(~ cycles) (gth par latch.i.cycles))
     ::  push new cycle
     ::
     [[par kid %list [par kid] ~] cycles]
-  ::  extend top cycle
+  ::  pop and extend top cycle
   ::
   =/  new-cycle=cycle
-    [(min par entry.i.cycles) kid %deep [%list [par kid] ~] frond.i.cycles]
+    [(min par entry.i.cycles) kid (dive frond.i.cycles [par kid])]
   =/  rest  t.cycles
   ::
   |-  ^-  (list cycle)
-  ?~  rest  [new-cycle ~]
-  ?:  (gth entry.new-cycle latch.i.rest)  [new-cycle rest]
-  ::  merge overlapping cycles
+  ?:  |(?=(~ rest) (gth entry.new-cycle latch.i.rest))
+    ::  push extended cycle
+    ::
+    [new-cycle rest]
+  ::  pop and merge overlapping cycle
   ::
   =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
   =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
@@ -104,9 +128,10 @@
   ::        parent > latch.i.-.cycles (compare site labels)
   ::      If false, extend top cycle (set latch to kid, entry to
   ::      min(entry, parent)), then iterate over the rest of the list, 
-  ::      merging if new cycle overlaps with the predecessor (entry >= latch)
+  ::      merging if new cycle overlaps with the predecessor
+  ::      (new entry <= previous latch)
   ::
-  ::    want: evalsite subject requirements
+  ::    want: evalsite subject requirements of non-finalized evalsites
   ::
   $:  =evals
       =results
@@ -116,6 +141,8 @@
   ==
 ::
 +$  stack
+  ::  TODO leave essential
+  ::
   $:
     ::  list: linear stack of evalsites
     ::    
@@ -140,7 +167,6 @@
   ?>  =(0x0 here-site)
   |-  ^-  [[sock-anno flags] gen=state]
   =*  eval-loop  $
-  ~&  [here-site fol]
   ::  retry evalsite analysis if a loop assumption was wrong
   ::
   =|  =blocklist
@@ -167,12 +193,15 @@
   ::  check memo cache
   ::
   ?^  m=(memo here-site fol sub gen)
-    %-  (slog [(rap 3 '<1 ' (scot %ux here-site) ' <- ' (scot %ux from.u.m) ~)]~)
+    =.  bars  (ps '<1' (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~) --0)
     &+[[pro.u.m deff] gen.u.m]
+  ::  XX to do meloization; if melo hit then loopy; save assumption(?), merge
+  ::  cycles if needed
+  ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sock.sub here-site)
   =^  [code=nomm prod=sock-anno =flags]  gen
-    %-  (slog [(rap 3 '>> ' (scot %ux here-site) ~)]~)
+    =.  bars  (ps '>>' (rap 3 (scux here-site) ~) --1)
     |-  ^-  [[nomm sock-anno flags] state]
     =*  fol-loop  $
     ?+    fol  [[[%0 0] dunno deff] gen]
@@ -206,7 +235,7 @@
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
-        %-  (slog ~[(rap 3 '<4 ' (scot %ux there-site) ~)])
+        =.  bars  (ps '<4' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -214,9 +243,9 @@
       ::  direct call
       ::
       =/  fol-new  data.sock.f-prod
-      =/  fol-want=urge  (want:source src.f-prod &)
+      =/  fol-urge  (urge:source src.f-prod &)
       =.  want.gen
-        %-  (~(uno by want.gen) fol-want)
+        %-  (~(uno by want.gen) fol-urge)
         |=  [@uxsite a=cape b=cape]
         ~(cut ca (~(uni ca a) b))
       ::
@@ -247,7 +276,7 @@
         ::  draft: loop calls are rendered indirect
         ::  TODO direct loops like in orig
         ::
-        %-  (slog [(rap 3 '<4 ' (scot %ux there-site) ~)]~)
+        =.  bars  (ps '<4' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -262,7 +291,11 @@
         ==
       :_  gen
       :+  [%2 s-code f-code there-site]
-        pro
+        ::  tok.pro describes capture of s-prod by daughter call product
+        ::  compose with our subject capture to get our subject's capture
+        ::  by `pro`
+        :: 
+        pro(tok (comp:took tok.sub tok.pro))
       (fold-flag flags s-flags f-flags ~)
     ::
         [%3 p=^]
@@ -371,8 +404,8 @@
   =;  fin=(error [loopy=? gen=state])
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
-  ?.  loopy.flags  &+[| (final-simple here-site code prod gen direct.flags)]
-  =*  i  i.-.cycles.gen
+  ?.  loopy.flags  &+[| (final-simple here-site code sub prod gen direct.flags)]
+  =*  i  ,.-.cycles.gen
   ?.  =(here-site entry.i)  &+[& (process here-site prod gen direct.flags)]
   ::  cycle entry not loopy if finalized
   ::
@@ -381,25 +414,33 @@
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
-  |=  [site=@uxsite code=nomm prod=sock-anno gen=state direct=?]
+  |=  [site=@uxsite code=nomm sub=sock-anno prod=sock-anno gen=state direct=?]
   ^-  state
-  %-  (slog [(rap 3 '>3 ' (scot %ux site) ~)]~)
+  =.  bars  (ps '>3' (scux site) -1)
+  =/  mayb-site=(unit cape)  (~(get by want.gen) site)
   ::  memoize if fully direct
   ::
   =?  memo.results.gen  direct
-    =/  want-site=cape  (~(gut by want.gen) site |)
-    =/  want-res=urge  (want:source src.prod cape.sock.prod)
-    =/  mask=cape  :: XX push mask to want.gen? original doesn't do it, but why?
+    =/  want-site=cape  ?~(mayb-site | u.mayb-site)
+    =/  urge-res=urge  (urge:source src.prod cape.sock.prod)
+    =/  mask=cape
       %-  ~(uni ca want-site)
-      (~(gut by want-res) site |)
+      (~(gut by urge-res) site |)
     ::
     %-  ~(put by memo.results.gen)
-    :+  site  code
-    :_  want-site
-    :+  ~(norm so (~(app ca mask) sock.prod))
-      (mask:source src.prod mask)
-    tok.prod
+    :-  site
+    :^    code
+        ::  minimized subject sock for memo checks
+        ::
+        ~(norm so (~(app ca mask) sock.sub))
+      ::  result to apply relocations to
+      ::
+      (mask-relo prod)
+    ::  subject want for subject need propagation on memo hits
+    ::
+    want-site
   ::
+  =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
   gen
 ::  finalize analysis of a call graph cycle entry: pop cycle, verify assumptions
 ::
@@ -422,10 +463,13 @@
   |-  ^-  (unit [@uxsite sock-anno state])
   ?~  calls  ~
   ?~  res=(~(get by memo.results.gen) site.i.calls)  $(calls t.calls)
-  ?.  (~(huge so sock.prod.u.res) sock.sub)          $(calls t.calls)
-  =/  sub-want  (want:source src.sub want.u.res)
+  ?.  (~(huge so less.u.res) sock.sub)               $(calls t.calls)
+  ::  memo hit: propagate subject needs, relocate subject into result
+  ::  via `took`
+  :: 
+  =/  sub-urge  (urge:source src.sub want.u.res)
   =.  want.gen
-    %-  (~(uno by want.gen) sub-want)
+    %-  (~(uno by want.gen) sub-urge)
     |=  [@uxsite a=cape b=cape]
     ~(cut ca (~(uni ca a) b))
   ::

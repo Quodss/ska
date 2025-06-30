@@ -54,7 +54,6 @@
   ++  int
     |=  [a=took b=took]
     ^-  took
-    ?:  |(=(~ a) =(~ b))  ~
     ::
     =/  a1  (norm a)
     =/  b1  (norm b)
@@ -62,6 +61,7 @@
     =.  a  a1
     =.  b  b1
     ::
+    ?:  |(=(~ a) =(~ b))  ~
     ?:  &(?=(@ a) ?=(@ b))  ?:(=(a b) a ~)
     =/  [l-a=took r-a=took]
       ?^  a  a
@@ -73,12 +73,7 @@
       =/  l-b  (lsh 0 b)
       [l-b +(l-b)]
     ::
-    =/  l  $(a l-a, b l-b)
-    =/  r  $(a r-a, b r-b)
-    ?:  &(=(~ l) =(~ r))  ~
-    ?:  &(!=(0 l) ?=(@ l) ?=(@ r) =(+(l) r) =(0 (end 0 l)))
-      (rsh 0 l)
-    [l r]
+    (cons $(a l-a, b l-b) $(a r-a, b r-b))
   ::
   ++  slot
     |=  [a=took ax=@]
@@ -102,6 +97,7 @@
       =/  p  (lsh 0 rec)
       [p +(p)]
     ::
+    %-  cons
     ?-  (cap ax)
       %2  [$(rec p, ax (mas ax)) q]
       %3  [p $(rec q, ax (mas ax))]
@@ -128,8 +124,20 @@
     =/  l  $(tok -.tok, pro (slot:source pro 2))
     =/  r  $(tok -.tok, pro (slot:source pro 3))
     (cons:source l r)
+  ::  compose captures
+  ::
+  ::    if a captures s, and b captures a, what b captures from s?
+  ::
+  ++  comp
+    |=  [a=took b=took]
+    ^-  took
+    ?~  b  ~
+    ?@  b  (slot a b)
+    (cons $(b -.b) $(b +.b))
   --
-::  generic info at evalsites
+::  TODO leave essential to traverse less
+::
+::  generic info at directly called evalsites
 ::
 +$  evals
   $:
@@ -146,9 +154,9 @@
     ::
     every=(map @uxsite [=nomm prod=sock-anno])
     ::  memoized results: finalized, fully direct
-    ::  product, subject mask
+    ::  code, minimized subject, full product, subject need
     ::
-    memo=(map @uxsite [=nomm prod=sock-anno want=cape])
+    memo=(map @uxsite [=nomm less=sock prod=sock-anno want=cape])
   ==
 ::  provenance tree: axes of the subject of evalsite
 ::
@@ -254,7 +262,7 @@
       [~ ?:(=([~ ~ ~] l) ~ l) $(rec r, ax (mas ax))]
     ==
   ::
-  ++  want
+  ++  urge
     !.
     =/  unica  |=([@uxsite a=cape b=cape] (~(uni ca a) b))
     |=  [src=source cap=cape]
@@ -286,4 +294,19 @@
   $(a (mas a), b (mas b))
 ::
 +$  sock-anno  [=sock src=source tok=took]
+::  mask out parts of the result that are going to be relocated anyway
+::
+++  mask-relo
+  |=  a=sock-anno
+  ^-  sock-anno
+  =-  [(~(app ca -) sock.a) (mask:source src.a -) tok.a]
+  ::  cape of result parts that do not capture the subject
+  ::
+  |-  ^-  cape
+  ?~  tok.a  &
+  ?@  tok.a  |
+  =/  l  $(tok.a -.tok.a)
+  =/  r  $(tok.a +.tok.a)
+  ?:  &(?=(@ l) =(l r))  l
+  [l r]
 --
