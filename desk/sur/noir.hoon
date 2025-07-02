@@ -246,7 +246,7 @@
         %2
       =/  r=[n=(list peon) l=source r=source]  ?~(r [~ ~ ~] r)
       =.  n.r
-        %+  roll  n.r
+        %+  roll  n
         |:  [p=*peon out=n.r]
         [p(ax (peg ax.p 3)) out]
       ::
@@ -255,7 +255,7 @@
         %3
       =/  l=[n=(list peon) l=source r=source]  ?~(l [~ ~ ~] l)
       =.  n.l
-        %+  roll  n.l
+        %+  roll  n
         |:  [p=*peon out=n.l]
         [p(ax (peg ax.p 2)) out]
       ::
