@@ -101,7 +101,8 @@
   ::    connected components)
   ::      entry: top-most entry into a cyclical call graph
   ::      latch: right-most, bottom-most evalsite of the cycle
-  ::      frond: set of parent-kid pairs of loop assumptions (back edges)
+  ::      frond: set of parent-kid pairs of loop assumptions
+  ::             (targets of back edges)
   ::
   ::      When new assumptions are made, we either extend an old cycle, possibly
   ::      merging multiple predecessor cycles, or add a new one if its
@@ -262,7 +263,8 @@
           stack-loop(tak t.tak)
         ::  draft: loop calls are rendered indirect
         ::  TODO direct loops like in orig
-        ::  CAREFUL: here-site is the kid, q.i.tak/there-site are a parent assumption pair
+        ::  CAREFUL: here-site is the backedge root, there-site/q.i.tak are
+        ::  the backedge target that are assumed to be the same (kid/parent)
         ::
         =.  bars.gen  (ps bars.gen 'indi:' (rap 3 (scux there-site) ~) --0)
         :_  gen

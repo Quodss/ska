@@ -331,12 +331,15 @@
   ?>  ?=(%list -.a)
   i.-.p.a
 ::
-++  flatten  ::  XX performance
+++  flatten
   |*  a=(deep)
-  |-  ^-  (list (peer a))
+  ^-  (list (peer a))
+  %-  zing
+  =|  out=(list (list (peer a)))
+  |-  ^-  (list (list (peer a)))
   ?-  -.a
-    %list  p.a
-    %deep  (weld $(a p.a) $(a q.a))
+    %list  [p.a out]
+    %deep  $(a p.a, out $(a q.a))
   ==
 ::
 ++  gave
