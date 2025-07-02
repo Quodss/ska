@@ -1,6 +1,8 @@
 /-  *noir
+::  TODO ~2025.7.2:
+::    if works: loop product capture arithmetic
 ::
-::  TODO:
+::  TODO general:
 ::    full loop engine (direct call in %2, final-cycle, process)
 ::    
 =*  stub  !!
@@ -12,22 +14,30 @@
 ::
 =/  deff  [| &]
 =/  verb  &
-=/  bars  0
 ::
 |%
 ++  scux  ^~((cury scot %ux))
 ::  print analysis stack
 ::
 ++  ps
-  |=  [tag=cord comment=cord diff=@s]
+  |=  [bars=@ud tag=cord comment=cord diff=@s]
   ^+  bars
   ?.  verb  bars
-  %-  (slog (rap 3 tag ' ' (fil 3 bars '|') ' ' comment ~) ~)
-  ?+  diff  ~|(%weird-diff !!)
-    %--0  bars
-    %--1  (succ bars)
-    %-1   ~|  %bars-underrun  (dec bars)
-  ==
+  =/  bars-print
+    ?+  diff  ~|(%weird-diff !!)
+      %--0  bars
+      %--1  (succ bars)
+      %-1   bars
+    ==
+  ::
+  =/  bars-return
+    ?+  diff  ~|(%weird-diff !!)
+      %--0  bars
+      %--1  (succ bars)
+      %-1   ~|  %bars-underrun  (dec bars)
+    ==
+  ::
+  ((slog (rap 3 tag ' ' (fil 3 bars-print '|') ' ' comment ~) ~) bars-return)
 ::  redo blocklist parent -> children
 ::
 +$  blocklist  (jug @uxsite @uxsite)
@@ -114,7 +124,7 @@
   ::    cycles:   stack of call graph cycles (aka natural loops aka strongly
   ::    connected components)
   ::      entry: top-most entry into a cyclical call graph
-  ::      latch: bottom-most evalsite of the cycle
+  ::      latch: right-most, bottom-most evalsite of the cycle
   ::      frond: set of parent-kid pairs of loop assumptions (back edges)
   ::
   ::      When new assumptions are made, we either extend an old cycle, possibly
@@ -138,6 +148,7 @@
       site=@uxsite
       cycles=(list cycle)
       want=urge
+      bars=@ud
   ==
 ::
 +$  stack
@@ -193,15 +204,15 @@
   ::  check memo cache
   ::
   ?^  m=(memo here-site fol sub gen)
-    =.  bars  (ps '<1' (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~) --0)
+    =.  bars.gen  (ps bars.gen '<1' (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~) --0)
     &+[[pro.u.m deff] gen.u.m]
-  ::  XX to do meloization; if melo hit then loopy; save assumption(?), merge
-  ::  cycles if needed
+  ::  XX to do meloization
   ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sock.sub here-site)
+  ::
   =^  [code=nomm prod=sock-anno =flags]  gen
-    =.  bars  (ps '>>' (rap 3 (scux here-site) ~) --1)
+    =.  bars.gen  (ps bars.gen '>>' (rap 3 (scux here-site) ~) --1)
     |-  ^-  [[nomm sock-anno flags] state]
     =*  fol-loop  $
     ?+    fol  [[[%0 0] dunno deff] gen]
@@ -235,7 +246,7 @@
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
-        =.  bars  (ps '<4' (rap 3 (scux there-site) ~) --0)
+        =.  bars.gen  (ps bars.gen '<4' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -276,7 +287,7 @@
         ::  draft: loop calls are rendered indirect
         ::  TODO direct loops like in orig
         ::
-        =.  bars  (ps '<4' (rap 3 (scux there-site) ~) --0)
+        =.  bars.gen  (ps bars.gen '<4' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -291,7 +302,7 @@
         ==
       :_  gen
       :+  [%2 s-code f-code there-site]
-        ::  tok.pro describes capture of s-prod by daughter call product
+        ::  tok.pro describes capture of s-prod by daughter call product;
         ::  compose with our subject capture to get our subject's capture
         ::  by `pro`
         :: 
@@ -410,22 +421,23 @@
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
+  ^-  err-state
   (final-cycle here-site prod frond.i gen direct.flags)
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
   |=  [site=@uxsite code=nomm sub=sock-anno prod=sock-anno gen=state direct=?]
   ^-  state
-  =.  bars  (ps '>3' (scux site) -1)
+  =.  bars.gen  (ps bars.gen '>3' (scux site) -1)
   =/  mayb-site=(unit cape)  (~(get by want.gen) site)
   ::  memoize if fully direct
   ::
   =?  memo.results.gen  direct
     =/  want-site=cape  ?~(mayb-site | u.mayb-site)
     =/  urge-res=urge  (urge:source src.prod cape.sock.prod)
-    =/  mask=cape
-      %-  ~(uni ca want-site)
-      (~(gut by urge-res) site |)
+    =/  mask=cape  want-site ::  is enough due to relocation?
+      :: %-  ~(uni ca want-site)
+      :: (~(gut by urge-res) site |)
     ::
     %-  ~(put by memo.results.gen)
     :-  site
