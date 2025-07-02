@@ -1,9 +1,7 @@
 /-  *noir
-::  TODO ~2025.7.2:
-::    if works: loop product capture arithmetic
-::
-::  TODO general:
-::    full loop engine (direct call in %2, final-cycle, process)
+::  TODO ~2025.7.3:
+::    loop product capture arithmetic finish
+::    loop engine sans melo
 ::    
 =*  stub  !!
 =*  one  `@`1
@@ -14,6 +12,7 @@
 ::
 =/  deff  [| &]
 =/  verb  &
+=/  bars  &
 ::
 |%
 ++  scux  ^~((cury scot %ux))
@@ -23,18 +22,12 @@
   |=  [bars=@ud tag=cord comment=cord diff=@s]
   ^+  bars
   ?.  verb  bars
-  =/  bars-print
+  ?.  ^bars  ((slog (rap 3 tag ' ' comment ~) ~) 0)
+  =/  [bars-print=@ bars-return=@]
     ?+  diff  ~|(%weird-diff !!)
-      %--0  bars
-      %--1  (succ bars)
-      %-1   bars
-    ==
-  ::
-  =/  bars-return
-    ?+  diff  ~|(%weird-diff !!)
-      %--0  bars
-      %--1  (succ bars)
-      %-1   ~|  %bars-underrun  (dec bars)
+      %--0  [bars bars]
+      %--1  [. .]:(succ bars)
+      %-1   [bars ~|(%bars-underrun (dec bars))]
     ==
   ::
   ((slog (rap 3 tag ' ' (fil 3 bars-print '|') ' ' comment ~) ~) bars-return)
