@@ -65,32 +65,8 @@
   (each m (pair @uxsite @uxsite))
 ::
 +$  err-state  (error state)
-::  lazily concatenated list
-::
-++  deep
-  |$  [m]
-  $%  [%deep p=(deep m) q=(deep m)]
-      [%list p=(list m)]
-  ==
-::
 +$  frond  (deep [par=@uxsite kid=@uxsite])
 +$  cycle  [entry=@uxsite latch=@uxsite =frond]
-::
-++  dive
-  |*  [a=(deep) b=*]
-  ^+  a
-  ?-  -.a
-    %list  a(p [b p.a])
-    %deep  a(p $(a p.a))
-  ==
-::
-++  fold-deep
-  |*  [a=(deep) g=_=>(~ |=([* *] +<+))]
-  |-  ^+  ,.+<+.g
-  ?-  -.a
-    %list  (roll p.a g)
-    %deep  $(a q.a, +<+.g $(a p.a))
-  ==
 ::
 ++  add-frond
   |=  [par=@uxsite kid=@uxsite cycles=(list cycle)]
@@ -204,7 +180,7 @@
   ::  check memo cache
   ::
   ?^  m=(memo here-site fol sub gen)
-    =.  bars.gen  (ps bars.gen '<1' (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~) --0)
+    =.  bars.gen  (ps bars.gen 'memo:' (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~) --0)
     &+[[pro.u.m deff] gen.u.m]
   ::  XX to do meloization
   ::
@@ -212,7 +188,7 @@
   =.  fols.stack  (~(add ja fols.stack) fol sock.sub here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
-    =.  bars.gen  (ps bars.gen '>>' (rap 3 (scux here-site) ~) --1)
+    =.  bars.gen  (ps bars.gen 'step:' (rap 3 (scux here-site) ~) --1)
     |-  ^-  [[nomm sock-anno flags] state]
     =*  fol-loop  $
     ?+    fol  [[[%0 0] dunno deff] gen]
@@ -246,7 +222,7 @@
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
-        =.  bars.gen  (ps bars.gen '<4' (rap 3 (scux there-site) ~) --0)
+        =.  bars.gen  (ps bars.gen 'indi:' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -286,8 +262,9 @@
           stack-loop(tak t.tak)
         ::  draft: loop calls are rendered indirect
         ::  TODO direct loops like in orig
+        ::  CAREFUL: here-site is the kid, q.i.tak/there-site are a parent assumption pair
         ::
-        =.  bars.gen  (ps bars.gen '<4' (rap 3 (scux there-site) ~) --0)
+        =.  bars.gen  (ps bars.gen 'indi:' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -406,6 +383,7 @@
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
   ::
+  ::  XX prune provenance tree?
   ::  save results
   ::
   =.  every.results.gen  (~(put by every.results.gen) here-site code prod)
@@ -428,23 +406,20 @@
 ++  final-simple
   |=  [site=@uxsite code=nomm sub=sock-anno prod=sock-anno gen=state direct=?]
   ^-  state
-  =.  bars.gen  (ps bars.gen '>3' (scux site) -1)
+  =.  bars.gen  (ps bars.gen 'done:' (scux site) -1)
   =/  mayb-site=(unit cape)  (~(get by want.gen) site)
   ::  memoize if fully direct
   ::
   =?  memo.results.gen  direct
     =/  want-site=cape  ?~(mayb-site | u.mayb-site)
-    =/  urge-res=urge  (urge:source src.prod cape.sock.prod)
-    =/  mask=cape  want-site ::  is enough due to relocation?
-      :: %-  ~(uni ca want-site)
-      :: (~(gut by urge-res) site |)
-    ::
+    =/  less  ~(norm so (~(app ca want-site) sock.sub))
+    ?.  =(want-site cape.less)  ~&  [want-site cape.less]  !!
     %-  ~(put by memo.results.gen)
     :-  site
     :^    code
         ::  minimized subject sock for memo checks
         ::
-        ~(norm so (~(app ca mask) sock.sub))
+        less
       ::  result to apply relocations to
       ::
       (mask-relo prod)

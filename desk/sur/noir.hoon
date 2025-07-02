@@ -156,7 +156,7 @@
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject, full product, subject need
     ::
-    memo=(map @uxsite [=nomm less=sock prod=sock-anno want=cape])
+    memo=(map @uxsite [=nomm less=sock prod=sock-anno want=cape])  ::  XX remove want?
   ==
 ::  provenance tree: axes of the subject of evalsite
 ::
@@ -292,6 +292,112 @@
   ?:  =(a 1)  b
   ?>  =((cap a) (cap b))  ::  remove assertion for performance?
   $(a (mas a), b (mas b))
+::
+::  lazily concatenated list
+::
+++  deep
+  |$  [m]
+  $%  [%deep p=(deep m) q=(deep m)]
+      [%list p=(list m)]
+  ==
+::
+++  dive
+  |*  [a=(deep) b=*]
+  ^+  a
+  ?-  -.a
+    %list  a(p [b p.a])
+    %deep  a(p $(a p.a))
+  ==
+::
+++  roll-deep
+  |*  [a=(deep) g=_=>(~ |=([* *] +<+))]
+  |-  ^+  ,.+<+.g
+  ?-  -.a
+    %list  (roll p.a g)
+    %deep  $(a q.a, +<+.g $(a p.a))
+  ==
+::
+++  reel-deep
+  |*  [a=(deep) g=_=>(~ |=([* *] +<+))]
+  |-  ^+  ,.+<+.g
+  ?-  -.a
+    %list  (reel p.a g)
+    %deep  $(a p.a, +<+.g $(a q.a))
+  ==
+::
+++  peer
+  |*  a=(deep)
+  $_
+  ?>  ?=(%list -.a)
+  i.-.p.a
+::
+++  flatten  ::  XX performance
+  |*  a=(deep)
+  |-  ^-  (list (peer a))
+  ?-  -.a
+    %list  p.a
+    %deep  (weld $(a p.a) $(a q.a))
+  ==
+::
+++  gave
+  |^  gave
+  ::
+  +$  gave
+    $~  [%full ~]
+    $^  [gave gave]   ::  cons
+    $%  [%full ~]     ::  no capture
+        [%hole hole]  ::  capture backedge product
+    ==
+  ::
+  +$  hole  [ax=@axis par=@uxsite kid=@uxsite]
+  +$  guess
+    $%  [%know p=sock q=hole]
+        [%qual p=hole q=hole]
+    ==
+  ::
+  ++  norm
+    |=  a=gave
+    ^-  gave
+    ?@  -.a  a
+    =.  -.a  ~=(-.a $(a -.a))
+    =.  +.a  ~=(+.a $(a +.a))
+    ?:  ?=([[%full ~] %full ~] a)  [%full ~]
+    a
+  ::
+  ++  cons
+    |=  [a=gave b=gave]
+    ^-  gave
+    ?:  &(?=(%full -.a) ?=(%full -.b))  [%full ~]
+    [a b]
+  ::
+  ++  slot
+    |=  [a=gave ax=@]
+    ^-  gave
+    ?^  -.a
+      ?-  (cap ax)
+        %2  $(ax (mas ax), a -.a)
+        %3  $(ax (mas ax), a +.a)
+      ==
+    ?:  ?=(%full -.a)  a
+    a(ax (peg ax.a ax))
+  ::  intersect socks where they don't capture loops
+  ::  take known sock over loop capturing, recording the assumption
+  ::  two different loop captures: record equality assumption
+  ::
+  ++  int-uni
+    |=  [a=[=sock gav=gave] b=[=sock gav=gave]]
+    ^-  [[sock gave] (list guess)]
+    =-  [-< `(list guess)`(flatten dip)]
+    |-  ^-  [[s=sock g=gave] dip=(deep guess)]
+    ::
+    =/  gav-a1  (norm gav.a)
+    =/  gav-b1  (norm gav.b)
+    ~?  |(!=(gav-a1 gav.a) !=(gav-b1 gav.b))  %gave-int-uni-norm
+    =.  gav.a  gav-a1
+    =.  gav.b  gav-b1
+    ::
+    !!  
+  --
 ::
 +$  sock-anno  [=sock src=source tok=took]
 ::  mask out parts of the result that are going to be relocated anyway
