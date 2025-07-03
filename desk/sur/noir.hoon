@@ -158,6 +158,9 @@
     ::
     memo=(map @uxsite [=nomm less=sock prod=sock-anno want=cape])  ::  XX remove want?
   ==
+::  urge: evalsite subject requirements
+::
++$  urge  (map @uxsite cape)
 ::  provenance tree: axes of the subject of evalsite
 ::
 ++  source
@@ -191,7 +194,6 @@
     $(a r.a, b r.b)
   ::
   ++  mask
-    ::  XX no pushing down? suspicious...
     |=  [src=source cap=cape]
     ^-  source
     ::
@@ -203,10 +205,13 @@
     ?:  ?=(%| cap)  ~
     ?:  ?=(%& cap)  src
     ?~  src  ~
+    ::  debug assert: we should only have provenance of things we fully know?
+    ::
+    ?>  =(~ n.src)
     =/  l  $(src l.src, cap -.cap)
     =/  r  $(src r.src, cap +.cap)
     ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
-    [n.src l r]  ::  preserve root provenance even though l and r might get masked down. dubious
+    [n.src l r]
   ::
   ++  slot
     |=  [src=source ax=@]
@@ -261,22 +266,76 @@
       ::
       [~ ?:(=([~ ~ ~] l) ~ l) $(rec r, ax (mas ax))]
     ==
+  ::  unify urges
+  ::
+  ++  uni-urge
+    |=  [a=^urge b=^urge]
+    ^-  ^urge
+    %-  (~(uno by a) b)
+    =>  ..ca  ^~
+    |=  [@uxsite a=cape b=cape]
+    (~(uni ca a) b)
   ::
   ++  urge
-    !.
-    =/  unica  |=([@uxsite a=cape b=cape] (~(uni ca a) b))
     |=  [src=source cap=cape]
-    ^-  (map @uxsite cape)
-    ?:  |(?=(%| cap) ?=(~ src))  ~
-    =/  n
-      %+  roll  n.src
-      |=  [p=peon m=(map @uxsite cape)]
-      (~(put by m) sit.p (~(pat ca cap) ax.p))
+    ^-  ^urge
+    =*  sam  +<
+    =/  a
+      :: ~>  %bout
+      (urge1 sam)
     ::
-    =+  [p q]=?@(cap [& &] cap)
-    =/  l  $(src l.src, cap p)
-    =/  r  $(src r.src, cap q)
-    ((~(uno by ((~(uno by l) r) unica)) n) unica)
+    =/  b
+      :: ~>  %bout
+      (urge2 sam)
+    ::
+    ?>  =(a b)
+    a
+  ::  XX performance: make tail recursive?
+  ::
+  ++  urge1
+    |=  [src=source cap=cape]
+    ^-  ^urge
+    ?:  |(?=(%| cap) ?=(~ src))  ~
+    =/  [p=cape q=cape]  ?@(cap [& &] cap)
+    ;:  uni-urge
+      $(src l.src, cap p)
+      $(src r.src, cap q)
+      (roll n.src |=([peon m=^urge] (~(put by m) sit (~(pat ca cap) ax))))
+    ==
+  ::
+  ++  urge2
+    |=  [src=source cap=cape]
+    ^-  ^urge
+    =|  tel=(list (pair source cape))
+    =|  out=^urge
+    |-  ^-  ^urge
+    ?:  |(?=(%| cap) ?=(~ src))
+      ?~  tel  out
+      $(src p.i.tel, cap q.i.tel, tel t.tel)
+    =/  [p=cape q=cape]  ?@(cap [& &] cap)
+    %=  $
+      tel  [[r.src q] tel]
+      src  l.src
+      cap  p
+      out  %+  uni-urge  out
+           %+  roll  n.src
+           |=  [peon m=^urge]
+           (~(put by m) sit (~(pat ca cap) ax))
+    ==
+  ::
+  ++  trim
+    |=  [src=source stack=(set @uxsite) =cape]
+    ^-  source
+    ?:  |(?=(~ src) ?=(%| cape))  ~
+    ::  debug assert: we should only have provenance of things we fully know?
+    ::
+    ?>  |(?=(@ cape) =(~ n.src))
+    =/  n  (skim n.src |=(peon (~(has in stack) sit)))
+    =+  [p q]=?@(cape [& &] cape)
+    =/  l  $(src l.src, cape p)
+    =/  r  $(src r.src, cape q)
+    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
+    [n l r]
   --
 ::
 ::    axis after axis
@@ -324,6 +383,7 @@
     %list  (reel p.a g)
     %deep  $(a p.a, +<+.g $(a q.a))
   ==
+::  mold builder from deep, cannot safely bunt
 ::
 ++  peer
   |*  a=(deep)
@@ -354,9 +414,11 @@
   ::
   +$  hole  [ax=@axis par=@uxsite kid=@uxsite]
   +$  guess
-    $%  [%know p=sock q=hole]
-        [%qual p=hole q=hole]
+    $%  [%know p=sock q=hole]  ::  equality to a sock
+        [%qual p=hole q=hole]  ::  equality of holes
     ==
+  ::
+  ++  full  full+~
   ::
   ++  norm
     |=  a=gave
@@ -364,33 +426,34 @@
     ?@  -.a  a
     =.  -.a  ~=(-.a $(a -.a))
     =.  +.a  ~=(+.a $(a +.a))
-    ?:  ?=([[%full ~] %full ~] a)  [%full ~]
+    ?:  ?=([[%full ~] %full ~] a)  full
     a
   ::
   ++  cons
     |=  [a=gave b=gave]
     ^-  gave
-    ?:  &(?=(%full -.a) ?=(%full -.b))  [%full ~]
+    ?:  &(?=(%full -.a) ?=(%full -.b))  full
     [a b]
   ::
   ++  slot
     |=  [a=gave ax=@]
     ^-  gave
-    ?^  -.a
-      ?-  (cap ax)
-        %2  $(ax (mas ax), a -.a)
-        %3  $(ax (mas ax), a +.a)
-      ==
+    ?:  =(ax 1)  a
     ?:  ?=(%full -.a)  a
-    a(ax (peg ax.a ax))
-  ::  intersect socks where they don't capture loops
-  ::  take known sock over loop capturing, recording the assumption
-  ::  two different loop captures: record equality assumption
+    ?@  -.a  a(ax (peg ax.a ax))
+    ?-  (cap ax)
+      %2  $(ax (mas ax), a -.a)
+      %3  $(ax (mas ax), a +.a)
+    ==
+  ::  intersect socks where they don't capture loops, unify when one of them
+  ::  does. Returns intersected-unified sock-gave pair and a list of assumptions
+  ::  to be validated.
+  ::  
   ::
   ++  int-uni
     |=  [a=[=sock gav=gave] b=[=sock gav=gave]]
     ^-  [[sock gave] (list guess)]
-    =-  [-< `(list guess)`(flatten dip)]
+    =-  [[s g] (flatten dip)]
     |-  ^-  [[s=sock g=gave] dip=(deep guess)]
     ::
     =/  gav-a1  (norm gav.a)
@@ -399,7 +462,51 @@
     =.  gav.a  gav-a1
     =.  gav.b  gav-b1
     ::
-    !!  
+    ::  both don't capture loop products: intersect
+    ::
+    ?:  &(?=(%full -.gav.a) ?=(%full -.gav.b))
+      [[(~(purr so sock.a) sock.b) full] list+~]
+    ::  both capture: overwrite with the product of latest parent (does it
+    ::  matter?), guess equality
+    ::  
+    ?:  &(?=(%hole -.gav.a) ?=(%hole -.gav.b))
+      [?:((gth par.gav.a par.gav.b) a b) list+~[[%qual +.gav.a +.gav.b]]]
+    ::  one doesn't capture, another captures: overwrite with known, guess
+    ::  that we know the product
+    ::
+    ?:  &(?=(%full -.gav.a) ?=(%hole -.gav.b))
+      [a list+~[[%know sock.a +.gav.b]]]
+    ?:  &(?=(%full -.gav.b) ?=(%hole -.gav.a))
+      [b list+~[[%know sock.b +.gav.a]]]
+    ::  all other cases (at least one cons case): split sock-gaves, decend,
+    ::  cons products and guesses
+    ::
+    =/  l-a=[sock gave]  [(~(pull so sock.a) 2) (slot gav.a 2)]
+    =/  r-a=[sock gave]  [(~(pull so sock.a) 3) (slot gav.a 3)]
+    =/  l-b=[sock gave]  [(~(pull so sock.b) 2) (slot gav.b 2)]
+    =/  r-b=[sock gave]  [(~(pull so sock.b) 3) (slot gav.b 3)]
+    =/  l  $(a l-a, b l-b)
+    =/  r  $(a r-a, b r-b)
+    [[(~(knit so s.l) s.r) (cons g.l g.r)] [%deep dip.l dip.r]]
+  ::
+  ++  edit
+    |=  [rec=gave ax=@ don=gave]
+    ^-  gave
+    ?:  =(1 ax)  don
+    =/  [p=gave q=gave]
+      ::  [(slot 2 rec) (slot 3 rec)] inlined
+      ::
+      ?-  -.rec
+        ^      rec
+        %full  [full full]
+        %hole  [rec(ax (lsh 0 ax.rec)) rec(ax +((lsh 0 ax.rec)))]
+      ==
+    ::
+    %-  cons
+    ?-  (cap ax)
+      %2  [$(rec p, ax (mas ax)) q]
+      %3  [p $(rec q, ax (mas ax))]
+    ==
   --
 ::
 +$  sock-anno  [=sock src=source tok=took]

@@ -1,6 +1,5 @@
 /-  *noir
 ::  TODO ~2025.7.3:
-::    loop product capture arithmetic finish
 ::    loop engine sans melo
 ::    
 =*  stub  !!
@@ -48,9 +47,6 @@
 ::  otherwise more specific evals would not be reanalyzed
 ::
 +$  flags  [loopy=? direct=?]
-::  urge: evalsite subject requirements
-::
-+$  urge  (map @uxsite cape)
 ::  error: either m or parent-kid pair which turned out to be false
 ::
 ++  error
@@ -131,6 +127,9 @@
     ::  fols: search by formula
     ::
     fols=(jar * (pair sock @uxsite))
+    ::  set: set of evalsites on the stack
+    ::
+    set=(set @uxsite)
   ==
 ::
 ++  scan
@@ -178,8 +177,11 @@
     &+[[pro.u.m deff] gen.u.m]
   ::  XX to do meloization
   ::
+  ::  push on the stack
+  ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sock.sub here-site)
+  =.  set.stack   (~(put in set.stack) here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
     =.  bars.gen  (ps bars.gen 'step:' (rap 3 (scux here-site) ~) --1)
@@ -259,7 +261,7 @@
         ::  CAREFUL: here-site is the backedge root, there-site/q.i.tak are
         ::  the backedge target that are assumed to be the same (kid/parent)
         ::
-        =.  bars.gen  (ps bars.gen 'indi:' (rap 3 (scux there-site) ~) --0)
+        =.  bars.gen  (ps bars.gen 'loop:' (rap 3 (scux there-site) ~) --0)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -377,8 +379,10 @@
       =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
+  ::  prune provenance tree to leave only calls on the stack (ourselves
+  ::  included), removing cousin provenance; also mask down to the product cape
   ::
-  ::  XX prune provenance tree?
+  =.  src.prod  (trim:source src.prod set.stack cape.sock.prod)
   ::  save results
   ::
   =.  every.results.gen  (~(put by every.results.gen) here-site code prod)
@@ -408,17 +412,25 @@
   =?  memo.results.gen  direct
     =/  want-site=cape  ?~(mayb-site | u.mayb-site)
     =/  less  ~(norm so (~(app ca want-site) sock.sub))
-    ?.  =(want-site cape.less)  ~&  [want-site cape.less]  !!
+    ::  we start off with more knowledge in the subject and mask down, 
+    ::  so the intersection of want-site and cape.sock.sub should be exactly
+    ::  equal to want-site?
+    ::
+    ?.  =(want-site cape.less)
+      ~_  'cape.less < want-site'
+      ~|  [cape.less want-site]
+      !!
     %-  ~(put by memo.results.gen)
     :-  site
     :^    code
         ::  minimized subject sock for memo checks
         ::
         less
-      ::  result to apply relocations to
+      ::  result to apply relocations to, with to-be-relocated parts masked out
       ::
       (mask-relo prod)
     ::  subject want for subject need propagation on memo hits
+    ::  (XX just use cape.less?)
     ::
     want-site
   ::
@@ -480,12 +492,15 @@
   %+  roll  t.l
   |:  [f=*flags out=out]
   [|(loopy.f loopy.out) &(direct.f direct.out)]
+::  Analyze s/f pair, then run Nomm interpreter on the result
+::  Indirect calls reanalyze
+::  Direct calls are verified with subject sock nest checking
 ::
 ++  run-nomm
   |=  [s=* f=*]
   ^-  (unit)
   =/  gen  (scan s f)
-  =/  n=nomm  nomm:(~(got by every.results.gen) 0x0)
+  =/  n  nomm:(~(got by every.results.gen) 0x0)
   |-  ^-  (unit)
   ?-    n
       [p=^ q=*]
