@@ -1,5 +1,5 @@
 /-  *noir
-::  TODO ~2025.7.3:
+::  TODO ~2025.7.4:
 ::    loop engine sans melo
 ::    
 =*  stub  !!
@@ -54,20 +54,24 @@
   (each m (pair @uxsite @uxsite))
 ::
 +$  err-state  (error state)
-+$  frond  (deep [par=@uxsite kid=@uxsite])
-+$  cycle  [entry=@uxsite latch=@uxsite =frond]
++$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock])
++$  cycle  [entry=@uxsite latch=@uxsite =frond set=(set @uxsite)]
 ::
 ++  add-frond
-  |=  [par=@uxsite kid=@uxsite cycles=(list cycle)]
+  |=  [new=[par=@uxsite kid=@uxsite sock sock] cycles=(list cycle)]
   ^-  (list cycle)
-  ?:  |(?=(~ cycles) (gth par latch.i.cycles))
+  ?:  |(?=(~ cycles) (gth par.new latch.i.cycles))
     ::  push new cycle
     ::
-    [[par kid %list [par kid] ~] cycles]
+    [[par.new kid.new [%list new ~] (silt par.new kid.new ~)] cycles]
   ::  pop and extend top cycle
   ::
   =/  new-cycle=cycle
-    [(min par entry.i.cycles) kid (dive frond.i.cycles [par kid])]
+    :^    (min par.new entry.i.cycles)
+        kid.new
+      (dive frond.i.cycles new)
+    (~(gas in set.i.cycles) ~[kid.new par.new])
+  ::
   =/  rest  t.cycles
   ::
   |-  ^-  (list cycle)
@@ -79,6 +83,7 @@
   ::
   =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
   =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
+  =.  set.new-cycle    (~(uni in set.new-cycle) set.i.rest)
   $(rest t.rest)
 ::
 +$  state
@@ -91,7 +96,9 @@
   ::      entry: top-most entry into a cyclical call graph
   ::      latch: right-most, bottom-most evalsite of the cycle
   ::      frond: set of parent-kid pairs of loop assumptions
-  ::             (targets of back edges)
+  ::             (target of hypothetical backedge, target of the actual edge,
+  ::              subject socks at the par/kid evalsites)
+  ::      set: set of all vertices in the cycle
   ::
   ::      When new assumptions are made, we either extend an old cycle, possibly
   ::      merging multiple predecessor cycles, or add a new one if its
@@ -142,6 +149,7 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.gen.res-eval)
+    ?>  =(~ want.gen.res-eval)
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
   ?>  =(0x0 here-site)
@@ -155,7 +163,7 @@
   =;  res
     ?-  -.res
       %&  p.res
-      %|  redo-loop(blocklist (~(put ju blocklist) p.res))
+      %|  ~&  %redo  redo-loop(blocklist (~(put ju blocklist) p.res))
     ==
   ^-  (error [[sock-anno flags] state])
   ::  record current evalsite in the subject provenance tree
@@ -173,7 +181,12 @@
   ::  check memo cache
   ::
   ?^  m=(memo here-site fol sub gen)
-    =.  bars.gen  (ps bars.gen 'memo:' (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~) --0)
+    =.  bars.gen
+      %:  ps  bars.gen  'memo:'
+        (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
+        --0
+      ==
+    ::
     &+[[pro.u.m deff] gen.u.m]
   ::  XX to do meloization
   ::
@@ -256,16 +269,26 @@
                 (close sock.s-prod p.i.tak q.i.tak gen)
             ==
           stack-loop(tak t.tak)
-        ::  draft: loop calls are rendered indirect
-        ::  TODO direct loops like in orig
-        ::  CAREFUL: here-site is the backedge root, there-site/q.i.tak are
-        ::  the backedge target that are assumed to be the same (kid/parent)
+        ::  CAREFUL: ackchyually, here-site is the backedge root,
+        ::  there-site/q.i.tak are the backedge targets that are assumed to be
+        ::  the same (kid/parent) (but it should be totally fine to use kid as
+        ::  latch, since we don't analyse through kid and all other calls that
+        ::  would be greater than the latch would also be greater than the kid,
+        ::  and vice versa)
         ::
-        =.  bars.gen  (ps bars.gen 'loop:' (rap 3 (scux there-site) ~) --0)
+        =.  bars.gen
+          %:  ps  bars.gen  'loop:'
+            (rap 3 (scux there-site) ' =?> ' (scux q.i.tak) ~)
+            --0
+          ==
+        ::
+        =.  cycles.gen
+          (add-frond [q.i.tak there-site p.i.tak sock.s-prod] cycles.gen)
+        ::
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
-        (fold-flag s-flags f-flags [| |] ~)
+        (fold-flag s-flags f-flags [& &] ~)
       ::  non-loop case: analyse through
       ::
       =^  [pro=sock-anno =flags]  gen
@@ -306,7 +329,7 @@
       (fold-flag p-flags q-flags ~)
     ::
         [%6 c=^ y=^ n=^]
-      =^  [c-code=nomm * c-flags=flags]       gen  fol-loop(fol c.fol)
+      =^  [c-code=nomm * c-flags=flags]                 gen  fol-loop(fol c.fol)
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
@@ -399,7 +422,7 @@
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
   ^-  err-state
-  (final-cycle here-site prod frond.i gen direct.flags)
+  (final-cycle here-site code sub prod frond.i gen direct.flags)
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
@@ -439,15 +462,66 @@
 ::  finalize analysis of a call graph cycle entry: pop cycle, verify assumptions
 ::
 ++  final-cycle
-  |=  [site=@uxsite prod=sock-anno =frond gen=state direct=?]
+  |=  $:  site=@uxsite
+          code=nomm
+          sub=sock-anno
+          prod=sock-anno
+          =frond
+          gen=state
+          direct=?
+      ==
   ^-  err-state
-  stub
+  ::  XX add every.results.gen to loop calls if finalized
+  ::
+  =/  want-site=cape  (~(gut by want.gen) site |)
+  =/  err-gen=err-state
+    %+  roll-deep  frond
+    |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock]
+        err-gen=`err-state`&+gen
+    ^-  err-state
+    ::  XX performance: return sooner? OTOH roll is jetted and errors should be rare
+    ::
+    ?:  ?=(%| -.err-gen)  err-gen
+    =/  par-want=cape  (~(gut by want.gen) par |)
+    =/  par-masked=sock  (~(app ca par-want) par-sub)
+    ?.  (~(huge so par-masked) kid-sub)  |+[par kid]
+    &+gen
+  ::
+  ?:  ?=(%| -.err-gen)  err-gen
+  =.  bars.p.err-gen  (ps bars.p.err-gen 'fini:' (scux site) -1)
+  =^  pop=cycle  cycles.p.err-gen  ?~(cycles.p.err-gen !! cycles.p.err-gen)
+  =.  want.p.err-gen
+    %-  ~(rep in set.pop)
+    |:  [v=*@uxsite acc=want.p.err-gen]
+    (~(del by acc) v)
+  ::  memoize if fully direct
+  ::
+  =?  memo.results.p.err-gen  direct
+    =/  less  ~(norm so (~(app ca want-site) sock.sub))
+    ?.  =(want-site cape.less)
+      ~_  'cape.less < want-site'
+      ~|  [cape.less want-site]
+      !!
+    %-  ~(put by memo.results.gen)
+    :-  site
+    :^    code
+        less
+      (mask-relo prod)
+    want-site
+  ::
+  err-gen
 ::  treat analysis result of a non-finalized evalsite
 ::
 ++  process
   |=  [site=@uxsite prod=sock-anno gen=state direct=?]
   ^-  state
-  stub
+  =.  bars.gen  (ps bars.gen 'ciao:' (scux site) -1)
+  ::  TODO meloization
+  ::
+  ?~  cycles.gen  !!
+  =.  set.i.cycles.gen  (~(put in set.i.cycles.gen) site)
+  ::  XX add our code to top cycle
+  gen
 ::
 ++  memo
   |=  [site=@uxsite fol=* sub=sock-anno gen=state]
@@ -481,8 +555,8 @@
   |=  [kid-sub=sock par-sub=sock par-site=@uxsite gen=state]
   ^-  ?
   =/  par-want=cape  (~(gut by want.gen) par-site |)
-  =/  par-mask=sock  (~(app ca par-want) par-sub)
-  (~(huge so par-mask) kid-sub)
+  =/  par-masked=sock  (~(app ca par-want) par-sub)
+  (~(huge so par-masked) kid-sub)
 ::  fold flags of children expressions
 ::
 ++  fold-flag
