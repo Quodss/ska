@@ -548,7 +548,9 @@
   ::
   ?~  cycles.gen  !!
   =.  set.i.cycles.gen   (~(put in set.i.cycles.gen) site)
-  =.  code.i.cycles.gen  (~(put by code.i.cycles.gen) site code)
+  =?  code.i.cycles.gen  (~(has in pars.i.cycles.gen) site)
+    (~(put by code.i.cycles.gen) site code)
+  ::
   gen
 ::
 ++  memo
