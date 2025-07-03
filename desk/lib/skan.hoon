@@ -1,6 +1,6 @@
 /-  *noir
 ::  TODO ~2025.7.4:
-::    loop engine sans melo
+::    meloization
 ::    
 =*  stub  !!
 =*  one  `@`1
