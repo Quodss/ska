@@ -152,7 +152,7 @@
   $:
     ::  all direct call analysis results
     ::
-    every=(map @uxsite [=nomm prod=sock-anno])
+    every=(map @uxsite [=nomm])
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject, full product, subject need
     ::

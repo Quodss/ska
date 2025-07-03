@@ -55,7 +55,14 @@
 ::
 +$  err-state  (error state)
 +$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock])
-+$  cycle  [entry=@uxsite latch=@uxsite =frond set=(set @uxsite)]
++$  cycle
+  $:  entry=@uxsite
+      latch=@uxsite
+      =frond
+      set=(set @uxsite)
+      pars=(set @uxsite)
+      code=(map @uxsite nomm)
+  ==
 ::
 ++  add-frond
   |=  [new=[par=@uxsite kid=@uxsite sock sock] cycles=(list cycle)]
@@ -63,14 +70,18 @@
   ?:  |(?=(~ cycles) (gth par.new latch.i.cycles))
     ::  push new cycle
     ::
-    [[par.new kid.new [%list new ~] (silt par.new kid.new ~)] cycles]
+    :_  cycles
+    [par.new kid.new [%list new ~] (silt par.new kid.new ~) [par.new ~ ~] ~]
   ::  pop and extend top cycle
   ::
   =/  new-cycle=cycle
-    :^    (min par.new entry.i.cycles)
+    :*  (min par.new entry.i.cycles)
         kid.new
-      (dive frond.i.cycles new)
-    (~(gas in set.i.cycles) ~[kid.new par.new])
+        (dive frond.i.cycles new)
+        (~(gas in set.i.cycles) ~[kid.new par.new])
+        (~(put in pars.i.cycles) par.new)
+        code.i.cycles
+    ==
   ::
   =/  rest  t.cycles
   ::
@@ -84,6 +95,8 @@
   =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
   =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
   =.  set.new-cycle    (~(uni in set.new-cycle) set.i.rest)
+  =.  pars.new-cycle   (~(uni in pars.new-cycle) pars.i.rest)
+  =.  code.new-cycle   (~(uni by code.new-cycle) code.i.rest)
   $(rest t.rest)
 ::
 +$  state
@@ -98,7 +111,10 @@
   ::      frond: set of parent-kid pairs of loop assumptions
   ::             (target of hypothetical backedge, target of the actual edge,
   ::              subject socks at the par/kid evalsites)
-  ::      set: set of all vertices in the cycle
+  ::      set: set of all vertices in the cycle (to delete from want.gen when
+  ::           done)
+  ::      pars: set of parents in the cycle (to save code in the current cycle)
+  ::      code: parent -> code map
   ::
   ::      When new assumptions are made, we either extend an old cycle, possibly
   ::      merging multiple predecessor cycles, or add a new one if its
@@ -284,6 +300,15 @@
         ::
         =.  cycles.gen
           (add-frond [q.i.tak there-site p.i.tak sock.s-prod] cycles.gen)
+        ::  register evalsite in bidirectional mapping
+        ::  (it's a direct call but we don't analyze through so we have to
+        ::  put registration code here)
+        ::
+        =.  sites.evals.gen
+          (~(put by sites.evals.gen) there-site sock.s-prod fol-new)
+        ::
+        =.  calls.evals.gen
+          (~(add ja calls.evals.gen) fol-new there-site sock.s-prod)
         ::
         :_  gen
         :+  [%2 s-code f-code there-site]
@@ -408,7 +433,7 @@
   =.  src.prod  (trim:source src.prod set.stack cape.sock.prod)
   ::  save results
   ::
-  =.  every.results.gen  (~(put by every.results.gen) here-site code prod)
+  =.  every.results.gen  (~(put by every.results.gen) here-site code)
   ::  if finalized: update loopiness (caller is not loopy due to a call to
   ::  a finalized entry into a cycle)
   ::
@@ -417,7 +442,7 @@
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
   ?.  loopy.flags  &+[| (final-simple here-site code sub prod gen direct.flags)]
   =*  i  ,.-.cycles.gen
-  ?.  =(here-site entry.i)  &+[& (process here-site prod gen direct.flags)]
+  ?.  =(here-site entry.i)  &+[& (process here-site code prod gen direct.flags)]
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
@@ -471,8 +496,7 @@
           direct=?
       ==
   ^-  err-state
-  ::  XX add every.results.gen to loop calls if finalized
-  ::
+  =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
   =/  want-site=cape  (~(gut by want.gen) site |)
   =/  err-gen=err-state
     %+  roll-deep  frond
@@ -485,11 +509,15 @@
     =/  par-want=cape  (~(gut by want.gen) par |)
     =/  par-masked=sock  (~(app ca par-want) par-sub)
     ?.  (~(huge so par-masked) kid-sub)  |+[par kid]
-    &+gen
+    =.  every.results.p.err-gen
+      %+  ~(put by every.results.p.err-gen)  kid
+      ?:  =(par site)  code
+      (~(got by code.pop) par)
+    ::
+    err-gen
   ::
   ?:  ?=(%| -.err-gen)  err-gen
   =.  bars.p.err-gen  (ps bars.p.err-gen 'fini:' (scux site) -1)
-  =^  pop=cycle  cycles.p.err-gen  ?~(cycles.p.err-gen !! cycles.p.err-gen)
   =.  want.p.err-gen
     %-  ~(rep in set.pop)
     |:  [v=*@uxsite acc=want.p.err-gen]
@@ -513,14 +541,14 @@
 ::  treat analysis result of a non-finalized evalsite
 ::
 ++  process
-  |=  [site=@uxsite prod=sock-anno gen=state direct=?]
+  |=  [site=@uxsite code=nomm prod=sock-anno gen=state direct=?]
   ^-  state
   =.  bars.gen  (ps bars.gen 'ciao:' (scux site) -1)
   ::  TODO meloization
   ::
   ?~  cycles.gen  !!
-  =.  set.i.cycles.gen  (~(put in set.i.cycles.gen) site)
-  ::  XX add our code to top cycle
+  =.  set.i.cycles.gen   (~(put in set.i.cycles.gen) site)
+  =.  code.i.cycles.gen  (~(put by code.i.cycles.gen) site code)
   gen
 ::
 ++  memo
@@ -541,7 +569,7 @@
     |=  [@uxsite a=cape b=cape]
     ~(cut ca (~(uni ca a) b))
   ::
-  =.  every.results.gen  (~(put by every.results.gen) site [nomm prod]:u.res)
+  =.  every.results.gen  (~(put by every.results.gen) site nomm.u.res)
   :-  ~
   :-  site.i.calls
   :_  gen
@@ -599,7 +627,7 @@
     =/  f1  $(n q.n)
     ?~  f1  ~
     ?~  call=(~(get by sites.evals.gen) site.n)
-      ~&  %indirect
+      ~&  indirect+site.n
       (run-nomm u.s1 u.f1)
     ?.  (~(huge so sub.u.call) & u.s1)
       ~|  site.n
