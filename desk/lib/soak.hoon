@@ -10,7 +10,7 @@
     ?@  one  one
     =/  l  cut(one -.one)
     =/  r  cut(one +.one)
-    ?:  &(?=(@ l) =(l r))  l
+    ?:  &(?=(@ l) =(l r))  ~&  %cut-ca-norm  l
     [l r]
   ::  list of known axes
   ::
@@ -78,7 +78,7 @@
           ^ 
         =/  l  $(one -.one, two -.two)
         =/  r  $(one +.one, two +.two)
-        ?:(?&(?=(@ l) =(l r)) l [l r])
+        ?:(&(?=(@ l) =(l r)) l [l r])
       ==
     ==
   ::    Added axes?

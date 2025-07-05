@@ -369,7 +369,7 @@
         :+  int-sock
           ::  mask unified provenance tree with intersection cape
           ::
-          (mask:source uni-source cape.int-sock)
+          (mask:source uni-source cape.int-sock ~)
         ::  `took` records subject capture, so we intersect
         ::
         (int:took tok.y-prod tok.n-prod)
@@ -430,7 +430,7 @@
   ::  prune provenance tree to leave only calls on the stack (ourselves
   ::  included), removing cousin provenance; also mask down to the product cape
   ::
-  =.  src.prod  (trim:source src.prod set.stack cape.sock.prod)
+  =.  src.prod  (mask:source src.prod cape.sock.prod `set.stack)
   ::  save results
   ::
   =.  every.results.gen  (~(put by every.results.gen) here-site code)
@@ -556,7 +556,6 @@
 ++  memo
   |=  [site=@uxsite fol=* sub=sock-anno gen=state]
   ^-  (unit [from=@uxsite pro=sock-anno gen=state])
-  :: ~
   =/  calls  (~(get ja calls.evals.gen) fol)
   |-  ^-  (unit [@uxsite sock-anno state])
   ?~  calls  ~
@@ -603,7 +602,9 @@
 ++  run-nomm
   |=  [s=* f=*]
   ^-  (unit)
-  =/  gen  (scan s f)
+  =/  gen
+    :: ~>  %bout
+    (scan s f)
   =/  n  nomm:(~(got by every.results.gen) 0x0)
   |-  ^-  (unit)
   ?-    n

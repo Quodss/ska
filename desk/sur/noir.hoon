@@ -192,26 +192,56 @@
     :+  ~(tap in (~(gas in (~(gas in *(set (pair @axis @uxsite))) n.a)) n.b))
       $(a l.a, b l.b)
     $(a r.a, b r.b)
+  ::  mask provenance tree to a cape, with provenance limited to a 
+  ::  potentially infinite set of evalsites
   ::
   ++  mask
-    |=  [src=source cap=cape]
+    |=  [src=source cap=cape stack=(unit (set @uxsite))]
     ^-  source
     ::
     =;  out
       =/  out1  (norm out)
       ~?  !=(out out1)  %mask-norm    ::  should not fire?
       out1
+    ::  shortcut: nothing to mask
     ::
+    ?:  =(~ src)  ~
+    ::  accumulator to be pushed to a %& cape
+    ::
+    =|  acc=(list (pair @ (list peon)))
+    =/  rev  1
+    |-  ^-  source
+    ?^  cap
+      ::  shortcut: nothing to push, nothing to mask
+      ::
+      ?:  &(=(~ acc) =(~ src))  ~
+      =+  [n l r]=?~(src [~ ~ ~] src)
+      =.  acc  [[rev n] acc]
+      %+  cons
+        $(rev (peg rev 2), src l, cap -.cap)
+      $(rev (peg rev 3), src r, cap +.cap)
     ?:  ?=(%| cap)  ~
-    ?:  ?=(%& cap)  src
-    ?~  src  ~
-    ::  debug assert: we should only have provenance of things we fully know?
+    ::  nothing to push
     ::
-    ?>  =(~ n.src)
-    =/  l  $(src l.src, cap -.cap)
-    =/  r  $(src r.src, cap +.cap)
-    ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
-    [n.src l r]
+    ?:  =(~ acc)  src
+    ::  push to node list
+    ::
+    =/  [n=(list peon) lr=[source source]]  ?~(src [~ ~ ~] src)
+    =?  n  ?=(^ stack)  (skim n |=(peon (~(has in u.stack) sit)))
+    :_  lr
+    %+  roll  acc
+    |:  [[ax=*@ l=*(list peon)] out=n]
+    ^+  n
+    ?:  =(~ l)  out
+    =/  rel  (hub ax rev)
+    ?~  stack
+      %+  roll  l
+      |:  [p=*peon out=out]
+      [p(ax (peg ax.p rel)) out]
+    %+  roll  l
+    |:  [p=*peon out=out]
+    ?.  (~(has in u.stack) sit.p)  out
+    [p(ax (peg ax.p rel)) out]
   ::
   ++  slot
     |=  [src=source ax=@]
@@ -244,28 +274,149 @@
   ++  edit
     |=  [rec=source ax=@ don=source]
     ^-  source
+    =*  sam  +<
+    =/  a
+      :: ~>  %bout
+      (edit1 sam)
+    ::
+    =/  b
+      :: ~>  %bout
+      (edit2 sam)  ::  faster?
+    ::
+    =/  c
+      :: ~>  %bout
+      (edit3 sam)  :: even faster?
+    ::
+    ?.  =(a b)
+      ~|  sam
+      ~|  [a b]
+      !!
+    ?.  =(b c)
+      ~|  sam
+      ~|  [b c]
+      !!
+    a
+  ::
+  ++  edit1
+    |=  [rec=source ax=@ don=source]
+    ^-  source
     ?:  =(ax 1)  don
-    =-  ?:(=([~ ~ ~] -) ~ -)
-    =/  [n=(list peon) l=source r=source]  ?@(rec [~ ~ ~] rec)
+    =/  rev  1
+    =|  acc=(list (pair @ (list peon)))
+    |-  ^-  source
+    ?:  =(1 ax)  don
+    =+  [n l r]=?~(rec [~ ~ ~] rec)
+    =.  acc  [[rev n] acc]
+    %-  cons
+    ^-  [source source]
     ?-    (cap ax)
         %2
-      =/  r=[n=(list peon) l=source r=source]  ?~(r [~ ~ ~] r)
-      =.  n.r
-        %+  roll  n
-        |:  [p=*peon out=n.r]
-        [p(ax (peg ax.p 3)) out]
+      :-  $(rec l, ax (mas ax), rev (peg rev 2))
+      =.  rev  (peg rev 3)
+      =+  [n-r lr-r]=?~(r [~ ~ ~] r)
+      =.  n-r
+        %+  roll  acc
+        |:  [[ax=*@ l=*(list peon)] out=n-r]
+        ^+  n-r
+        ?:  =(~ l)  out
+        =/  rel  (hub ax rev)
+        %+  roll  l
+        |:  [p=*peon out=out]
+        [p(ax (peg ax.p rel)) out]
       ::
-      [~ $(rec l, ax (mas ax)) ?:(=([~ ~ ~] r) ~ r)]
+      ?:  =([~ ~ ~] [n-r lr-r])  ~
+      [n-r lr-r]
     ::
         %3
-      =/  l=[n=(list peon) l=source r=source]  ?~(l [~ ~ ~] l)
-      =.  n.l
-        %+  roll  n
-        |:  [p=*peon out=n.l]
-        [p(ax (peg ax.p 2)) out]
+      :_  $(rec r, ax (mas ax), rev (peg rev 3))
+      =.  rev  (peg rev 2)
+      =+  [n-l lr-l]=?~(l [~ ~ ~] l)
+      =.  n-l
+        %+  roll  acc
+        |:  [[ax=*@ l=*(list peon)] out=n-l]
+        ^+  n-l
+        ?:  =(~ l)  out
+        =/  rel  (hub ax rev)
+        %+  roll  l
+        |:  [p=*peon out=out]
+        [p(ax (peg ax.p rel)) out]
       ::
-      [~ ?:(=([~ ~ ~] l) ~ l) $(rec r, ax (mas ax))]
+      ?:  =([~ ~ ~] [n-l lr-l])  ~
+      [n-l lr-l]
     ==
+  ::
+  ++  edit2
+    |=  [rec=source ax=@ don=source]
+    ^-  source
+    ?:  =(ax 1)  don
+    ::  shortcut: nothing to put, nowhere to put
+    ::
+    ?:  &(=(~ rec) =(~ don))  ~
+    =+  [n l r]=?~(rec [~ ~ ~] rec)
+    =+  l1=[n l r]=?~(l [~ ~ ~] l)
+    =+  r1=[n l r]=?~(r [~ ~ ~] r)
+    =.  n.l1
+      %+  roll  `(list peon)`n
+      |:  [p=*peon out=n.l1]
+      [p(ax (peg ax.p 2)) out]
+    ::
+    =.  n.r1
+      %+  roll  `(list peon)`n
+      |:  [p=*peon out=n.r1]
+      [p(ax (peg ax.p 3)) out]
+    ::
+    ?-    (cap ax)
+        %2
+      %+  cons
+        $(rec ?:(=([~ ~ ~] l1) ~ l1), ax (mas ax))
+      ?:(=([~ ~ ~] r1) ~ r1)
+    ::
+        %3
+      %+  cons
+        ?:(=([~ ~ ~] l1) ~ l1)
+      $(rec ?:(=([~ ~ ~] r1) ~ r1), ax (mas ax))
+    ==
+  ::
+  ++  edit3
+    |=  [rec=source ax=@ don=source]
+    ^-  source
+    ?:  =(ax 1)  don
+    =|  tack=(list [c=?(%2 %3) p=source])
+    |-  ^-  source
+    ?.  =(1 ax)
+      ?-  (cap ax)
+        %2  $(ax (mas ax), rec (hed rec), tack [2+(tel rec) tack])
+        %3  $(ax (mas ax), rec (tel rec), tack [3+(hed rec) tack])
+      ==
+    |-  ^-  source
+    ?~  tack  don
+    ?-  c.i.tack
+      %2  $(don (cons don p.i.tack), tack t.tack)
+      %3  $(don (cons p.i.tack don), tack t.tack)
+    ==
+  ::
+  ++  hed
+    |=  src=source
+    ^-  source
+    ?~  src  ~
+    ?:  =(~ n.src)  l.src
+    =+  [n lr]=?~(l.src [~ ~ ~] l.src)
+    :_  lr
+    %+  roll  n.src
+    |:  [p=*peon out=n]
+    [p(ax (peg ax.p 2)) out]
+  ::
+  ++  tel
+    |=  src=source
+    ^-  source
+    ?~  src  ~
+    ?:  =(~ n.src)  r.src
+    =+  [n lr]=?~(r.src [~ ~ ~] r.src)
+    :_  lr
+    %+  roll  n.src
+    |:  [p=*peon out=n]
+    [p(ax (peg ax.p 3)) out]
+  ::
   ::  unify urges
   ::
   ++  uni-urge
@@ -277,6 +428,7 @@
     (~(uni ca a) b)
   ::
   ++  urge
+    :: urge2
     |=  [src=source cap=cape]
     ^-  ^urge
     =*  sam  +<
@@ -300,7 +452,15 @@
     ;:  uni-urge
       $(src l.src, cap p)
       $(src r.src, cap q)
-      (roll n.src |=([peon m=^urge] (~(put by m) sit (~(pat ca cap) ax))))
+    ::
+      %+  roll  n.src
+      |=  [peon m=^urge]
+      =/  need=cape  (~(pat ca cap) ax)
+      ::  sanity check: we probably shouldn't have peons with the same
+      ::  evalsite but different axes? if yes, the difference will get caught
+      ::  in the comparison above
+      ::
+      (jib m sit need |=(c=cape (~(uni ca c) need)))
     ==
   ::
   ++  urge2
@@ -320,6 +480,9 @@
       out  %+  uni-urge  out
            %+  roll  n.src
            |=  [peon m=^urge]
+           ::  here we are not unifying capes from peons with the same site,
+           ::  is this correct?
+           ::
            (~(put by m) sit (~(pat ca cap) ax))
     ==
   ::
@@ -345,12 +508,42 @@
 ::
 ++  hub
   |=  [a=@ b=@]
+  ::  fast (not actually fast?)
+  ::
+  =/  out
+    :: ~>  %bout
+    =/  met-a  (met 0 a)
+    =/  met-b  (met 0 b)
+    =/  dif  (sub met-b met-a)
+    (con (bex dif) (end [0 dif] b))
+  ::
+  =-  ?>  =(out -)  out
+  ::  slow
+  ::
+  :: ~>  %bout
   ?<  =(0 a)
   ?<  =(0 b)
   |-  ^-  @
   ?:  =(a 1)  b
-  ?>  =((cap a) (cap b))  ::  remove assertion for performance?
+  ?>  =((cap a) (cap b))
   $(a (mas a), b (mas b))
+::  update a value or push a new one
+::
+++  jib
+  |*  [m=(map) k=* v=* g=$-(* *)]
+  ^+  m
+  =-  ?^(- u (~(put by m) k v))
+  |-  ^-  (unit _m)
+  ?~  m  ~
+  ?:  =(k p.n.m)
+    `m(q.n (g q.n.m))
+  ?:  (gor k p.n.m)
+    =/  l  $(m l.m)
+    ?~  l  ~
+    `m(l u.l)
+  =/  r  $(m r.m)
+  ?~  r  ~
+  `m(r u.r)
 ::
 ::  lazily concatenated list
 ::
@@ -515,7 +708,7 @@
 ++  mask-relo
   |=  a=sock-anno
   ^-  sock-anno
-  =-  [(~(app ca -) sock.a) (mask:source src.a -) tok.a]
+  =-  [(~(app ca -) sock.a) (mask:source src.a - ~) tok.a]
   ::  cape of result parts that do not capture the subject
   ::
   |-  ^-  cape
