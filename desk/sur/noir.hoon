@@ -192,10 +192,39 @@
     :+  ~(tap in (~(gas in (~(gas in *(set (pair @axis @uxsite))) n.a)) n.b))
       $(a l.a, b l.b)
     $(a r.a, b r.b)
+  ::
+  ++  mask
+    |=  [src=source cap=cape stack=(unit (set @uxsite))]
+    ^-  source
+    =*  sam  +<
+    =/  a
+      :: ~>  %bout
+      (mask1 sam)
+    ::
+    =/  b
+      :: ~>  %bout
+      (mask2 sam)
+    ::
+    ?>  =(a b)
+    a
+  ::
+  ++  mask1
+    |=  [src=source cap=cape stack=(unit (set @uxsite))]
+    ^-  source
+    ?~  src  ~
+    ?^  cap  (cons $(src (hed src), cap -.cap) $(src (tel src), cap +.cap))
+    ?:  ?=(%| cap)  ~
+    ?~  stack  src
+    |-  ^-  source
+    =.  n.src  (skim n.src |=(peon (~(has in u.stack) sit)))
+    =/  l  ?~(l.src ~ $(src l.src))
+    =/  r  ?~(r.src ~ $(src r.src))
+    ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
+    [n.src l r]
   ::  mask provenance tree to a cape, with provenance limited to a 
   ::  potentially infinite set of evalsites
   ::
-  ++  mask
+  ++  mask2
     |=  [src=source cap=cape stack=(unit (set @uxsite))]
     ^-  source
     ::
@@ -221,13 +250,23 @@
         $(rev (peg rev 2), src l, cap -.cap)
       $(rev (peg rev 3), src r, cap +.cap)
     ?:  ?=(%| cap)  ~
+    ::  filter for provenance on the stack
+    ::
+    =?  src  ?=(^ stack)
+      |-  ^-  source
+      ?~  src  ~
+      =.  n.src  (skim n.src |=(peon (~(has in u.stack) sit)))
+      =/  l  $(src l.src)
+      =/  r  $(src r.src)
+      ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
+      [n.src l r]
     ::  nothing to push
     ::
     ?:  =(~ acc)  src
     ::  push to node list
     ::
     =/  [n=(list peon) lr=[source source]]  ?~(src [~ ~ ~] src)
-    =?  n  ?=(^ stack)  (skim n |=(peon (~(has in u.stack) sit)))
+    ?:  &(=(~ n) =(~ acc) =([~ ~] lr))  ~
     :_  lr
     %+  roll  acc
     |:  [[ax=*@ l=*(list peon)] out=n]
