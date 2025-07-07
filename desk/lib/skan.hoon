@@ -425,25 +425,36 @@
   ::  parts of the subject that are used as code downstream
   ::
   =/  want-site=cape  (~(gut by want.gen) here-site |)
-  ::  parts of subject that may have been captured by the result and thus
-  ::  could be used as code by cousin evalsites
+  ::  minified subject sock for code: only code usage
   ::
-  =/  capture-res=cape
-    (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
+  =/  less-code=sock  ~(norm so (~(app ca want-site) sock.sub))
+  ::  minified subject sock for memo: stricter requirement i.e. bigger sock,
+  ::  includes possible subject captures
   ::
-  =/  mask=cape  (~(uni ca want-site) capture-res)
-  =/  less=sock  ~(norm so (~(app ca mask) sock.sub))
-  ::  we start off with more knowledge in the subject and mask down, 
-  ::  so the intersection of want-site and cape.sock.sub should be exactly
-  ::  equal to want-site?
+  =/  less-memo=(trap sock)
+    |.
+    ::  parts of subject that may have been captured by the result and thus
+    ::  could be used as code by cousin evalsites
+    ::
+    =/  capture-res=cape
+      (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
+    ::
+    =/  mask=cape  (~(uni ca want-site) capture-res)
+    =/  less  ~(norm so (~(app ca mask) sock.sub))
+    ::  we start off with more knowledge in the subject and mask down, 
+    ::  so the intersection of want-site and cape.sock.sub should be exactly
+    ::  equal to want-site?
+    ::
+    ?.  =(mask cape.less)
+      ~_  'cape.less < mask'
+      ~|  [cape.less mask]
+      !!
+    less
+  ::  |.(sock)
   ::
-  ?.  =(mask cape.less)
-    ~_  'cape.less < mask'
-    ~|  [cape.less mask]
-    !!
   ::  save results
   ::
-  =.  every.results.gen  (~(put by every.results.gen) here-site less code)
+  =.  every.results.gen  (~(put by every.results.gen) here-site less-code code)
   ::  if finalized: update loopiness (caller is not loopy due to a call to
   ::  a finalized entry into a cycle)
   ::
@@ -451,21 +462,34 @@
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
   ?.  loopy.flags
-    &+[| (final-simple here-site code less prod gen direct.flags want-site)]
+    ::  success, non-loopy
+    ::
+    :+  %&  %|
+    (final-simple here-site code less-memo prod gen direct.flags want-site)
   =*  i  ,.-.cycles.gen
   ?.  =(here-site entry.i)
-    &+[& (process here-site code less prod gen direct.flags)]
+    &+[& (process here-site code prod gen direct.flags)]
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
   ^-  err-state
-  (final-cycle here-site code less prod frond.i gen direct.flags want-site)
+  %:  final-cycle
+    here-site
+    code
+    less-code
+    less-memo
+    prod
+    frond.i
+    gen
+    direct.flags
+    want-site
+  ==
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
   |=  $:  site=@uxsite
           code=nomm
-          less=sock
+          less-memo=(trap sock)
           prod=sock-anno
           gen=state
           direct=?
@@ -482,7 +506,7 @@
     :^    code
         ::  minimized subject sock for memo checks
         ::
-        less
+        $:less-memo
       ::  full result, captured subject was included in memo requirement
       ::
       prod
@@ -497,7 +521,8 @@
 ++  final-cycle
   |=  $:  site=@uxsite
           code=nomm
-          less=sock
+          less-code=sock
+          less-memo=(trap sock)
           prod=sock-anno
           =frond
           gen=state
@@ -522,7 +547,7 @@
       !!
     =.  every.results.p.err-gen
       %+  ~(put by every.results.p.err-gen)  kid
-      ?:  =(par site)  [less code]
+      ?:  =(par site)  [less-code code]
       (~(got by every.results.gen) par)
     ::
     err-gen
@@ -539,7 +564,7 @@
     %-  ~(put by memo.results.gen)
     :-  site
     :^    code
-        less
+        $:less-memo
       prod
     want-site
   ::
@@ -547,7 +572,7 @@
 ::  treat analysis result of a non-finalized evalsite
 ::
 ++  process
-  |=  [site=@uxsite code=nomm less=sock prod=sock-anno gen=state direct=?]
+  |=  [site=@uxsite code=nomm prod=sock-anno gen=state direct=?]
   ^-  state
   =.  bars.gen  (ps bars.gen 'ciao:' (scux site) -1)
   ::  TODO meloization
@@ -634,7 +659,7 @@
   |=  [s=* f=*]
   ^-  (unit (unit))
   ~
-  :: ?^  res=(jet-simple-gate-hoot s f)  res
+  :: ?^  res=(jet-simple-gate-hoot s f)  ~&  %hit  res
   :: ?^  res=(jet-simple-gate-play s f)  res
   :: ::  place for jets with nontrivial templates
   :: ::
@@ -646,6 +671,7 @@
 ++  run-nomm
   |=  [s=* f=*]
   ^-  (unit)
+  !.
   =/  gen
     :: ~>  %bout
     (scan s f)
@@ -678,7 +704,8 @@
       (run-nomm u.s1 u.f1)
     ?.  (~(huge so less.u.call) & u.s1)
       ~|  site.n
-      ~|  [need+less.u.call got+[& u.s1]]
+      :: ~|  [need+less.u.call got+[& u.s1]]
+      ~|  %sock-nest-error
       !!
     ?^  res=(jet u.s1 u.f1)  u.res
     $(s u.s1, n nomm.u.call)
