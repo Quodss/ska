@@ -41,7 +41,9 @@
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject, full product, subject need
     ::
-    memo=(map @uxsite [=nomm less=sock prod=sock-anno want=cape])  ::  XX remove want?
+    $=  memo
+    %+  map  @uxsite
+    [=nomm less-memo=sock less-code=sock prod=sock-anno want=cape]
   ==
 ::  urge: evalsite subject requirements
 ::

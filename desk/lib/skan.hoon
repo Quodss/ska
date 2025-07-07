@@ -465,7 +465,16 @@
     ::  success, non-loopy
     ::
     :+  %&  %|
-    (final-simple here-site code less-memo prod gen direct.flags want-site)
+    %:  final-simple
+      here-site
+      code
+      less-memo
+      less-code
+      prod
+      gen
+      direct.flags
+      want-site
+    ==
   =*  i  ,.-.cycles.gen
   ?.  =(here-site entry.i)
     &+[& (process here-site code prod gen direct.flags)]
@@ -490,6 +499,7 @@
   |=  $:  site=@uxsite
           code=nomm
           less-memo=(trap sock)
+          less-code=sock
           prod=sock-anno
           gen=state
           direct=?
@@ -503,16 +513,18 @@
   =?  memo.results.gen  direct
     %-  ~(put by memo.results.gen)
     :-  site
-    :^    code
-        ::  minimized subject sock for memo checks
+    :*  code
+        ::  minimized subjects' socks for memo checks and code checks
         ::
         $:less-memo
-      ::  full result, captured subject was included in memo requirement
-      ::
-      prod
-    ::  subject code usage for subject need propagation on memo hits
-    ::
-    want-site
+        less-code
+        ::  full result, captured subject was included in memo requirement
+        ::
+        prod
+        ::  subject code usage for subject need propagation on memo hits
+        ::
+        want-site
+    ==
   ::
   =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
   gen
@@ -563,10 +575,12 @@
   =?  memo.results.p.err-gen  direct
     %-  ~(put by memo.results.gen)
     :-  site
-    :^    code
+    :*  code
         $:less-memo
-      prod
-    want-site
+        less-code
+        prod
+        want-site
+    ==
   ::
   err-gen
 ::  treat analysis result of a non-finalized evalsite
@@ -590,7 +604,7 @@
   |-  ^-  (unit [@uxsite sock-anno state])
   ?~  calls  ~
   ?~  res=(~(get by memo.results.gen) site.i.calls)  $(calls t.calls)
-  ?.  (~(huge so less.u.res) sock.sub)               $(calls t.calls)
+  ?.  (~(huge so less-memo.u.res) sock.sub)          $(calls t.calls)
   ::  memo hit: propagate subject needs
   :: 
   =/  sub-urge
@@ -602,7 +616,7 @@
     ~(cut ca (~(uni ca a) b))
   ::
   =.  every.results.gen
-    (~(put by every.results.gen) site less.u.res nomm.u.res)
+    (~(put by every.results.gen) site less-code.u.res nomm.u.res)
   ::
   :-  ~
   :-  site.i.calls
