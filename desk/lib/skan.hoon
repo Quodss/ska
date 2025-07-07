@@ -1,4 +1,6 @@
 /-  *noir
+/+  hoot
+/+  playpen
 ::  TODO ~2025.7.4:
 ::    meloization
 ::    
@@ -6,7 +8,7 @@
 =*  one  `@`1
 ::  ignorant sock-anno
 ::
-=/  dunno  [|+~ ~ ~]
+=/  dunno  [|+~ ~]
 ::  default flags: not loopy, fully direct
 ::
 =/  deff  [| &]
@@ -61,7 +63,6 @@
       =frond
       set=(set @uxsite)
       pars=(set @uxsite)
-      code=(map @uxsite nomm)
   ==
 ::
 ++  add-frond
@@ -71,7 +72,8 @@
     ::  push new cycle
     ::
     :_  cycles
-    [par.new kid.new [%list new ~] (silt par.new kid.new ~) [par.new ~ ~] ~]
+    ^-  cycle
+    [par.new kid.new [%list new ~] (silt par.new kid.new ~) [par.new ~ ~]]
   ::  pop and extend top cycle
   ::
   =/  new-cycle=cycle
@@ -80,7 +82,6 @@
         (dive frond.i.cycles new)
         (~(gas in set.i.cycles) ~[kid.new par.new])
         (~(put in pars.i.cycles) par.new)
-        code.i.cycles
     ==
   ::
   =/  rest  t.cycles
@@ -96,7 +97,6 @@
   =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
   =.  set.new-cycle    (~(uni in set.new-cycle) set.i.rest)
   =.  pars.new-cycle   (~(uni in pars.new-cycle) pars.i.rest)
-  =.  code.new-cycle   (~(uni by code.new-cycle) code.i.rest)
   $(rest t.rest)
 ::
 +$  state
@@ -112,9 +112,8 @@
   ::             (target of hypothetical backedge, target of the actual edge,
   ::              subject socks at the par/kid evalsites)
   ::      set: set of all vertices in the cycle (to delete from want.gen when
-  ::           done)
+  ::           done)  XX should probably be `deep`?
   ::      pars: set of parents in the cycle (to save code in the current cycle)
-  ::      code: parent -> code map
   ::
   ::      When new assumptions are made, we either extend an old cycle, possibly
   ::      merging multiple predecessor cycles, or add a new one if its
@@ -130,7 +129,8 @@
   ::      merging if new cycle overlaps with the predecessor
   ::      (new entry <= previous latch)
   ::
-  ::    want: evalsite subject requirements of non-finalized evalsites
+  ::    want: evalsite subject requirements of non-finalized evalsites:
+  ::      parts of the subject that are used as code
   ::
   $:  =evals
       =results
@@ -160,12 +160,14 @@
   ^-  state
   =|  gen=state
   =|  =stack  ::  lexically scoped
-  =/  sub=sock-anno  [&+bus ~ ~]
+  =/  sub=sock-anno  [&+bus ~]
   =;  res-eval
     ::  debug asserts
     ::
     ?>  =(~ cycles.gen.res-eval)
-    ?>  =(~ want.gen.res-eval)
+    ?.  =(~ want.gen.res-eval)
+      ~|  ~(key by want.gen.res-eval)
+      !!
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
   ?>  =(0x0 here-site)
@@ -179,7 +181,7 @@
   =;  res
     ?-  -.res
       %&  p.res
-      %|  ~&  %redo  redo-loop(blocklist (~(put ju blocklist) p.res))
+      %|  ~&  %redo  ~|  p.res  !!  ::  redo-loop(blocklist (~(put ju blocklist) p.res))
     ==
   ^-  (error [[sock-anno flags] state])
   ::  record current evalsite in the subject provenance tree
@@ -187,16 +189,13 @@
   =.  src.sub
     ?~  src.sub  [[one here-site]~ ~ ~]
     src.sub(n [[one here-site] n.src.sub])
-  ::  start tracking subject capture
-  ::
-  =.  tok.sub  1
   ::  register evalsite in bidirectional mapping
   ::
   =.  sites.evals.gen  (~(put by sites.evals.gen) here-site sock.sub fol)
   =.  calls.evals.gen  (~(add ja calls.evals.gen) fol here-site sock.sub)
   ::  check memo cache
   ::
-  ?^  m=(memo here-site fol sub gen)
+  ?^  m=(memo here-site fol sub gen set.stack)
     =.  bars.gen
       %:  ps  bars.gen  'memo:'
         (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
@@ -222,23 +221,21 @@
       =^  [r-code=nomm r-prod=sock-anno r-flags=flags]  gen  fol-loop(fol q.fol)
       :_  gen
       :+  [l-code r-code]
-        :+  (~(knit so sock.l-prod) sock.r-prod)
-          (cons:source src.l-prod src.r-prod)
-        (cons:took tok.l-prod tok.r-prod)
+        :-  (~(knit so sock.l-prod) sock.r-prod)
+        (cons:source src.l-prod src.r-prod)
       (fold-flag l-flags r-flags ~)
     ::
         [%0 p=@]
       ?:  =(0 p.fol)  [[fol dunno deff] gen]
       :_  gen
       :+  fol
-        :+  (~(pull so sock.sub) p.fol)
-          (slot:source src.sub p.fol)
-        (slot:took tok.sub p.fol)
+        :-  (~(pull so sock.sub) p.fol)
+        (slot:source src.sub p.fol)
       deff
     ::
         [%1 p=*]
       :_  gen
-      [fol [&+p.fol ~ ~] deff]
+      [fol [&+p.fol ~] deff]
     ::
         [%2 p=^ q=^]
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
@@ -255,7 +252,7 @@
       ::  direct call
       ::
       =/  fol-new  data.sock.f-prod
-      =/  fol-urge  (urge:source src.f-prod &)
+      =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
       =.  want.gen
         %-  (~(uno by want.gen) fol-urge)
         |=  [@uxsite a=cape b=cape]
@@ -324,11 +321,7 @@
         ==
       :_  gen
       :+  [%2 s-code f-code there-site]
-        ::  tok.pro describes capture of s-prod by daughter call product;
-        ::  compose with our subject capture to get our subject's capture
-        ::  by `pro`
-        :: 
-        pro(tok (comp:took tok.sub tok.pro))
+        pro
       (fold-flag flags s-flags f-flags ~)
     ::
         [%3 p=^]
@@ -366,13 +359,10 @@
       ::
       =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
       :+  [%6 c-code y-code n-code]
-        :+  int-sock
-          ::  mask unified provenance tree with intersection cape
-          ::
-          (mask:source uni-source cape.int-sock ~)
-        ::  `took` records subject capture, so we intersect
+        :-  int-sock
+        ::  mask unified provenance tree with intersection cape
         ::
-        (int:took tok.y-prod tok.n-prod)
+        (mask:source uni-source cape.int-sock `set.stack)
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -401,9 +391,8 @@
       ::
       :_  gen
       :+  [%10 [a.fol don-code] rec-code]
-        :+  (~(darn so sock.rec-prod) a.fol sock.don-prod)
-          (edit:source src.rec-prod a.fol src.don-prod)
-        (edit:took tok.rec-prod a.fol tok.don-prod)
+        :-  (~(darn so sock.rec-prod) a.fol sock.don-prod)
+        (edit:source src.rec-prod a.fol src.don-prod)
       (fold-flag rec-flags don-flags ~)
     ::
         [%11 p=@ q=^]
@@ -431,54 +420,73 @@
   ::  included), removing cousin provenance; also mask down to the product cape
   ::
   =.  src.prod  (mask:source src.prod cape.sock.prod `set.stack)
+  ::  make minimized subject
+  ::
+  ::  parts of the subject that are used as code downstream
+  ::
+  =/  want-site=cape  (~(gut by want.gen) here-site |)
+  ::  parts of subject that may have been captured by the result and thus
+  ::  could be used as code by cousin evalsites
+  ::
+  =/  capture-res=cape
+    (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
+  ::
+  =/  mask=cape  (~(uni ca want-site) capture-res)
+  =/  less=sock  ~(norm so (~(app ca mask) sock.sub))
+  ::  we start off with more knowledge in the subject and mask down, 
+  ::  so the intersection of want-site and cape.sock.sub should be exactly
+  ::  equal to want-site?
+  ::
+  ?.  =(mask cape.less)
+    ~_  'cape.less < mask'
+    ~|  [cape.less mask]
+    !!
   ::  save results
   ::
-  =.  every.results.gen  (~(put by every.results.gen) here-site code)
+  =.  every.results.gen  (~(put by every.results.gen) here-site less code)
   ::  if finalized: update loopiness (caller is not loopy due to a call to
   ::  a finalized entry into a cycle)
   ::
   =;  fin=(error [loopy=? gen=state])
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
-  ?.  loopy.flags  &+[| (final-simple here-site code sub prod gen direct.flags)]
+  ?.  loopy.flags
+    &+[| (final-simple here-site code less prod gen direct.flags want-site)]
   =*  i  ,.-.cycles.gen
-  ?.  =(here-site entry.i)  &+[& (process here-site code prod gen direct.flags)]
+  ?.  =(here-site entry.i)
+    &+[& (process here-site code less prod gen direct.flags)]
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
   ^-  err-state
-  (final-cycle here-site code sub prod frond.i gen direct.flags)
+  (final-cycle here-site code less prod frond.i gen direct.flags want-site)
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
-  |=  [site=@uxsite code=nomm sub=sock-anno prod=sock-anno gen=state direct=?]
+  |=  $:  site=@uxsite
+          code=nomm
+          less=sock
+          prod=sock-anno
+          gen=state
+          direct=?
+          want-site=cape
+      ==
   ^-  state
   =.  bars.gen  (ps bars.gen 'done:' (scux site) -1)
   =/  mayb-site=(unit cape)  (~(get by want.gen) site)
   ::  memoize if fully direct
   ::
   =?  memo.results.gen  direct
-    =/  want-site=cape  ?~(mayb-site | u.mayb-site)
-    =/  less  ~(norm so (~(app ca want-site) sock.sub))
-    ::  we start off with more knowledge in the subject and mask down, 
-    ::  so the intersection of want-site and cape.sock.sub should be exactly
-    ::  equal to want-site?
-    ::
-    ?.  =(want-site cape.less)
-      ~_  'cape.less < want-site'
-      ~|  [cape.less want-site]
-      !!
     %-  ~(put by memo.results.gen)
     :-  site
     :^    code
         ::  minimized subject sock for memo checks
         ::
         less
-      ::  result to apply relocations to, with to-be-relocated parts masked out
+      ::  full result, captured subject was included in memo requirement
       ::
-      (mask-relo prod)
-    ::  subject want for subject need propagation on memo hits
-    ::  (XX just use cape.less?)
+      prod
+    ::  subject code usage for subject need propagation on memo hits
     ::
     want-site
   ::
@@ -489,15 +497,15 @@
 ++  final-cycle
   |=  $:  site=@uxsite
           code=nomm
-          sub=sock-anno
+          less=sock
           prod=sock-anno
           =frond
           gen=state
           direct=?
+          want-site=cape
       ==
   ^-  err-state
   =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
-  =/  want-site=cape  (~(gut by want.gen) site |)
   =/  err-gen=err-state
     %+  roll-deep  frond
     |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock]
@@ -508,11 +516,14 @@
     ?:  ?=(%| -.err-gen)  err-gen
     =/  par-want=cape  (~(gut by want.gen) par |)
     =/  par-masked=sock  (~(app ca par-want) par-sub)
-    ?.  (~(huge so par-masked) kid-sub)  |+[par kid]
+    ?.  (~(huge so par-masked) kid-sub)  ::  |+[par kid]
+      ~|  [par kid]
+      ~|  par-want
+      !!
     =.  every.results.p.err-gen
       %+  ~(put by every.results.p.err-gen)  kid
-      ?:  =(par site)  code
-      (~(got by code.pop) par)
+      ?:  =(par site)  [less code]
+      (~(got by every.results.gen) par)
     ::
     err-gen
   ::
@@ -525,58 +536,53 @@
   ::  memoize if fully direct
   ::
   =?  memo.results.p.err-gen  direct
-    =/  less  ~(norm so (~(app ca want-site) sock.sub))
-    ?.  =(want-site cape.less)
-      ~_  'cape.less < want-site'
-      ~|  [cape.less want-site]
-      !!
     %-  ~(put by memo.results.gen)
     :-  site
     :^    code
         less
-      (mask-relo prod)
+      prod
     want-site
   ::
   err-gen
 ::  treat analysis result of a non-finalized evalsite
 ::
 ++  process
-  |=  [site=@uxsite code=nomm prod=sock-anno gen=state direct=?]
+  |=  [site=@uxsite code=nomm less=sock prod=sock-anno gen=state direct=?]
   ^-  state
   =.  bars.gen  (ps bars.gen 'ciao:' (scux site) -1)
   ::  TODO meloization
   ::
   ?~  cycles.gen  !!
   =.  set.i.cycles.gen   (~(put in set.i.cycles.gen) site)
-  =?  code.i.cycles.gen  (~(has in pars.i.cycles.gen) site)
-    (~(put by code.i.cycles.gen) site code)
-  ::
+  :: =/  has-in-pars=?  (~(has in pars.i.cycles.gen) site)
+  :: =?  want.gen  has-in-pars  (~(put by want.gen) site cape.less)
   gen
 ::
 ++  memo
-  |=  [site=@uxsite fol=* sub=sock-anno gen=state]
+  |=  [site=@uxsite fol=* sub=sock-anno gen=state stack=(set @uxsite)]
   ^-  (unit [from=@uxsite pro=sock-anno gen=state])
   =/  calls  (~(get ja calls.evals.gen) fol)
   |-  ^-  (unit [@uxsite sock-anno state])
   ?~  calls  ~
   ?~  res=(~(get by memo.results.gen) site.i.calls)  $(calls t.calls)
   ?.  (~(huge so less.u.res) sock.sub)               $(calls t.calls)
-  ::  memo hit: propagate subject needs, relocate subject into result
-  ::  via `took`
+  ::  memo hit: propagate subject needs
   :: 
-  =/  sub-urge  (urge:source src.sub want.u.res)
+  =/  sub-urge
+    (urge:source (mask:source src.sub cape.sock.sub `stack) want.u.res)
+  ::
   =.  want.gen
     %-  (~(uno by want.gen) sub-urge)
     |=  [@uxsite a=cape b=cape]
     ~(cut ca (~(uni ca a) b))
   ::
-  =.  every.results.gen  (~(put by every.results.gen) site nomm.u.res)
+  =.  every.results.gen
+    (~(put by every.results.gen) site less.u.res nomm.u.res)
+  ::
   :-  ~
   :-  site.i.calls
   :_  gen
-  :+  (relo-sock:took sock.sub sock.prod.u.res tok.prod.u.res)
-    (relo-src:took src.sub src.prod.u.res tok.prod.u.res)
-  tok.prod.u.res
+  prod.u.res
 ::  given kid and parent subject socks and parent evalsite label, check if
 ::  the kid sock is compatible with parent for a loop call. heuristic.
 ::
@@ -595,6 +601,44 @@
   %+  roll  t.l
   |:  [f=*flags out=out]
   [|(loopy.f loopy.out) &(direct.f direct.out)]
+::
+++  jet-simple-gate-hoot
+  =/  l=(list)
+    =>  hoot
+    :~  dec  add  sub  mul  div  mod  dvr  gte  gth  lte  lth  max  min
+        cap  mas  peg  bex  can  cat  cut  end  fil  hew  lsh  met  rap
+        rep  rev  rig  rip  rsh  run  rut  sew  swp  xeb
+    ==
+  |=  [s=* f=*]
+  ^-  (unit (unit))
+  ?~  l  ~
+  ?:  &(=(f -.i.l) =(-.s -.i.l) =(+>.s +>.i.l))
+    `(mure |.((slum i.l +<.s)))
+  $(l t.l)
+::
+++  jet-simple-gate-play
+  =/  l=(list)
+    =>  playpen
+    :~  dec  add  sub  mul  div  mod  dvr  gte  gth  lte  lth
+        bex  can  cat  cut  end  fil  lsh  met  rap
+        rep  rev  rip  rsh  swp  xeb
+    ==
+  |=  [s=* f=*]
+  ^-  (unit (unit))
+  ?~  l  ~
+  ?:  &(=(f -.i.l) =(-.s -.i.l) =(+>.s +>.i.l))
+    `(mure |.((slum i.l +<.s)))
+  $(l t.l)
+::
+++  jet
+  |=  [s=* f=*]
+  ^-  (unit (unit))
+  ~
+  :: ?^  res=(jet-simple-gate-hoot s f)  res
+  :: ?^  res=(jet-simple-gate-play s f)  res
+  :: ::  place for jets with nontrivial templates
+  :: ::
+  :: ~
 ::  Analyze s/f pair, then run Nomm interpreter on the result
 ::  Indirect calls reanalyze
 ::  Direct calls are verified with subject sock nest checking
@@ -629,15 +673,15 @@
     ?~  s1  ~
     =/  f1  $(n q.n)
     ?~  f1  ~
-    ?~  call=(~(get by sites.evals.gen) site.n)
+    ?~  call=(~(get by every.results.gen) site.n)
       ~&  indirect+site.n
       (run-nomm u.s1 u.f1)
-    ?.  (~(huge so sub.u.call) & u.s1)
+    ?.  (~(huge so less.u.call) & u.s1)
       ~|  site.n
-      ~|  [need+sub.u.call got+[& u.s1]]
+      ~|  [need+less.u.call got+[& u.s1]]
       !!
-    =/  res  (~(got by every.results.gen) site.n)
-    $(s u.s1, n nomm.res)
+    ?^  res=(jet u.s1 u.f1)  u.res
+    $(s u.s1, n nomm.u.call)
   ::
       [%3 *]
     =/  p  $(n p.n)

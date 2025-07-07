@@ -195,7 +195,27 @@
   ::  roughly, 1 < 2
   ::
   ::  every axis known in one is also known in 2, with equal data
+  ::
   ++  huge
+    |=  two=sock
+    ^-  ?
+    =/  a  (huge1 two)
+    =/  b  (huge2 two)
+    ?>  =(a b)
+    a
+  ::
+  ++  huge1
+    |=  two=sock
+    ^-  ?
+    ?:  =(one two)  &
+    ?:  |(?=(^ cape.one) ?=(^ cape.two))
+      &($(one hed, two hed(one two)) $(one tel, two tel(one two)))
+    ::  if cape.one is %.n then two nests
+    ::  else either cape.two is %.n or data.one != data.two, so doesn't nest
+    ::
+    !cape.one
+  ::
+  ++  huge2
     |=  two=sock
     ^-  ?
     ?|  =(one two)
@@ -241,38 +261,65 @@
     =*  r  cape.two
     :-  ?:(&(?=(@ l) =(l r)) l [l r])
     [data.one data.two]
+  ::
+  ++  hed
+    ^-  sock
+    ?:  |(?=(%| cape.one) ?=(@ data.one))
+      [| ~]
+    ?@  cape.one  [& -.data.one]
+    [-.cape.one -.data.one]
+  ::
+  ++  tel
+    ^-  sock
+    ?:  |(?=(%| cape.one) ?=(@ data.one))
+      [| ~]
+    ?@  cape.one  [& +.data.one]
+    [+.cape.one +.data.one]
   ::    intersect
   ::
   ::  output is unmasked only where both one and two are unmasked and
   ::  they both agree in data
   ++  purr
+    :: |=  two=sock
+    :: |-  ^-  sock
+    :: ?^  data.one
+    ::   ?@  data.two  ?>(?=(@ cape.two) [| ~])
+    ::   ?^  cape.one
+    ::     ?^  cape.two
+    ::       %-  %~  knit  so
+    ::         $(one [-.cape.one -.data.one], two [-.cape.two -.data.two])
+    ::       $(one [+.cape.one +.data.one], two [+.cape.two +.data.two])
+    ::     ?.  cape.two  [| ~]
+    ::     %-  %~  knit  so
+    ::       $(one [-.cape.one -.data.one], data.two -.data.two)
+    ::     $(one [+.cape.one +.data.one], data.two +.data.two)
+    ::   ?.  cape.one  [| ~]
+    ::   ?^  cape.two
+    ::     %-  %~  knit  so 
+    ::       $(data.one -.data.one, two [-.cape.two -.data.two])
+    ::     $(data.one +.data.one, two [+.cape.two +.data.two])
+    ::   ?.  cape.two  [| ~]
+    ::   ?:  =(data.one data.two)  one  :: optimization?
+    ::   %-  %~  knit  so
+    ::     $(data.one -.data.one, data.two -.data.two)
+    ::   $(data.one +.data.one, data.two +.data.two)
+    :: ?>  ?=(@ cape.one)
+    :: ?^  data.two  [| ~]
+    :: ?>  ?=(@ cape.two)
+    :: ?:  =(data.one data.two)  one  [| ~]
     |=  two=sock
     |-  ^-  sock
-    ?^  data.one
-      ?@  data.two  ?>(?=(@ cape.two) [| ~])
-      ?^  cape.one
-        ?^  cape.two
-          %-  %~  knit  so
-            $(one [-.cape.one -.data.one], two [-.cape.two -.data.two])
-          $(one [+.cape.one +.data.one], two [+.cape.two +.data.two])
-        ?.  cape.two  [| ~]
-        %-  %~  knit  so
-          $(one [-.cape.one -.data.one], data.two -.data.two)
-        $(one [+.cape.one +.data.one], data.two +.data.two)
-      ?.  cape.one  [| ~]
-      ?^  cape.two
-        %-  %~  knit  so 
-          $(data.one -.data.one, two [-.cape.two -.data.two])
-        $(data.one +.data.one, two [+.cape.two +.data.two])
-      ?.  cape.two  [| ~]
-      ?:  =(data.one data.two)  one  :: optimization?
+    ?:  |(?=(^ cape.one) ?=(^ cape.two))
       %-  %~  knit  so
-        $(data.one -.data.one, data.two -.data.two)
-      $(data.one +.data.one, data.two +.data.two)
-    ?>  ?=(@ cape.one)
-    ?^  data.two  [| ~]
-    ?>  ?=(@ cape.two)
-    ?:  =(data.one data.two)  one  [| ~]
+          $(one hed, two hed(one two))
+      $(one tel, two tel(one two))
+    ?:  |(?=(%| cape.one) ?=(%| cape.two))  [| ~]
+    |-  ^-  sock
+    ?:  =(data.one data.two)  one
+    ?.  &(?=(^ data.one) ?=(^ data.two))  [| ~]
+    %-  %~  knit  so
+        $(data.one data:hed, data.two data:hed(one two))
+    $(data.one data:tel, data.two data:tel(one two))
   ::    union
   ::
   ::  take the union of two socks, but crash if they disagree on a known

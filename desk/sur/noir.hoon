@@ -20,121 +20,6 @@
       [%12 p=nomm q=nomm]                     ::  "Nock 12"
       [%0 p=@]                                ::  Nock 0
   ==
-::  +$  took  $~  ~
-::            $@  ?(~ @)
-::            [took took]
-::  describes what parts of subject are contained in the product
-::  ~  new noun/unknown
-::  @  subject axis
-::  ^  cons
-::
-++  took
-  |^  took
-  ::
-  +$  took  *
-  ++  norm
-    |=  a=took
-    ^-  took
-    ?.  ?=([p=took q=took] a)  a
-    =.  p.a  ~=(p.a $(a p.a))
-    =.  q.a  ~=(q.a $(a q.a))
-    ::  [2n 2n+1] --> n
-    ::
-    ?:  &(!=(0 p.a) ?=(@ p.a) ?=(@ q.a) =(+(p.a) q.a) =(0 (end 0 p.a)))
-      (rsh 0 p.a)
-    a
-  ++  cons
-    |=  [a=took b=took]
-    ^-  took
-    ?:  &(=(~ a) =(~ b))  ~
-    ?:  &(!=(0 a) ?=(@ a) ?=(@ b) =(+(a) b) =(0 (end 0 a)))
-      (rsh 0 a)
-    [a b]
-  ::
-  ++  int
-    |=  [a=took b=took]
-    ^-  took
-    ::
-    =/  a1  (norm a)
-    =/  b1  (norm b)
-    ~?  |(!=(a1 a) !=(b1 b))  %int-norm  ::  shouldn't fire?
-    =.  a  a1
-    =.  b  b1
-    ::
-    ?:  |(=(~ a) =(~ b))  ~
-    ?:  &(?=(@ a) ?=(@ b))  ?:(=(a b) a ~)
-    =/  [l-a=took r-a=took]
-      ?^  a  a
-      =/  l-a  (lsh 0 a)
-      [l-a +(l-a)]
-    ::
-    =/  [l-b=took r-b=took]
-      ?^  b  b
-      =/  l-b  (lsh 0 b)
-      [l-b +(l-b)]
-    ::
-    (cons $(a l-a, b l-b) $(a r-a, b r-b))
-  ::
-  ++  slot
-    |=  [a=took ax=@]
-    ^-  took
-    ?:  =(0 ax)  !!
-    ?:  =(1 ax)  a
-    ?~  a  ~
-    ?@  a  (peg a ax)
-    ?-  (cap ax)
-      %2  $(a -.a, ax (mas ax))
-      %3  $(a +.a, ax (mas ax))
-    ==
-  ::
-  ++  edit
-    |=  [rec=took ax=@ don=took]
-    ^-  took
-    ?:  =(1 ax)  don
-    =/  [p=took q=took]
-      ?^  rec  rec
-      ?~  rec  [~ ~]
-      =/  p  (lsh 0 rec)
-      [p +(p)]
-    ::
-    %-  cons
-    ?-  (cap ax)
-      %2  [$(rec p, ax (mas ax)) q]
-      %3  [p $(rec q, ax (mas ax))]
-    ==
-  ::  relocate new subject sock into old product with `took` 
-  ::
-  ++  relo-sock
-    |=  [sub=sock pro=sock tok=took]
-    ^-  sock
-    ?~  tok  pro
-    ?@  tok  (~(pull so sub) tok)
-    =/  l  $(tok -.tok, pro (~(pull so pro) 2))
-    =/  r  $(tok +.tok, pro (~(pull so pro) 3))
-    (~(knit so l) r)
-  ::  relocate new subject provenance into old product with `took` 
-  ::
-  ++  relo-src
-    |=  [sub=source pro=source tok=took]
-    ^-  source
-    ?~  tok  pro
-    ?@  tok  (slot:source sub tok)
-    ::   XX performance? defer provenance pushing like in slot?
-    ::
-    =/  l  $(tok -.tok, pro (slot:source pro 2))
-    =/  r  $(tok -.tok, pro (slot:source pro 3))
-    (cons:source l r)
-  ::  compose captures
-  ::
-  ::    if a captures s, and b captures a, what b captures from s?
-  ::
-  ++  comp
-    |=  [a=took b=took]
-    ^-  took
-    ?~  b  ~
-    ?@  b  (slot a b)
-    (cons $(b -.b) $(b +.b))
-  --
 ::  TODO leave essential to traverse less
 ::
 ::  generic info at directly called evalsites
@@ -152,7 +37,7 @@
   $:
     ::  all direct call analysis results
     ::
-    every=(map @uxsite [=nomm])
+    every=(map @uxsite [less=sock =nomm])
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject, full product, subject need
     ::
@@ -188,7 +73,7 @@
     ^-  source
     ?~  a  b
     ?~  b  a
-    =-  ?:  =([~ ~ ~] -)  ~&  %uni-norm  ~  -  ::  debug check; shouldn't be necessary if source is normalized?
+    =-  ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -  ::  debug check; shouldn't be necessary if source is normalized?
     :+  ~(tap in (~(gas in (~(gas in *(set (pair @axis @uxsite))) n.a)) n.b))
       $(a l.a, b l.b)
     $(a r.a, b r.b)
@@ -205,7 +90,11 @@
       :: ~>  %bout
       (mask2 sam)
     ::
-    ?>  =(a b)
+    ?.  (eq a b)
+      ~|  a
+      ~|  b
+      ~|  [src cap stack]
+      !!
     a
   ::
   ++  mask1
@@ -230,7 +119,12 @@
     ::
     =;  out
       =/  out1  (norm out)
-      ~?  !=(out out1)  %mask-norm    ::  should not fire?
+      ?.  =(out out1)
+        ~|  %mask-norm
+        ~|  [src cap stack]
+        ~|  out1
+        ~|  out
+        !!
       out1
     ::  shortcut: nothing to mask
     ::
@@ -266,7 +160,7 @@
     ::  push to node list
     ::
     =/  [n=(list peon) lr=[source source]]  ?~(src [~ ~ ~] src)
-    ?:  &(=(~ n) =(~ acc) =([~ ~] lr))  ~
+    =-  ?:  =([~ ~ ~] -)  ~  -
     :_  lr
     %+  roll  acc
     |:  [[ax=*@ l=*(list peon)] out=n]
@@ -309,6 +203,22 @@
     ::
     ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
     [n l r]
+  ::  equality of provenance trees modulo permutation of peons in lists
+  ::
+  ++  eq
+    =/  rev  1
+    |=  [a=source b=source]
+    ^-  ?
+    ?:  |(&(?=(~ a) ?=(^ b)) &(?=(~ b) ?=(^ a)))
+      ~&  >>>  rev  |
+    ?~  a  &
+    ?>  ?=(^ b)
+    ?:  !=((silt n.a) (silt n.b))
+      ~&  >>>  rev  |
+    ?&  
+        $(a l.a, b l.b, rev (peg rev 2))
+        $(a r.a, b r.b, rev (peg rev 3))
+    ==
   ::
   ++  edit
     |=  [rec=source ax=@ don=source]
@@ -326,11 +236,11 @@
       :: ~>  %bout
       (edit3 sam)  :: even faster?
     ::
-    ?.  =(a b)
+    ?.  (eq a b)
       ~|  sam
       ~|  [a b]
       !!
-    ?.  =(b c)
+    ?.  (eq b c)
       ~|  sam
       ~|  [b c]
       !!
@@ -495,10 +405,6 @@
       %+  roll  n.src
       |=  [peon m=^urge]
       =/  need=cape  (~(pat ca cap) ax)
-      ::  sanity check: we probably shouldn't have peons with the same
-      ::  evalsite but different axes? if yes, the difference will get caught
-      ::  in the comparison above
-      ::
       (jib m sit need |=(c=cape (~(uni ca c) need)))
     ==
   ::
@@ -519,10 +425,8 @@
       out  %+  uni-urge  out
            %+  roll  n.src
            |=  [peon m=^urge]
-           ::  here we are not unifying capes from peons with the same site,
-           ::  is this correct?
-           ::
-           (~(put by m) sit (~(pat ca cap) ax))
+           =/  need=cape  (~(pat ca cap) ax)
+           (jib m sit need |=(c=cape (~(uni ca c) need)))
     ==
   ::
   ++  trim
@@ -690,7 +594,7 @@
     ::
     =/  gav-a1  (norm gav.a)
     =/  gav-b1  (norm gav.b)
-    ~?  |(!=(gav-a1 gav.a) !=(gav-b1 gav.b))  %gave-int-uni-norm
+    ~?  >>>  |(!=(gav-a1 gav.a) !=(gav-b1 gav.b))  %gave-int-uni-norm
     =.  gav.a  gav-a1
     =.  gav.b  gav-b1
     ::
@@ -741,20 +645,5 @@
     ==
   --
 ::
-+$  sock-anno  [=sock src=source tok=took]
-::  mask out parts of the result that are going to be relocated anyway
-::
-++  mask-relo
-  |=  a=sock-anno
-  ^-  sock-anno
-  =-  [(~(app ca -) sock.a) (mask:source src.a - ~) tok.a]
-  ::  cape of result parts that do not capture the subject
-  ::
-  |-  ^-  cape
-  ?~  tok.a  &
-  ?@  tok.a  |
-  =/  l  $(tok.a -.tok.a)
-  =/  r  $(tok.a +.tok.a)
-  ?:  &(?=(@ l) =(l r))  l
-  [l r]
++$  sock-anno  [=sock src=source]
 --
