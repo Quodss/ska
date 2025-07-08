@@ -47,21 +47,12 @@
   ::  mask unknown axes in a cape out of a sock
   ++  app
     |=  know=sock
-    |-  ^-  sock
-    ?-  one
-        %|  [%| ~]
-        %&  know
-        ^
-      ?:  ?=(%| cape.know)  [%| ~]
-      ?>  ?=(^ data.know)
-      ?:  ?=(^ cape.know)
-        =/  l  $(one -.one, cape.know -.cape.know, data.know -.data.know)
-        =/  r  $(one +.one, cape.know +.cape.know, data.know +.data.know)
-        [[cape.l cape.r] data.l data.r]
-      =/  l  $(one -.one, data.know -.data.know)
-      =/  r  $(one +.one, data.know +.data.know)
-      [[cape.l cape.r] data.l data.r]
-    ==
+    ^-  sock
+    ?:  |(?=(%| one) ?=(%| cape.know))  lost:so
+    ?.  |(?=(^ one) ?=(^ cape.know))
+      know
+    %-  ~(knit so $(know ~(hed so know), one ?@(one one -.one)))
+    $(know ~(tel so know), one ?@(one one +.one))
   ::    union two capes
   ::
   ::  
@@ -163,6 +154,9 @@
 ::  operations on sock
 ++  so
   |_  one=sock
+  ::  empty sock
+  ::
+  ++  lost  [| ~]
   ::    valid?
   ++  apt
     |-  ^-  ?
@@ -178,7 +172,7 @@
   ++  norm
     |-  ^-  sock
     ?-  cape.one
-        %|  [%| ~]
+        %|  lost
         %&  one
         ^
       ?>  ?=(^ data.one)
@@ -187,7 +181,7 @@
       ?:  ?&(=(& cape.l) =(& cape.r))
         [& data.l data.r]
       ?:  ?&(=(| cape.l) =(| cape.r))
-        [| ~]
+        lost
       [[cape.l cape.r] data.l data.r]
     ==
   ::    nesting
@@ -208,12 +202,13 @@
     |=  two=sock
     ^-  ?
     ?:  =(one two)  &
+    ?:  ?=(%| cape.one)  &
     ?:  |(?=(^ cape.one) ?=(^ cape.two))
       &($(one hed, two hed(one two)) $(one tel, two tel(one two)))
     ::  if cape.one is %.n then two nests
     ::  else either cape.two is %.n or data.one != data.two, so doesn't nest
     ::
-    !cape.one
+    |
   ::
   ++  huge2
     |=  two=sock
@@ -240,7 +235,7 @@
     |-  ^-  sock
     ?:  =(1 axe)  one
     ?:  |(?=(%| cape.one) ?=(@ data.one))
-      [| ~]
+      lost
     =+  [now lat]=[(cap axe) (mas axe)]
     ?@  cape.one
       ?-  now
@@ -259,20 +254,21 @@
     ^-  sock
     =*  l  cape.one
     =*  r  cape.two
-    :-  ?:(&(?=(@ l) =(l r)) l [l r])
-    [data.one data.two]
+    =/  cap  ?:(&(?=(@ l) =(l r)) l [l r])
+    ?:  ?=(%| cap)  lost
+    [cap data.one data.two]
   ::
   ++  hed
     ^-  sock
     ?:  |(?=(%| cape.one) ?=(@ data.one))
-      [| ~]
+      lost
     ?@  cape.one  [& -.data.one]
     [-.cape.one -.data.one]
   ::
   ++  tel
     ^-  sock
     ?:  |(?=(%| cape.one) ?=(@ data.one))
-      [| ~]
+      lost
     ?@  cape.one  [& +.data.one]
     [+.cape.one +.data.one]
   ::    intersect
@@ -280,70 +276,68 @@
   ::  output is unmasked only where both one and two are unmasked and
   ::  they both agree in data
   ++  purr
-    :: |=  two=sock
-    :: |-  ^-  sock
-    :: ?^  data.one
-    ::   ?@  data.two  ?>(?=(@ cape.two) [| ~])
-    ::   ?^  cape.one
-    ::     ?^  cape.two
-    ::       %-  %~  knit  so
-    ::         $(one [-.cape.one -.data.one], two [-.cape.two -.data.two])
-    ::       $(one [+.cape.one +.data.one], two [+.cape.two +.data.two])
-    ::     ?.  cape.two  [| ~]
-    ::     %-  %~  knit  so
-    ::       $(one [-.cape.one -.data.one], data.two -.data.two)
-    ::     $(one [+.cape.one +.data.one], data.two +.data.two)
-    ::   ?.  cape.one  [| ~]
-    ::   ?^  cape.two
-    ::     %-  %~  knit  so 
-    ::       $(data.one -.data.one, two [-.cape.two -.data.two])
-    ::     $(data.one +.data.one, two [+.cape.two +.data.two])
-    ::   ?.  cape.two  [| ~]
-    ::   ?:  =(data.one data.two)  one  :: optimization?
-    ::   %-  %~  knit  so
-    ::     $(data.one -.data.one, data.two -.data.two)
-    ::   $(data.one +.data.one, data.two +.data.two)
-    :: ?>  ?=(@ cape.one)
-    :: ?^  data.two  [| ~]
-    :: ?>  ?=(@ cape.two)
-    :: ?:  =(data.one data.two)  one  [| ~]
     |=  two=sock
     |-  ^-  sock
+    ?:  |(?=(%| cape.one) ?=(%| cape.two))  lost
     ?:  |(?=(^ cape.one) ?=(^ cape.two))
       %-  %~  knit  so
           $(one hed, two hed(one two))
       $(one tel, two tel(one two))
-    ?:  |(?=(%| cape.one) ?=(%| cape.two))  [| ~]
     |-  ^-  sock
     ?:  =(data.one data.two)  one
-    ?.  &(?=(^ data.one) ?=(^ data.two))  [| ~]
+    ?.  &(?=(^ data.one) ?=(^ data.two))  lost
     %-  %~  knit  so
         $(data.one data:hed, data.two data:hed(one two))
     $(data.one data:tel, data.two data:tel(one two))
-  ::    union
-  ::
-  ::  take the union of two socks, but crash if they disagree on a known
-  ::  axis
-  ++  pack
-    |=  two=sock
-    |-  ^-  sock
-    ?:  ?=(%| cape.one)  two
-    ?:  ?=(%| cape.two)  one
-    ?:  ?=(%& cape.one)  ?>((~(huge so one) two) one)
-    ?:  ?=(%& cape.two)  ?>((~(huge so two) one) two)
-    ?>  ?=(^ data.one)
-    ?>  ?=(^ data.two)
-    %-
-      %~  knit  so
-      (pack(one [-.cape.one -.data.one]) [-.cape.two -.data.two]) 
-    (pack(one [-.cape.one -.data.one]) [-.cape.two -.data.two])
   ::    edit
   ::
   ::  update mask and data at an axis into a sock
   ++  darn
     |=  [axe=@ two=sock]
+    ^-  sock
+    =*  sam  +<
+    =/  a  (darn1 sam)
+    =/  b  (darn2 sam)
+    ?.  =(a b)
+      |-
+      ?:  |(?=(^ cape.a) ?=(^ cape.b))
+        (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
+      ?:  |(?=(%| cape.a) ?=(%| cape.b))
+        ~|  a
+        ~|  b
+        !!
+      ?:  |(?=(@ data.a) ?=(@ data.b))
+        ?:  =(data.a data.b)  lost
+        ~|  a
+        ~|  b
+        !!
+      (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
+    a
+  ::
+  ++  darn1
+    |=  [axe=@ two=sock]
+    ^-  sock
+    ?:  =(1 axe)  two
+    ?:  &(?=(%| cape.one) ?=(%| cape.two))  lost
+    =|  acc=(list (pair ?(%2 %3) sock))
+    |-  ^-  sock
+    ?.  =(1 axe)
+      ?-  (cap axe)
+          %2  $(one hed, acc [[%2 tel] acc], axe (mas axe))
+          %3  $(one tel, acc [[%3 hed] acc], axe (mas axe))
+      ==
+    |-  ^-  sock
+    ?~  acc  two
+    ?-  p.i.acc
+      %2  $(two (~(knit so two) q.i.acc), acc t.acc)
+      %3  $(two (~(knit so q.i.acc) two), acc t.acc)
+    ==
+  ::
+  ++  darn2
+    |=  [axe=@ two=sock]
     ?<  =(0 axe)
     |-  ^-  sock
+    =-  norm(one -)
     ?:  =(1 axe)  two
     =+  [now lat]=[(cap axe) (mas axe)]
     ?^  cape.one
@@ -378,4 +372,3 @@
   ?>  ~(apt so know)
   know
 --
-

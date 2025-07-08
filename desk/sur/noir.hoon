@@ -24,13 +24,6 @@
 ::
 ::  generic info at directly called evalsites
 ::
-+$  evals
-  $:
-    ::  evalsites <--> sub/fol pairs
-    ::
-    sites=(map @uxsite [sub=sock fol=*])
-    calls=(jar * [site=@uxsite sub=sock])
-  ==
 ::  analysis results
 ::
 +$  results
@@ -39,12 +32,15 @@
     ::
     every=(map @uxsite [less=sock =nomm])
     ::  memoized results: finalized, fully direct
-    ::  code, minimized subject, full product, subject need
+    ::  code, minimized subject for match & for code, full product
     ::
     $=  memo
-    %+  map  @uxsite
-    [=nomm less-memo=sock less-code=sock prod=sock-anno want=cape]
+    %+  jar  *
+    [site=@uxsite =nomm less-memo=sock less-code=sock prod=sock-anno]
   ==
+::  melo entry: code, subject capture cape, full subject to mask, full product
+::
++$  meal  [site=@uxsite =nomm capture=cape sub=sock prod=sock-anno]
 ::  urge: evalsite subject requirements
 ::
 +$  urge  (map @uxsite cape)
@@ -583,6 +579,21 @@
       %2  $(ax (mas ax), a -.a)
       %3  $(ax (mas ax), a +.a)
     ==
+  ::
+  ++  hed
+    |=  a=gave
+    ^-  gave
+    ?:  ?=(%full -.a)  full
+    ?^  -.a  -.a
+    a(ax (lsh 0 ax.a))
+  ::
+  ++  tel
+    |=  a=gave
+    ^-  gave
+    ?:  ?=(%full -.a)  full
+    ?^  -.a  +.a
+    a(ax +((lsh 0 ax.a)))
+  ::
   ::  intersect socks where they don't capture loops, unify when one of them
   ::  does. Returns intersected-unified sock-gave pair and a list of assumptions
   ::  to be validated.
@@ -619,10 +630,10 @@
     ::  all other cases (at least one cons case): split sock-gaves, decend,
     ::  cons products and guesses
     ::
-    =/  l-a=[sock gave]  [(~(pull so sock.a) 2) (slot gav.a 2)]
-    =/  r-a=[sock gave]  [(~(pull so sock.a) 3) (slot gav.a 3)]
-    =/  l-b=[sock gave]  [(~(pull so sock.b) 2) (slot gav.b 2)]
-    =/  r-b=[sock gave]  [(~(pull so sock.b) 3) (slot gav.b 3)]
+    =/  l-a=[sock gave]  [~(hed so sock.a) (hed gav.a)]
+    =/  r-a=[sock gave]  [~(tel so sock.a) (tel gav.a)]
+    =/  l-b=[sock gave]  [~(hed so sock.b) (hed gav.b)]
+    =/  r-b=[sock gave]  [~(tel so sock.b) (tel gav.b)]
     =/  l  $(a l-a, b l-b)
     =/  r  $(a r-a, b r-b)
     [[(~(knit so s.l) s.r) (cons g.l g.r)] [%deep dip.l dip.r]]
