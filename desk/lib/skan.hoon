@@ -167,9 +167,9 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.gen.res-eval)
-    ?.  =(~ want.gen.res-eval)
-      ~|  ~(key by want.gen.res-eval)
-      !!
+    :: ?.  =(~ want.gen.res-eval)
+    ::   ~|  ~(key by want.gen.res-eval)
+    ::   !!
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
   ?>  =(0x0 here-site)
@@ -214,6 +214,8 @@
     &+[[pro.u.m [& &]] gen.u.m]
   ::
   ::  push on the stack
+  ::
+  :: =.  src.sub  (mask:source src.sub cape.sock.sub `set.stack)
   ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
@@ -260,7 +262,8 @@
       ::  direct call
       ::
       =/  fol-new  data.sock.f-prod
-      =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
+      :: =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
+      =/  fol-urge  (urge:source src.f-prod &)
       =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::
       ::  check for loop:
@@ -303,7 +306,7 @@
           ==
         ::  propagate subject needs
         ::
-        =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
+        :: =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
         =/  sub-urge  (urge:source src.s-prod u.want)
         =.  want.gen  (uni-urge:source want.gen sub-urge)
         =.  cycles.gen
@@ -364,7 +367,8 @@
         :-  int-sock
         ::  mask unified provenance tree with intersection cape
         ::
-        (mask:source uni-source cape.int-sock `set.stack)
+        :: (mask:source uni-source cape.int-sock `set.stack)
+        (mask:source uni-source cape.int-sock ~)
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -526,8 +530,32 @@
         prod
     ==
   ::
-  =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
+  :: =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
   gen
+::  given that b > a, for each axis that used to be %.n in a and became not that
+::  in b, what subaxes are set to %.y?
+::
+++  dif-ca
+  |=  [a=cape b=cape]
+  ^-  (list (trel @ @ (lest @)))
+  =/  rev  1
+  |-  ^-  (list (trel @ @ (lest @)))
+  ?:  ?=(%& a)  ~
+  ?:  ?=(%| a)
+    ?~  yea=~(yea ca b)  ~
+    ~[[(xeb rev) rev yea]]
+  %:  weld
+    $(a -.a, b ?@(b b -.b), rev (peg rev 2))
+    $(a +.a, b ?@(b b +.b), rev (peg rev 3))
+  ==
+::
+++  max-xeb-ax
+  |=  n=*
+  ^-  @
+  =/  rev  1
+  |-  ^-  @
+  ?@  n  (xeb rev)
+  (max $(n -.n, rev (peg rev 2)) $(n +.n, rev (peg rev 3)))
 ::  finalize analysis of a call graph cycle entry: pop cycle, verify assumptions
 ::
 ++  final-cycle
@@ -550,13 +578,19 @@
     =/  gen  p.err-gen
     =^  par-final=cape  gen
       =/  par-want-1=cape  (~(gut by want.gen) par |)
+      =/  c  0
+      =/  dep-print  &
       |-  ^-  [cape state]
       =/  kid-sub-urge  (urge:source src.kid-sub par-want-1)
       =.  want.gen  (uni-urge:source want.gen kid-sub-urge)
       =/  par-want-2=cape  (~(gut by want.gen) par |)
-      ?.  =(par-want-1 par-want-2)
-        ~&  >>  %fixpoint-loop
-        $(par-want-1 par-want-2)
+      ?.  =(~(cut ca par-want-1) ~(cut ca par-want-2))
+        ~?  dep-print  (max-xeb-ax data.par-sub)
+        =.  dep-print  |
+        ~&  >>  fixpoint-loop+c
+        ~&  (dif-ca par-want-1 par-want-2)
+        :: ~&  [par-want-1 par-want-2]
+        $(par-want-1 par-want-2, c +(c))
       [par-want-1 gen]
     ::
     =/  par-want=cape  (~(gut by want.gen) par |)
@@ -578,11 +612,11 @@
   ::
   =>  +
   =.  bars.gen  (ps bars.gen 'fini:' (scux site) -1)
-  =.  want.gen  (~(del by want.gen) site)
-  =.  want.gen
-    %+  roll-deep  set.pop
-    |:  [v=*@uxsite acc=want.gen]
-    (~(del by acc) v)
+  :: =.  want.gen  (~(del by want.gen) site)
+  :: =.  want.gen
+  ::   %+  roll-deep  set.pop
+  ::   |:  [v=*@uxsite acc=want.gen]
+  ::   (~(del by acc) v)
   ::
   =?  memo.results.gen  ?=(^ less-memo)
     %+  ~(add ja memo.results.gen)  fol
@@ -627,7 +661,8 @@
   ::  memo hit: propagate subject needs
   :: 
   =/  sub-urge
-    (urge:source (mask:source src.sub cape.sock.sub `stack) cape.less-code.i)
+    :: (urge:source (mask:source src.sub cape.sock.sub `stack) cape.less-code.i)
+    (urge:source src.sub cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =.  every.results.gen
@@ -661,7 +696,8 @@
     ::  melo hit: propagate subject needs
     :: 
     =/  sub-urge
-      (urge:source (mask:source src.sub cape.sock.sub `stack) want-site)
+      :: (urge:source (mask:source src.sub cape.sock.sub `stack) want-site)
+      (urge:source src.sub want-site)
     ::
     =.  want.gen  (uni-urge:source want.gen sub-urge)
     `[[site.i prod.i gen] popped]
