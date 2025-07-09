@@ -60,7 +60,7 @@
   (each m (pair @uxsite @uxsite))
 ::
 +$  err-state  (error state)
-+$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock])
++$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno])
 +$  cycle
   $:  entry=@uxsite
       latch=@uxsite
@@ -70,7 +70,7 @@
   ==
 ::
 ++  add-frond
-  |=  [new=[par=@uxsite kid=@uxsite sock sock] cycles=(list cycle)]
+  |=  [new=[par=@uxsite kid=@uxsite sock sock-anno] cycles=(list cycle)]
   ^-  (list cycle)
   ?:  |(?=(~ cycles) (gth par.new latch.i.cycles))
     ::  push new cycle
@@ -151,7 +151,7 @@
     list=(list (trel sock * @uxsite))
     ::  fols: search by formula
     ::
-    fols=(jar * (pair sock @uxsite))
+    fols=(jar * (pair sock-anno @uxsite))
     ::  set: set of evalsites on the stack
     ::
     set=(set @uxsite)
@@ -178,7 +178,6 @@
   ::  retry evalsite analysis if a loop assumption was wrong
   ::
   =|  loop-block=blocklist
-  =|  melo-block=blocklist
   |-  ^-  [[sock-anno flags] state]
   =*  redo-loop  $
   =;  res
@@ -203,9 +202,9 @@
       ==
     ::
     &+[[pro.u.m deff] gen.u.m]
-  ::  check melo cache (heuristic)
+  ::  check melo cache (melo hit makes call loopy, might merge some cycles)
   ::
-  ?^  m=(melo here-site fol sub gen set.stack melo-block)
+  ?^  m=(melo here-site fol sub gen set.stack)
     =.  bars.gen.u.m
       %:  ps  bars.gen  'melo:'
         (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
@@ -217,7 +216,7 @@
   ::  push on the stack
   ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
-  =.  fols.stack  (~(add ja fols.stack) fol sock.sub here-site)
+  =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   =.  set.stack   (~(put in set.stack) here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
@@ -262,10 +261,7 @@
       ::
       =/  fol-new  data.sock.f-prod
       =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
-      =.  want.gen
-        %-  (~(uno by want.gen) fol-urge)
-        |=  [@uxsite a=cape b=cape]
-        (~(uni ca a) b)
+      =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::
       ::  check for loop:
       ::    Check if there is formula in the stack above us that has a
@@ -289,7 +285,7 @@
         ::
         ?:  (~(has ju loop-block) q.i.tak there-site)
           stack-loop(tak t.tak)
-        ?~  want=(close sock.s-prod p.i.tak q.i.tak gen)
+        ?~  want=(close sock.s-prod sock.p.i.tak q.i.tak gen)
           stack-loop(tak t.tak)
         ::  loop hit
         ::
@@ -307,16 +303,11 @@
           ==
         ::  propagate subject needs
         ::
-        =/  sub-urge
-          (urge:source (mask:source src.sub cape.sock.sub `set.stack) u.want)
-        ::
-        =.  want.gen
-          %-  (~(uno by want.gen) sub-urge)
-          |=  [@uxsite a=cape b=cape]
-          (~(uni ca a) b)
-        ::
+        =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
+        =/  sub-urge  (urge:source src.s-prod u.want)
+        =.  want.gen  (uni-urge:source want.gen sub-urge)
         =.  cycles.gen
-          (add-frond [q.i.tak there-site p.i.tak sock.s-prod] cycles.gen)
+          (add-frond [q.i.tak there-site sock.p.i.tak s-prod] cycles.gen)
         ::
         :_  gen
         :+  [%2 s-code f-code there-site]
@@ -552,22 +543,34 @@
   =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
   =/  err-gen=err-state
     %+  roll-deep  frond.pop
-    |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock]
+    |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno]
         err-gen=`err-state`&+gen
     ^-  err-state
     ?:  ?=(%| -.err-gen)  err-gen
+    =/  gen  p.err-gen
+    =^  par-final=cape  gen
+      =/  par-want-1=cape  (~(gut by want.gen) par |)
+      |-  ^-  [cape state]
+      =/  kid-sub-urge  (urge:source src.kid-sub par-want-1)
+      =.  want.gen  (uni-urge:source want.gen kid-sub-urge)
+      =/  par-want-2=cape  (~(gut by want.gen) par |)
+      ?.  =(par-want-1 par-want-2)
+        ~&  >>  %fixpoint-loop
+        $(par-want-1 par-want-2)
+      [par-want-1 gen]
+    ::
     =/  par-want=cape  (~(gut by want.gen) par |)
-    =/  par-masked=sock  (~(app ca par-want) par-sub)
-    ?.  (~(huge so par-masked) kid-sub)  ::  |+[par kid]
+    =/  par-masked=sock  (~(app ca par-final) par-sub)
+    ?.  (~(huge so par-masked) sock.kid-sub)  ::  |+[par kid]
       ~|  [par kid]
-      ~|  par-want
+      ~|  par-final
       !!
-    =.  every.results.p.err-gen
-      %+  ~(put by every.results.p.err-gen)  kid
+    =.  every.results.gen
+      %+  ~(put by every.results.gen)  kid
       ?:  =(par site)  [less-code code]
       (~(got by every.results.gen) par)
     ::
-    err-gen
+    &+gen
   ::
   ?:  ?=(%| -.err-gen)  err-gen
   =.  gen  p.err-gen
@@ -626,11 +629,7 @@
   =/  sub-urge
     (urge:source (mask:source src.sub cape.sock.sub `stack) cape.less-code.i)
   ::
-  =.  want.gen
-    %-  (~(uno by want.gen) sub-urge)
-    |=  [@uxsite a=cape b=cape]
-    (~(uni ca a) b)
-  ::
+  =.  want.gen  (uni-urge:source want.gen sub-urge)
   =.  every.results.gen
     (~(put by every.results.gen) site less-code.i nomm.i)
   ::
@@ -642,7 +641,6 @@
           sub=sock-anno
           gen=state
           stack=(set @uxsite)
-          block=blocklist
       ==
   ^-  (unit [from=@uxsite pro=sock-anno gen=state])
   =*  res  ,(unit [out=[@uxsite sock-anno gen=state] popped=(list cycle)])
@@ -656,7 +654,6 @@
     =*  mele-loop  $
     ?~  mele  cycles-loop(cycles.gen t.cycles.gen, popped [i.cycles.gen popped])
     =*  i  i.mele
-    ?:  (~(has ju block) site.i site)  mele-loop(mele t.mele)
     =/  want-site=cape  (~(gut by want.gen) site.i |)
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sub.i)
@@ -666,11 +663,7 @@
     =/  sub-urge
       (urge:source (mask:source src.sub cape.sock.sub `stack) want-site)
     ::
-    =.  want.gen
-      %-  (~(uno by want.gen) sub-urge)
-      |=  [@uxsite a=cape b=cape]
-      (~(uni ca a) b)
-    ::
+    =.  want.gen  (uni-urge:source want.gen sub-urge)
     `[[site.i prod.i gen] popped]
   ::
   ::
