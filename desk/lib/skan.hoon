@@ -498,8 +498,12 @@
     here-site
     fol
     code
-    less-code
-    $:less-memo
+    sub
+  ::  capture-res
+  ::
+    ?.  direct.flags  ~
+    `(~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
+  ::
     prod
     gen
   ==
@@ -586,8 +590,10 @@
   |=  $:  site=@uxsite
           fol=*
           code=nomm
-          less-code=sock
-          less-memo=(unit sock)
+          sub=sock-anno
+          :: less-code=sock
+          :: less-memo=(unit sock)
+          capture-res=(unit cape)
           prod=sock-anno
           gen=state
       ==
@@ -620,17 +626,20 @@
       :: ~&  (dif-ca par-want-1 par-want-2)
       $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
     ::
-    :: =/  par-want=cape  (~(gut by want.gen) par |)
-    :: =/  par-masked=sock  (~(app ca par-final) par-sub)
     ?.  (~(huge so par-final) sock.kid-sub)  |+[par kid]
-      :: ~|  [par kid]
-      :: :: ~|  cape.par-final
-      :: ~|  (dif-so par-final sock.kid-sub)
-      :: !!
     =.  every.results.gen
       %+  ~(put by every.results.gen)  kid
-      ?:  =(par site)  [less-code code]
-      (~(got by every.results.gen) par)
+      ?.  =(par site)  (~(got by every.results.gen) par)  ::  XX update less-code of parent?
+      :_  code
+      ::  less-code
+      ::
+      =/  want-site=cape  (~(gut by want.gen) site |)
+      =/  less-code=sock  (~(app ca want-site) sock.sub)
+      ?.  =(want-site cape.less-code)
+        ~_  'cape.less-code < want-site'
+        ~|  [cape.less-code want-site]
+        !!
+      less-code
     ::
     &+gen
   ::
@@ -646,14 +655,29 @@
   ::   |:  [v=*@uxsite acc=want.gen]
   ::   (~(del by acc) v)
   ::
-  :: =?  memo.results.gen  ?=(^ less-memo)
-  ::   %+  ~(add ja memo.results.gen)  fol
-  ::   :*  site
-  ::       code
-  ::       u.less-memo
-  ::       less-code
-  ::       prod
-  ::   ==
+  =?  memo.results.gen  ?=(^ capture-res)
+    =/  want-site=cape  (~(gut by want.gen) site |)
+    =/  less-code=sock  (~(app ca want-site) sock.sub)
+    ?.  =(want-site cape.less-code)
+      ~_  'cape.less-code < want-site'
+      ~|  [cape.less-code want-site]
+      !!
+    =/  less-memo=sock
+      =/  mask=cape  (~(uni ca want-site) u.capture-res)
+      =/  less  (~(app ca mask) sock.sub)
+      ?.  =(mask cape.less)
+        ~_  'cape.less < mask'
+        ~|  [cape.less mask]
+        !!
+      less
+    ::
+    %+  ~(add ja memo.results.gen)  fol
+    :*  site
+        code
+        less-memo
+        less-code
+        prod
+    ==
   ::
   &+gen
 ::  treat analysis result of a non-finalized evalsite
@@ -862,6 +886,8 @@
       :: ~|  [need+less.u.call got+[& u.s1]]
       ~|  %sock-nest-error
       !!
+    ~?  =(site.n 0xb9)  site.n
+    ~?  =(site.n 0xbd)  site.n
     ?^  res=(jet u.s1 u.f1)  u.res
     $(s u.s1, n nomm.u.call)
   ::
