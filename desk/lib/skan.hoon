@@ -307,8 +307,8 @@
         ::  propagate subject needs
         ::
         :: =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
-        :: =/  sub-urge  (urge:source src.s-prod u.want)
-        :: =.  want.gen  (uni-urge:source want.gen sub-urge)
+        =/  sub-urge  (urge:source src.s-prod u.want)
+        =.  want.gen  (uni-urge:source want.gen sub-urge)
         =.  cycles.gen
           (add-frond [q.i.tak there-site sock.p.i.tak s-prod] cycles.gen)
         ::
@@ -469,6 +469,7 @@
   ::
   ::  XX use temporary code table for potentially nonfinalized results
   ::
+  ~?  |(=(here-site 0xb9) =(here-site 0xbd))  [here-site code]
   =.  every.results.gen  (~(put by every.results.gen) here-site less-code code)
   ::  if finalized: update loopiness (caller is not loopy due to a call to
   ::  a finalized entry into a cycle)
@@ -723,6 +724,7 @@
     (~(put by every.results.gen) site less-code.i nomm.i)
   ::
   `[site.i prod.i gen]
+::  XX better popped handling
 ::
 ++  melo
   |=  $:  site=@uxsite
