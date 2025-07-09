@@ -17,11 +17,8 @@
 ::
 |%
 ++  weld-meal
-  ^~
-  =>  ..sock-anno
-  =/  l  (list meal)
-  =/  w  (bake weld ,[l l])
-  |=([* l l] (w +<+))
+  |=  [* ls=[(list meal) (list meal)]]
+  (weld ls)
 ::
 ++  scux  ^~((cury scot %ux))
 ::  print analysis stack
@@ -60,7 +57,7 @@
 ::
 ++  error
   |$  [m]
-  (each m (trel ?(%loop %melo) @uxsite @uxsite))
+  (each m (pair @uxsite @uxsite))
 ::
 +$  err-state  (error state)
 +$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock])
@@ -70,8 +67,6 @@
       =frond
       set=(deep @uxsite)
       melo=(jar * meal)
-      $=  hits
-      (deep [old=@uxsite new=@uxsite old-sub=sock new-sub=sock capture=cape])
   ==
 ::
 ++  add-frond
@@ -82,7 +77,7 @@
     ::
     :_  cycles
     ^-  cycle
-    [par.new kid.new [%list new ~] [%list ~[kid.new]] ~ list+~]
+    [par.new kid.new [%list new ~] [%list ~[kid.new]] ~]
   ::  pop and extend top cycle
   ::
   =/  new-cycle=cycle
@@ -91,7 +86,6 @@
         (dive frond.i.cycles new)
         (dive set.i.cycles kid.new)
         melo.i.cycles
-        hits.i.cycles
     ==
   ::
   =/  rest  t.cycles
@@ -107,7 +101,6 @@
   =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
   =.  set.new-cycle    [%deep set.new-cycle set.i.rest]
   =.  melo.new-cycle   ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
-  =.  hits.new-cycle   [%deep hits.new-cycle hits.i.rest]
   ::
   $(rest t.rest)
 ::
@@ -192,10 +185,7 @@
     ?-  -.res
       %&  p.res
       %|  ~&  >>>  %redo
-          ?-  p.p.res
-            %loop  redo-loop(loop-block (~(put ju loop-block) q.p.res r.p.res))
-            %melo  redo-loop(melo-block (~(put ju melo-block) q.p.res r.p.res))
-          ==
+          redo-loop(loop-block (~(put ju loop-block) p.res))
     ==
   ^-  (error [[sock-anno flags] state])
   ::  record current evalsite in the subject provenance tree
@@ -568,7 +558,7 @@
     ?:  ?=(%| -.err-gen)  err-gen
     =/  par-want=cape  (~(gut by want.gen) par |)
     =/  par-masked=sock  (~(app ca par-want) par-sub)
-    ?.  (~(huge so par-masked) kid-sub)  ::  |+[%loop par kid]
+    ?.  (~(huge so par-masked) kid-sub)  ::  |+[par kid]
       ~|  [par kid]
       ~|  par-want
       !!
@@ -576,31 +566,6 @@
       %+  ~(put by every.results.p.err-gen)  kid
       ?:  =(par site)  [less-code code]
       (~(got by every.results.gen) par)
-    ::
-    err-gen
-  ::
-  ?:  ?=(%| -.err-gen)  err-gen
-  =.  gen  p.err-gen
-  ::  remove err-gen
-  ::
-  =>  +
-  =/  err-gen
-    %+  roll-deep  hits.pop
-    |:  :-  *[old=@uxsite new=@uxsite old-sub=sock new-sub=sock capture=cape]
-        err-gen=`err-state`&+gen
-    ^-  err-state
-    ?:  ?=(%| -.err-gen)  err-gen
-    =/  old-want=cape  (~(gut by want.gen) old |)
-    =/  mask=cape  (~(uni ca old-want) capture)
-    =/  less-melo=sock  (~(app ca mask) old-sub)
-    ?.  (~(huge so less-melo) new-sub)  ::  |+[%melo old new]
-      ~|  [old new]
-      ~|  old-want
-      !!
-    =/  less-code=sock  (~(app ca old-want) old-sub)
-    =.  every.results.p.err-gen
-      %+  ~(put by every.results.p.err-gen)  new
-      (~(got by every.results.gen) old)
     ::
     err-gen
   ::
@@ -680,18 +645,14 @@
           block=blocklist
       ==
   ^-  (unit [from=@uxsite pro=sock-anno gen=state])
-  =+  ^-  $=  res
-          %-  unit
-          $:  out=[@uxsite sock-anno gen=state]
-              hit=[@uxsite @uxsite sock sock cape]
-              popped=(list cycle)
-          ==
+  =*  res  ,(unit [out=[@uxsite sock-anno gen=state] popped=(list cycle)])
+  =/  =res
     =|  popped=(list cycle)
-    |-
+    |-  ^-  res
     =*  cycles-loop  $
     ?~  cycles.gen  ~
     =/  mele  (~(get ja melo.i.cycles.gen) fol)
-    |-
+    |-  ^-  res
     =*  mele-loop  $
     ?~  mele  cycles-loop(cycles.gen t.cycles.gen, popped [i.cycles.gen popped])
     =*  i  i.mele
@@ -710,8 +671,8 @@
       |=  [@uxsite a=cape b=cape]
       (~(uni ca a) b)
     ::
-    `[[site.i prod.i gen] [site.i site sub.i sock.sub capture.i] popped]
-  ::  =+  res
+    `[[site.i prod.i gen] popped]
+  ::
   ::
   ?~  res  ~
   ::  top melo hit: no merging necessary
@@ -734,11 +695,9 @@
     =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
     =.  set.new-cycle    [%deep set.new-cycle set.i.rest]
     =.  melo.new-cycle   ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
-    =.  hits.new-cycle   [%deep hits.new-cycle hits.i.rest]
     ::
     $(rest t.rest)
   ::
-  =.  hits.new-cycle  (dive hits.new-cycle hit.u.res)
   =.  cycles.gen  [new-cycle cycles.gen]
   `out.u.res(gen gen)
 ::  given kid and parent subject socks and parent evalsite label, check if
