@@ -140,6 +140,7 @@
       cycles=(list cycle)
       want=urge
       bars=@ud
+      redo=blocklist
   ==
 ::
 +$  stack
@@ -172,19 +173,18 @@
     ::   !!
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
-  ?>  =(0x0 here-site)
   |-  ^-  [[sock-anno flags] gen=state]
   =*  eval-loop  $
   ::  retry evalsite analysis if a loop assumption was wrong
   ::
-  =|  loop-block=blocklist
+  :: =|  loop-block=blocklist
   |-  ^-  [[sock-anno flags] state]
   =*  redo-loop  $
   =;  res
     ?-  -.res
       %&  p.res
-      %|  ~&  >>>  %redo
-          redo-loop(loop-block (~(put ju loop-block) p.res))
+      %|  ~&  >>>  [%redo p.res]
+          redo-loop(redo.gen (~(put ju redo.gen) p.res))
     ==
   ^-  (error [[sock-anno flags] state])
   ::  record current evalsite in the subject provenance tree
@@ -286,7 +286,7 @@
         ::  loop heuristic:
         ::  equal formulas, not in the blocklist, quasi matching subjects
         ::
-        ?:  (~(has ju loop-block) q.i.tak there-site)
+        ?:  (~(has ju redo.gen) q.i.tak there-site)
           stack-loop(tak t.tak)
         ?~  want=(close sock.s-prod sock.p.i.tak q.i.tak gen)
           stack-loop(tak t.tak)
@@ -307,8 +307,8 @@
         ::  propagate subject needs
         ::
         :: =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
-        =/  sub-urge  (urge:source src.s-prod u.want)
-        =.  want.gen  (uni-urge:source want.gen sub-urge)
+        :: =/  sub-urge  (urge:source src.s-prod u.want)
+        :: =.  want.gen  (uni-urge:source want.gen sub-urge)
         =.  cycles.gen
           (add-frond [q.i.tak there-site sock.p.i.tak s-prod] cycles.gen)
         ::
@@ -548,6 +548,30 @@
     $(a -.a, b ?@(b b -.b), rev (peg rev 2))
     $(a +.a, b ?@(b b +.b), rev (peg rev 3))
   ==
+::  (~(huge so a) b) failed, what are the offending subsocks?
+::
+++  dif-so
+  |=  [a=sock b=sock]
+  ^-  (list (pair @ (lest (pair @ ?(%lost %data)))))
+  =*  res  ,(list (pair @ (lest (pair @ ?(%lost %data)))))
+  =/  rev  1
+  |-  ^-  res
+  ?:  |(?=(^ cape.a) ?=(^ cape.b))
+    %:  weld
+      $(a ~(hed so a), b ~(hed so b), rev (peg rev 2))
+      $(a ~(tel so a), b ~(tel so b), rev (peg rev 3))
+    ==
+  ?:  ?=(%| cape.a)  ~
+  ?:  ?=(%| cape.b)  ~[[rev ~[[1 %lost]]]]
+  =/  rel  1
+  =-  ?~  -  ~  ~[[rev -]]
+  |-  ^-  (list (pair @ ?(%lost %data)))
+  ?:  =(data.a data.b)  ~
+  ?.  &(?=(^ data.a) ?=(^ data.b))  ~[[rel %data]]
+  %:  weld
+    $(data.a -.data.a, data.b -.data.b, rel (peg rel 2))
+    $(data.a +.data.a, data.b +.data.b, rel (peg rel 3))
+  ==
 ::
 ++  max-xeb-ax
   |=  n=*
@@ -576,29 +600,33 @@
     ^-  err-state
     ?:  ?=(%| -.err-gen)  err-gen
     =/  gen  p.err-gen
-    =^  par-final=cape  gen
-      =/  par-want-1=cape  (~(gut by want.gen) par |)
+    =^  par-final=sock  gen
+      =.  src.kid-sub  (mask:source src.kid-sub cape.sock.kid-sub ~)
       =/  c  0
       =/  dep-print  &
-      |-  ^-  [cape state]
+      ::
+      =/  par-want-1=cape  (~(gut by want.gen) par |)
+      =/  par-masked-1=sock  (~(app ca par-want-1) par-sub)
+      |-  ^-  [sock state]
       =/  kid-sub-urge  (urge:source src.kid-sub par-want-1)
       =.  want.gen  (uni-urge:source want.gen kid-sub-urge)
       =/  par-want-2=cape  (~(gut by want.gen) par |)
-      ?.  =(~(cut ca par-want-1) ~(cut ca par-want-2))
-        ~?  dep-print  (max-xeb-ax data.par-sub)
-        =.  dep-print  |
-        ~&  >>  fixpoint-loop+c
-        ~&  (dif-ca par-want-1 par-want-2)
-        :: ~&  [par-want-1 par-want-2]
-        $(par-want-1 par-want-2, c +(c))
-      [par-want-1 gen]
+      =/  par-masked-2=sock  (~(app ca par-want-2) par-sub)
+      ?:  =(~(norm so par-masked-1) ~(norm so par-masked-2))
+        [par-masked-1 gen]
+      :: ~?  dep-print  (max-xeb-ax data.par-sub)
+      =.  dep-print  |
+      ~&  >>  fixpoint-loop+c
+      :: ~&  (dif-ca par-want-1 par-want-2)
+      $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
     ::
-    =/  par-want=cape  (~(gut by want.gen) par |)
-    =/  par-masked=sock  (~(app ca par-final) par-sub)
-    ?.  (~(huge so par-masked) sock.kid-sub)  ::  |+[par kid]
-      ~|  [par kid]
-      ~|  par-final
-      !!
+    :: =/  par-want=cape  (~(gut by want.gen) par |)
+    :: =/  par-masked=sock  (~(app ca par-final) par-sub)
+    ?.  (~(huge so par-final) sock.kid-sub)  |+[par kid]
+      :: ~|  [par kid]
+      :: :: ~|  cape.par-final
+      :: ~|  (dif-so par-final sock.kid-sub)
+      :: !!
     =.  every.results.gen
       %+  ~(put by every.results.gen)  kid
       ?:  =(par site)  [less-code code]
@@ -618,14 +646,14 @@
   ::   |:  [v=*@uxsite acc=want.gen]
   ::   (~(del by acc) v)
   ::
-  =?  memo.results.gen  ?=(^ less-memo)
-    %+  ~(add ja memo.results.gen)  fol
-    :*  site
-        code
-        u.less-memo
-        less-code
-        prod
-    ==
+  :: =?  memo.results.gen  ?=(^ less-memo)
+  ::   %+  ~(add ja memo.results.gen)  fol
+  ::   :*  site
+  ::       code
+  ::       u.less-memo
+  ::       less-code
+  ::       prod
+  ::   ==
   ::
   &+gen
 ::  treat analysis result of a non-finalized evalsite
@@ -700,6 +728,10 @@
       (urge:source src.sub want-site)
     ::
     =.  want.gen  (uni-urge:source want.gen sub-urge)
+    =.  every.results.gen
+      %+  ~(put by every.results.gen)  site
+      (~(got by every.results.gen) site.i)
+    ::
     `[[site.i prod.i gen] popped]
   ::
   ::

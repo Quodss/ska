@@ -426,20 +426,6 @@
            =/  need=cape  (~(pat ca cap) ax)
            (jib m sit need |=(c=cape (~(uni ca c) need)))
     ==
-  ::
-  ++  trim
-    |=  [src=source stack=(set @uxsite) =cape]
-    ^-  source
-    ?:  |(?=(~ src) ?=(%| cape))  ~
-    ::  debug assert: we should only have provenance of things we fully know?
-    ::
-    ?>  |(?=(@ cape) =(~ n.src))
-    =/  n  (skim n.src |=(peon (~(has in stack) sit)))
-    =+  [p q]=?@(cape [& &] cape)
-    =/  l  $(src l.src, cape p)
-    =/  r  $(src r.src, cape q)
-    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
-    [n l r]
   --
 ::
 ::    axis after axis
