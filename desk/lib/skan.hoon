@@ -469,7 +469,6 @@
   ::
   ::  XX use temporary code table for potentially nonfinalized results
   ::
-  ~?  |(=(here-site 0xb9) =(here-site 0xbd))  [here-site code]
   =.  every.results.gen  (~(put by every.results.gen) here-site less-code code)
   ::  if finalized: update loopiness (caller is not loopy due to a call to
   ::  a finalized entry into a cycle)
@@ -841,12 +840,12 @@
 ++  jet
   |=  [s=* f=*]
   ^-  (unit (unit))
-  ~
-  :: ?^  res=(jet-simple-gate-hoot s f)  ~&  %hit  res
-  :: ?^  res=(jet-simple-gate-play s f)  res
-  :: ::  place for jets with nontrivial templates
-  :: ::
   :: ~
+  ?^  res=(jet-simple-gate-hoot s f)  ~&  %hit  res
+  ?^  res=(jet-simple-gate-play s f)  res
+  ::  place for jets with nontrivial templates
+  ::
+  ~
 ::  Analyze s/f pair, then run Nomm interpreter on the result
 ::  Indirect calls reanalyze
 ::  Direct calls are verified with subject sock nest checking
