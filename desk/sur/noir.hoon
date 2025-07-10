@@ -28,9 +28,12 @@
 ::
 +$  results
   $:
-    ::  all direct call analysis results
+    ::  all finalized call analysis results
     ::
-    every=(map @uxsite [less=sock =nomm])
+    final=(map @uxsite [less=sock =nomm])
+    ::  non-finalized call analysis results
+    ::
+    process=(map @uxsite [=nomm sub=sock])
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject for match & for code, full product
     ::
@@ -40,7 +43,7 @@
   ==
 ::  melo entry: code, subject capture cape, full subject to mask, full product
 ::
-+$  meal  [site=@uxsite =nomm capture=cape sub=sock prod=sock-anno]
++$  meal  [site=@uxsite =nomm capture=cape sub=sock-anno prod=sock-anno]
 ::  urge: evalsite subject requirements
 ::
 +$  urge  (map @uxsite cape)
@@ -369,6 +372,7 @@
   ++  uni-urge
     |=  [a=^urge b=^urge]
     ^-  ^urge
+    :: ~?  >>>  (~(has by b) 0x12c)  0x12c
     %-  (~(uno by a) b)
     =>  ..ca  ^~
     |=  [@uxsite a=cape b=cape]
