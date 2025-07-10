@@ -16,6 +16,33 @@
 =/  bars  &
 ::
 |%
+++  uni-melo
+  |=  l=(list (jar * meal))
+  ^-  (jar * (pair @ meal))
+  ~+
+  ~&  >>  %uni-melo-recalc
+  ?~  l  ~
+  =/  out=(jar * (pair @ meal))
+    %-  ~(run by i.l)
+    |=  l=(list meal)
+    (turn l (lead 0))
+  ::
+  =/  c  1
+  =/  rest  t.l
+  |-  ^+  out
+  ?~  rest  out
+  =/  next=(jar * (pair @ meal))
+    %-  ~(run by i.l)
+    |=  l=(list meal)
+    (turn l (lead c))
+  ::
+  =.  out
+    %-  (~(uno by out) next)
+    |=  [* ls=[(list [@ meal]) (list [@ meal])]]
+    (weld ls)
+  ::
+  $(c +(c), rest t.rest)
+::
 ++  weld-meal
   |=  [* ls=[(list meal) (list meal)]]
   (weld ls)
@@ -168,9 +195,9 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.gen.res-eval)
-    :: ?.  =(~ want.gen.res-eval)
-    ::   ~|  ~(key by want.gen.res-eval)
-    ::   !!
+    ?.  =(~ want.gen.res-eval)
+      ~|  ~(key by want.gen.res-eval)
+      !!
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
   |-  ^-  [[sock-anno flags] gen=state]
@@ -215,11 +242,12 @@
   ::
   ::  push on the stack
   ::
-  :: =.  src.sub  (mask:source src.sub cape.sock.sub `set.stack)
+  =.  set.stack   (~(put in set.stack) here-site)
+  ::
+  =.  src.sub  (mask:source src.sub cape.sock.sub `set.stack)
   ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
-  =.  set.stack   (~(put in set.stack) here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
     =.  bars.gen  (ps bars.gen 'step:' (rap 3 (scux here-site) ~) --1)
@@ -262,8 +290,7 @@
       ::  direct call
       ::
       =/  fol-new  data.sock.f-prod
-      :: =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
-      =/  fol-urge  (urge:source src.f-prod &)
+      =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
       =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::
       ::  check for loop:
@@ -306,7 +333,7 @@
           ==
         ::  propagate subject needs
         ::
-        :: =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
+        =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
         =/  sub-urge  (urge:source src.s-prod u.want)
         =.  want.gen  (uni-urge:source want.gen sub-urge)
         =.  cycles.gen
@@ -367,8 +394,7 @@
         :-  int-sock
         ::  mask unified provenance tree with intersection cape
         ::
-        :: (mask:source uni-source cape.int-sock `set.stack)
-        (mask:source uni-source cape.int-sock ~)
+        (mask:source uni-source cape.int-sock `set.stack)
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -536,7 +562,7 @@
         prod
     ==
   ::
-  :: =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
+  =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
   gen
 ::  given that b > a, for each axis that used to be %.n in a and became not that
 ::  in b, what subaxes are set to %.y?
@@ -651,12 +677,6 @@
   ::
   =>  +
   =.  bars.gen  (ps bars.gen 'fini:' (scux site) -1)
-  :: =.  want.gen  (~(del by want.gen) site)
-  :: =.  want.gen
-  ::   %+  roll-deep  set.pop
-  ::   |:  [v=*@uxsite acc=want.gen]
-  ::   (~(del by acc) v)
-  ::
   =?  memo.results.gen  ?=(^ capture-res)
     =/  want-site=cape  (~(gut by want.gen) site |)
     =/  less-code=sock  (~(app ca want-site) sock.sub)
@@ -680,6 +700,12 @@
         less-code
         prod
     ==
+  ::
+  =.  want.gen  (~(del by want.gen) site)
+  =.  want.gen
+    %+  roll-deep  set.pop
+    |:  [v=*@uxsite acc=want.gen]
+    (~(del by acc) v)
   ::
   &+gen
 ::  treat analysis result of a non-finalized evalsite
@@ -715,8 +741,7 @@
   ::  memo hit: propagate subject needs
   :: 
   =/  sub-urge
-    :: (urge:source (mask:source src.sub cape.sock.sub `stack) cape.less-code.i)
-    (urge:source src.sub cape.less-code.i)
+    (urge:source (mask:source src.sub cape.sock.sub `stack) cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =.  every.results.gen
@@ -733,61 +758,48 @@
           stack=(set @uxsite)
       ==
   ^-  (unit [from=@uxsite pro=sock-anno gen=state])
-  =*  res  ,(unit [out=[@uxsite sock-anno gen=state] popped=(list cycle)])
+  =*  res  ,(unit [out=[@uxsite sock-anno gen=state] depth=@])
   =/  =res
-    =|  popped=(list cycle)
+    =/  melo-dep  (uni-melo (turn cycles.gen |=(cycle melo)))
+    =/  mele  (~(get ja melo-dep) fol)
     |-  ^-  res
-    =*  cycles-loop  $
-    ?~  cycles.gen  ~
-    =/  mele  (~(get ja melo.i.cycles.gen) fol)
-    |-  ^-  res
-    =*  mele-loop  $
-    ?~  mele  cycles-loop(cycles.gen t.cycles.gen, popped [i.cycles.gen popped])
-    =*  i  i.mele
+    ?~  mele  ~
+    =*  i  q.i.mele
     =/  want-site=cape  (~(gut by want.gen) site.i |)
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sub.i)
-    ?.  (~(huge so less) sock.sub)  mele-loop(mele t.mele)
+    ?.  (~(huge so less) sock.sub)  $(mele t.mele)
     ::  melo hit: propagate subject needs
     :: 
     =/  sub-urge
-      :: (urge:source (mask:source src.sub cape.sock.sub `stack) want-site)
-      (urge:source src.sub want-site)
+      (urge:source (mask:source src.sub cape.sock.sub `stack) want-site)
     ::
     =.  want.gen  (uni-urge:source want.gen sub-urge)
     =.  every.results.gen
       %+  ~(put by every.results.gen)  site
       (~(got by every.results.gen) site.i)
     ::
-    `[[site.i prod.i gen] popped]
+    `[[site.i prod.i gen] p.i.mele]
   ::
   ::
   ?~  res  ~
   ::  top melo hit: no merging necessary
   ::
-  ?:  =(~ popped.u.res)  `out.u.res
+  ?:  =(0 depth.u.res)  `out.u.res
+  =/  depth  depth.u.res
   =/  gen  gen.out.u.res
-  ::  top cycle with a melo hit also needs to be merged
-  ::
-  =/  popped  (flop [i.-.cycles.gen popped.u.res])
-  =.  cycles.gen  t.+.cycles.gen
-  ::  merge all cycles up to & including melo-hit cycle top to bottom
-  ::
-  ?~  popped  !!
-  =/  new-cycle  i.popped
-  =/  rest  t.popped
-  =.  new-cycle
-    |-  ^-  cycle
-    ?~  rest  new-cycle
-    =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
-    =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
-    =.  set.new-cycle    [%deep set.new-cycle set.i.rest]
-    =.  melo.new-cycle   ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
-    ::
-    $(rest t.rest)
-  ::
-  =.  cycles.gen  [new-cycle cycles.gen]
-  `out.u.res(gen gen)
+  =/  new-cycle  ,.-.cycles.gen
+  =/  rest  ,.+.cycles.gen
+  |-
+  ?:  =(0 depth)
+    =.  cycles.gen  [new-cycle rest]
+    `out.u.res(gen gen)
+  ?~  rest  !!
+  =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
+  =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
+  =.  set.new-cycle    [%deep set.new-cycle set.i.rest]
+  =.  melo.new-cycle   ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
+  $(rest t.rest, depth (dec depth))
 ::  given kid and parent subject socks and parent evalsite label, check if
 ::  the kid sock is compatible with parent for a loop call. heuristic.
 ::  returns code usage cape if compatible
