@@ -593,7 +593,7 @@
   ::  validate fronds
   ::
   =/  err-gen=err-state
-    %+  roll-deep  frond.pop
+    %+  reel-deep  frond.pop
     |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno]
         err-gen=`err-state`&+gen
     ^-  err-state
@@ -630,7 +630,7 @@
   ::  validate melo hits
   ::
   =/  err-gen=err-state
-    %+  roll-deep  hits.pop
+    %+  reel-deep  hits.pop
     |:  :-  ^*  $:  new=@uxsite
                     new-sub=sock-anno
                     old=@uxsite
