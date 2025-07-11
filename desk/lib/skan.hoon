@@ -20,7 +20,7 @@
   |=  l=(list (jar * meal))
   ^-  (jar * (pair @ meal))
   ~+
-  ~&  >>  %uni-melo-recalc
+  ~?  >>  verb  %uni-melo-recalc
   ?~  l  ~
   =/  out=(jar * (pair @ meal))
     %-  ~(run by i.l)
@@ -199,7 +199,7 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.gen.res-eval)
-    ?.  =(~ want.gen.res-eval)  ::  XX crashes in parsing due to 0x12c present, why?
+    ?.  =(~ want.gen.res-eval)
       ~|  ~(key by want.gen.res-eval)
       !!
     gen.res-eval
@@ -213,7 +213,7 @@
   =;  res
     ?-  -.res
       %&  p.res
-      %|  ~&  >>>  [%redo res]
+      %|  ~?  >>>  verb  [%redo res]
           ?-  p.p.res
             %loop  redo-loop(block-loop.gen (~(put ju block-loop.gen) q.p.res r.p.res))
             %melo  redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
@@ -602,7 +602,6 @@
     =^  par-final=sock  gen
       =.  src.kid-sub  (mask:source src.kid-sub cape.sock.kid-sub ~)
       =/  c  0
-      =/  dep-print  &
       ::
       =/  par-want-1=cape  (~(gut by want.gen) par |)
       =/  par-masked-1=sock  (~(app ca par-want-1) par-sub)
@@ -613,10 +612,7 @@
       =/  par-masked-2=sock  (~(app ca par-want-2) par-sub)
       ?:  =(~(norm so par-masked-1) ~(norm so par-masked-2))
         [par-masked-1 gen]
-      :: ~?  dep-print  (max-xeb-ax data.par-sub)
-      =.  dep-print  |
-      ~&  >>  fixpoint-loop+c
-      :: ~&  (dif-ca par-want-1 par-want-2)
+      ~?  >>  verb  fixpoint-loop+c
       $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
     ::
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
@@ -658,7 +654,7 @@
       =/  old-masked-2=sock  (~(app ca old-want-2) sock.old-sub)
       ?:  =(~(norm so old-masked-1) ~(norm so old-masked-2))
         [old-masked-1 gen]
-      ~&  >>  %fixpoint-loop-melo
+      ~&  >>  %fixpoint-melo
       $(old-masked-1 old-masked-2, old-want-1 old-want-2)
     ::
     ?.  (~(huge so old-final) sock.new-sub)  |+[%melo old new]
@@ -675,7 +671,6 @@
     ~|  [cape.less-code want-site]
     !!
   =.  final.results.gen  (~(put by final.results.gen) site less-code code)
-  :: ~?  =(site 0xd)  (flatten set.pop)
   =.  final.results.gen
     %+  roll-deep  set.pop
     |:  [site=*@uxsite final=final.results.gen]
@@ -768,6 +763,7 @@
           stack=(set @uxsite)
       ==
   ^-  (unit [from=@uxsite pro=sock-anno gen=state])
+  ?:  =(~ cycles.gen)  ~
   =*  hit  ,[new=@uxsite new-sub=sock-anno =meal]
   =*  res  ,(unit [out=[@uxsite sock-anno gen=state] =hit depth=@])
   =/  =res
@@ -845,9 +841,10 @@
 ++  jet-simple-gate-hoot
   =/  l=(list)
     =>  hoot
-    :~  dec  add  sub  mul  div  mod  dvr  gte  gth  lte  lth  max  min
-        cap  mas  peg  bex  can  cat  cut  end  fil  hew  lsh  met  rap
-        rep  rev  rig  rip  rsh  run  rut  sew  swp  xeb
+    :~  dec  add  sub  mul  div  mod  dvr  gte  gth
+        lte  lth  max  min  cap  mas  peg  bex  can
+        cat  cut  end  fil  hew  lsh  met  rap  rep
+        rev  rig  rip  rsh  run  rut  sew  swp  xeb
     ==
   |=  [s=* f=*]
   ^-  (unit (unit))
@@ -859,9 +856,9 @@
 ++  jet-simple-gate-play
   =/  l=(list)
     =>  playpen
-    :~  dec  add  sub  mul  div  mod  dvr  gte  gth  lte  lth
-        bex  can  cat  cut  end  fil  lsh  met  rap
-        rep  rev  rip  rsh  swp  xeb
+    :~  dec  add  sub  mul  div  mod  dvr  gte  gth
+        lte  lth  bex  can  cat  cut  end  fil  lsh
+        met  rap  rep  rev  rip  rsh  swp  xeb
     ==
   |=  [s=* f=*]
   ^-  (unit (unit))
@@ -874,7 +871,7 @@
   |=  [s=* f=*]
   ^-  (unit (unit))
   :: ~
-  ?^  res=(jet-simple-gate-hoot s f)  ~&  %hit  res
+  ?^  res=(jet-simple-gate-hoot s f)  res
   ?^  res=(jet-simple-gate-play s f)  res
   ::  place for jets with nontrivial templates
   ::
@@ -923,8 +920,6 @@
       :: ~|  [need+less.u.call got+[& u.s1]]
       ~|  %sock-nest-error
       !!
-    ~?  =(site.n 0xb9)  site.n
-    ~?  =(site.n 0xbd)  site.n
     ?^  res=(jet u.s1 u.f1)  u.res
     $(s u.s1, n nomm.u.call)
   ::

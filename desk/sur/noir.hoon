@@ -438,19 +438,16 @@
 ::
 ++  hub
   |=  [a=@ b=@]
-  ::  fast (not actually fast?)
-  ::
-  =/  out
-    :: ~>  %bout
-    =/  met-a  (met 0 a)
-    =/  met-b  (met 0 b)
-    =/  dif  (sub met-b met-a)
-    (con (bex dif) (end [0 dif] b))
-  ::
-  =-  ?>  =(out -)  out
-  ::  slow
-  ::
-  :: ~>  %bout
+  :: ::  fast (not actually fast?)
+  :: ::
+  :: =/  out
+  ::   :: ~>  %bout
+  ::   =/  met-a  (met 0 a)
+  ::   =/  met-b  (met 0 b)
+  ::   =/  dif  (sub met-b met-a)
+  ::   (con (bex dif) (end [0 dif] b))
+  :: ::
+  :: =-  ?>  =(out -)  out
   ?<  =(0 a)
   ?<  =(0 b)
   |-  ^-  @
