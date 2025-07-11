@@ -199,9 +199,9 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.gen.res-eval)
-    :: ?.  =(~ want.gen.res-eval)  ::  XX crashes in parsing due to 0x12c present, why?
-    ::   ~|  ~(key by want.gen.res-eval)
-    ::   !!
+    ?.  =(~ want.gen.res-eval)  ::  XX crashes in parsing due to 0x12c present, why?
+      ~|  ~(key by want.gen.res-eval)
+      !!
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
   |-  ^-  [[sock-anno flags] gen=state]
@@ -233,6 +233,7 @@
         --0
       ==
     ::
+    =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m deff] gen.u.m]
   ::  check melo cache (melo hit makes call loopy, might merge some cycles)
   ::
@@ -243,6 +244,7 @@
         --0
       ==
     ::
+    =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m [& &]] gen.u.m]
   ::
   ::  push on the stack
@@ -796,10 +798,10 @@
   ::
   ?:  =(0 depth.u.res)
     ?~  cycles.gen.out.u.res  !!
-    =*  hits  hits.i.cycles.gen.out.u.res
-    =*  set   set.i.cycles.gen.out.u.res
-    =.  hits  (dive hits hit.u.res)
-    =.  set   (dive set site)
+    =*  i   i.cycles.gen.out.u.res
+    =.  hits.i  (dive hits.i hit.u.res)
+    =.  set.i   (dive set.i site)
+    =.  latch.i  site
     `out.u.res
   =/  depth  depth.u.res
   =/  gen  gen.out.u.res
@@ -807,8 +809,9 @@
   =/  rest  ,.+.cycles.gen
   |-
   ?:  =(0 depth)
-    =.  hits.new-cycle  (dive hits.new-cycle hit.u.res)
-    =.  set.new-cycle   (dive set.new-cycle site)
+    =.  hits.new-cycle   (dive hits.new-cycle hit.u.res)
+    =.  set.new-cycle    (dive set.new-cycle site)
+    =.  latch.new-cycle  site
     =.  cycles.gen  [new-cycle rest]
     `out.u.res(gen gen)
   ?~  rest  !!

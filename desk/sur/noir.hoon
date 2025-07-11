@@ -372,7 +372,6 @@
   ++  uni-urge
     |=  [a=^urge b=^urge]
     ^-  ^urge
-    :: ~?  >>>  (~(has by b) 0x12c)  0x12c
     %-  (~(uno by a) b)
     =>  ..ca  ^~
     |=  [@uxsite a=cape b=cape]
