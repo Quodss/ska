@@ -1,4 +1,5 @@
 /-  *sock
+=/  check-soak  &
 |%
 ::  operations on $cape
 ++  ca
@@ -191,12 +192,14 @@
   ::  every axis known in one is also known in 2, with equal data
   ::
   ++  huge
-    |=  two=sock
-    ^-  ?
-    =/  a  (huge1 two)
-    =/  b  (huge2 two)
-    ?>  =(a b)
-    a
+    !@  check-soak
+      |=  two=sock
+      ^-  ?
+      =/  a  (huge1 two)
+      =/  b  (huge2 two)
+      ?>  =(a b)
+      a
+    huge2
   ::
   ++  huge1
     |=  two=sock
@@ -219,8 +222,12 @@
           ?.  cape.one  &
           ?&(?=(@ cape.two) cape.two =(data.one data.two))
         ?@  data.two  ?>(?=(@ cape.two) |)
-        =/  [lope=cape rope=cape]  ?:(?=(^ cape.one) cape.one [cape.one cape.one])
-        =/  [loop=cape roop=cape]  ?:(?=(^ cape.two) cape.two [cape.two cape.two])
+        =/  [lope=cape rope=cape]
+          ?:(?=(^ cape.one) cape.one [cape.one cape.one])
+        ::
+        =/  [loop=cape roop=cape]
+          ?:(?=(^ cape.two) cape.two [cape.two cape.two])
+        ::
         ?&  $(one [lope -.data.one], two [loop -.data.two])
             $(one [rope +.data.one], two [roop +.data.two])
         ==
@@ -287,32 +294,34 @@
     ?:  =(data.one data.two)  one
     ?.  &(?=(^ data.one) ?=(^ data.two))  lost
     %-  %~  knit  so
-        $(data.one data:hed, data.two data:hed(one two))
-    $(data.one data:tel, data.two data:tel(one two))
+        $(data.one -.data.one, data.two -.data.two)
+    $(data.one +.data.one, data.two +.data.two)
   ::    edit
   ::
   ::  update mask and data at an axis into a sock
   ++  darn
-    |=  [axe=@ two=sock]
-    ^-  sock
-    =*  sam  +<
-    =/  a  (darn1 sam)
-    =/  b  (darn2 sam)
-    ?.  =(a b)
-      |-
-      ?:  |(?=(^ cape.a) ?=(^ cape.b))
+    !@  check-soak
+      |=  [axe=@ two=sock]
+      ^-  sock
+      =*  sam  +<
+      =/  a  (darn1 sam)
+      =/  b  (darn2 sam)
+      ?.  =(a b)
+        |-
+        ?:  |(?=(^ cape.a) ?=(^ cape.b))
+          (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
+        ?:  |(?=(%| cape.a) ?=(%| cape.b))
+          ~|  a
+          ~|  b
+          !!
+        ?:  |(?=(@ data.a) ?=(@ data.b))
+          ?:  =(data.a data.b)  lost
+          ~|  a
+          ~|  b
+          !!
         (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
-      ?:  |(?=(%| cape.a) ?=(%| cape.b))
-        ~|  a
-        ~|  b
-        !!
-      ?:  |(?=(@ data.a) ?=(@ data.b))
-        ?:  =(data.a data.b)  lost
-        ~|  a
-        ~|  b
-        !!
-      (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
-    a
+      a
+    darn1
   ::
   ++  darn1
     |=  [axe=@ two=sock]

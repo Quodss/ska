@@ -1,4 +1,5 @@
 /+  *soak
+=/  check-noir  &
 |%
 ::    Nomm (Nock--)
 ::
@@ -74,29 +75,35 @@
     ^-  source
     ?~  a  b
     ?~  b  a
-    =-  ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -  ::  debug check; shouldn't be necessary if source is normalized?
+    ::  debug check; shouldn't be necessary if source is normalized?
+    ::
+    =-  !@  check-noir
+          ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
+        -
     :+  ~(tap in (~(gas in (~(gas in *(set (pair @axis @uxsite))) n.a)) n.b))
       $(a l.a, b l.b)
     $(a r.a, b r.b)
   ::
   ++  mask
-    |=  [src=source cap=cape stack=(unit (set @uxsite))]
-    ^-  source
-    =*  sam  +<
-    =/  a
-      :: ~>  %bout
-      (mask1 sam)
-    ::
-    =/  b
-      :: ~>  %bout
-      (mask2 sam)
-    ::
-    ?.  (eq a b)
-      ~|  a
-      ~|  b
-      ~|  [src cap stack]
-      !!
-    a
+    !@  check-noir
+      |=  [src=source cap=cape stack=(unit (set @uxsite))]
+      ^-  source
+      =*  sam  +<
+      =/  a
+        :: ~>  %bout
+        (mask1 sam)
+      ::
+      =/  b
+        :: ~>  %bout
+        (mask2 sam)
+      ::
+      ?.  (eq a b)
+        ~|  a
+        ~|  b
+        ~|  [src cap stack]
+        !!
+      a
+    mask1
   ::
   ++  mask1
     |=  [src=source cap=cape stack=(unit (set @uxsite))]
@@ -222,30 +229,32 @@
     ==
   ::
   ++  edit
-    |=  [rec=source ax=@ don=source]
-    ^-  source
-    =*  sam  +<
-    =/  a
-      :: ~>  %bout
-      (edit1 sam)
-    ::
-    =/  b
-      :: ~>  %bout
-      (edit2 sam)  ::  faster?
-    ::
-    =/  c
-      :: ~>  %bout
-      (edit3 sam)  :: even faster?
-    ::
-    ?.  (eq a b)
-      ~|  sam
-      ~|  [a b]
-      !!
-    ?.  (eq b c)
-      ~|  sam
-      ~|  [b c]
-      !!
-    a
+    !@  check-noir
+      |=  [rec=source ax=@ don=source]
+      ^-  source
+      =*  sam  +<
+      =/  a
+        :: ~>  %bout
+        (edit1 sam)
+      ::
+      =/  b
+        :: ~>  %bout
+        (edit2 sam)  ::  faster?
+      ::
+      =/  c
+        :: ~>  %bout
+        (edit3 sam)  :: even faster?
+      ::
+      ?.  (eq a b)
+        ~|  sam
+        ~|  [a b]
+        !!
+      ?.  (eq b c)
+        ~|  sam
+        ~|  [b c]
+        !!
+      a
+    edit3
   ::
   ++  edit1
     |=  [rec=source ax=@ don=source]
@@ -378,21 +387,21 @@
     (~(uni ca a) b)
   ::
   ++  urge
-    :: urge2
-    |=  [src=source cap=cape]
-    ^-  ^urge
-    =*  sam  +<
-    =/  a
-      :: ~>  %bout
-      (urge1 sam)
-    ::
-    =/  b
-      :: ~>  %bout
-      (urge2 sam)
-    ::
-    ?>  =(a b)
-    a
-  ::  XX performance: make tail recursive?
+    !@  check-noir
+      |=  [src=source cap=cape]
+      ^-  ^urge
+      =*  sam  +<
+      =/  a
+        :: ~>  %bout
+        (urge1 sam)
+      ::
+      =/  b
+        :: ~>  %bout
+        (urge2 sam)
+      ::
+      ?>  =(a b)
+      a
+    urge2
   ::
   ++  urge1
     |=  [src=source cap=cape]
