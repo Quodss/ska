@@ -1,6 +1,5 @@
 /+  *test, *skan,  playpen, hoot
 ::
-=.  verb  |
 =/  expect-eq-nock
   |=  [sub=* fol=*]
   (expect-eq !>((mole |.(.*(sub fol)))) !>((run-nomm sub fol)))

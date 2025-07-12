@@ -12,15 +12,19 @@
 ::  default flags: not loopy, fully direct
 ::
 =/  deff  [| &]
-=/  verb  &
-=/  bars  &
+::  Wing for compile-time branching in printing routines
+::
+:: =/  verb  &
+::  print bars?
+::
+=/  p-bars  &
 ::
 |%
 ++  uni-melo
   |=  l=(list (jar * meal))
   ^-  (jar * (pair @ meal))
   ~+
-  ~?  >>  verb  %uni-melo-recalc
+  =>  !@(verb ~&(>> %uni-melo-recalc .) .)
   ?~  l  ~
   =/  out=(jar * (pair @ meal))
     %-  ~(run by i.l)
@@ -53,8 +57,7 @@
 ++  ps
   |=  [bars=@ud tag=cord comment=cord diff=@s]
   ^+  bars
-  ?.  verb  bars
-  ?.  ^bars  ((slog (rap 3 tag ' ' comment ~) ~) 0)
+  ?.  p-bars  ((slog (rap 3 tag ' ' comment ~) ~) 0)
   =/  [bars-print=@ bars-return=@]
     ?+  diff  ~|(%weird-diff !!)
       %--0  [bars bars]
@@ -213,10 +216,14 @@
   =;  res
     ?-  -.res
       %&  p.res
-      %|  ~?  >>>  verb  [%redo res]
-          ?-  p.p.res
-            %loop  redo-loop(block-loop.gen (~(put ju block-loop.gen) q.p.res r.p.res))
-            %melo  redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
+      %|  =>  !@(verb ~&(>>> [%redo res] .) .)
+          ?-    p.p.res
+              %loop
+            redo-loop(block-loop.gen (~(put ju block-loop.gen) q.p.res r.p.res))
+          ::
+              %melo
+            redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
+          ::
     ==    ==
   ^-  (error [[sock-anno flags] state])
   ::  record current evalsite in the subject provenance tree
@@ -227,23 +234,25 @@
   ::  check memo cache
   ::
   ?^  m=(memo here-site fol sub gen set.stack)
-    =.  bars.gen.u.m
-      %:  ps  bars.gen  'memo:'
-        (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
-        --0
-      ==
-    ::
+    =>  !@  verb
+          %=  .
+              bars.gen.u.m  %:  ps  bars.gen  'memo:'
+                              (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
+                              --0
+          ==                ==
+        .
     =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m deff] gen.u.m]
   ::  check melo cache (melo hit makes call loopy, might merge some cycles)
   ::
   ?^  m=(melo here-site fol sub gen set.stack)
-    =.  bars.gen.u.m
-      %:  ps  bars.gen  'melo:'
-        (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
-        --0
-      ==
-    ::
+    =>  !@  verb
+          %=  .
+              bars.gen.u.m  %:  ps  bars.gen  'melo:'
+                              (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
+                              --0
+          ==                ==
+        .
     =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m [& &]] gen.u.m]
   ::
@@ -258,7 +267,7 @@
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
-    =.  bars.gen  (ps bars.gen 'step:' (rap 3 (scux here-site) ~) --1)
+    =>  !@(verb .(bars.gen (ps bars.gen 'step:' (scux here-site) --1)) .)
     |-  ^-  [[nomm sock-anno flags] state]
     =*  fol-loop  $
     ?+    fol  [[[%0 0] dunno deff] gen]
@@ -290,7 +299,7 @@
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
-        =.  bars.gen  (ps bars.gen 'indi:' (rap 3 (scux there-site) ~) --0)
+        =>  !@(verb .(bars.gen (ps bars.gen 'indi:' (scux there-site) --0)) .)
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -334,11 +343,13 @@
         ::  would be greater than the latch would also be greater than the kid,
         ::  and vice versa)
         ::
-        =.  bars.gen
-          %:  ps  bars.gen  'loop:'
-            (rap 3 (scux there-site) ' =?> ' (scux q.i.tak) ~)
-            --0
-          ==
+        =>  !@  verb
+              %=  .
+                  bars.gen  %:  ps  bars.gen  'loop:'
+                              (rap 3 (scux there-site) ' =?> ' (scux q.i.tak) ~)
+                              --0
+              ==            ==
+            .
         ::  propagate subject needs
         ::
         =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
@@ -489,7 +500,7 @@
           direct=?
       ==
   ^-  state
-  =.  bars.gen  (ps bars.gen 'done:' (scux site) -1)
+  =>  !@(verb .(bars.gen (ps bars.gen 'done:' (scux site) -1)) .)
   =/  mayb-site=(unit cape)  (~(get by want.gen) site)
   =/  want-site=cape  ?~(mayb-site | u.mayb-site)
   ::  minified subject for codegen
@@ -612,7 +623,7 @@
       =/  par-masked-2=sock  (~(app ca par-want-2) par-sub)
       ?:  =(~(norm so par-masked-1) ~(norm so par-masked-2))
         [par-masked-1 gen]
-      ~?  >>  verb  fixpoint-loop+c
+      =>  !@(verb ~&(>> fixpoint-loop+c .) .)
       $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
     ::
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
@@ -663,7 +674,7 @@
   ?:  ?=(%| -.err-gen)  err-gen
   =.  gen  p.err-gen
   =>  +
-  =.  bars.gen  (ps bars.gen 'fini:' (scux site) -1)
+  =>  !@(verb .(bars.gen (ps bars.gen 'fini:' (scux site) -1)) .)
   =/  want-site=cape  (~(gut by want.gen) site |)
   =/  less-code=sock  (~(app ca want-site) sock.sub)
   ?.  =(want-site cape.less-code)
@@ -717,7 +728,7 @@
 ++  process
   |=  [site=@uxsite sub=sock-anno fol=* code=nomm prod=sock-anno gen=state]
   ^-  state
-  =.  bars.gen  (ps bars.gen 'ciao:' (scux site) -1)
+  =>  !@(verb .(bars.gen (ps bars.gen 'ciao:' (scux site) -1)) .)
   ?~  cycles.gen  !!
   =.  set.i.cycles.gen   (dive set.i.cycles.gen site)
   =/  capture-res=cape
