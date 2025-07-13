@@ -21,6 +21,26 @@
 =/  p-file  |
 ::
 |%
+++  safe
+  |=  fol=*
+  ^-  (unit *)
+  ?+  fol  ~
+    [%1 p=*]       `p.fol
+    [%11 @ p=*]    $(fol p.fol)
+    [%11 [@ h=^] p=*]  ?~(s=(safe h.fol) ~ $(fol p.fol))
+  ==
+::  returns ~ on failure, `~ on root registration, ``@ on child registration
+::
+++  fast-parent
+  |=  fol=*
+  ^-  (unit (unit @))
+  ?+  fol  ~
+    [%1 %0]        `~
+    [%0 p=@]       ``p.fol
+    [%11 @ p=*]    $(fol p.fol)
+    [%11 [@ f=^] p=*]  ?~(s=(safe f.fol) ~ $(fol p.fol))
+  ==
+::
 ++  uni-melo
   |=  l=(list (jar * meal))
   ^-  (jar * (pair @ meal))
@@ -283,6 +303,14 @@
   ::    want: evalsite subject requirements of non-finalized evalsites:
   ::      parts of the subject that are used as code
   ::
+  ::    bars: number of bars for printing
+  ::    block-loop/melo: blocklists for future guesses during retries
+  ::    area: outermost spot in the current eval
+  ::    jets: accumulated cold state:
+  ::      root: root noun -> path
+  ::      core: path -> core sock
+  ::      batt: core battery -> path
+  ::
   $:  =results
       site=@uxsite
       cycles=(list cycle)
@@ -291,7 +319,11 @@
       block-loop=blocklist
       block-melo=blocklist
       area=(unit spot)
-  ==
+      $=  jets
+      $:  root=(jug * path)
+          core=(jug path sock)  ::  XX why multiple socks per path?
+          batt=(jug ^ path)
+  ==  ==
 ::
 +$  stack
   ::  TODO leave essential
@@ -592,7 +624,7 @@
             ==
           .
       =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol f.fol)
-      :_  gen
+      :_  (hint a.fol h-prod f-prod gen)
       :+  [%d11 [a.fol h-code] f-code]
         f-prod
       (fold-flag f-flags h-flags ~)
@@ -1002,6 +1034,64 @@
   |:  [f=*flags out=out]
   [|(loopy.f loopy.out) &(direct.f direct.out)]
 ::
+++  hint
+  |=  [tag=@ hint=sock-anno result=sock-anno gen=state]
+  ^-  state
+  ?+    tag  gen
+      %fast
+    ?.  =(& cape.sock.hint)  ~&(>>> %fast-lost-clue gen)
+    =*  clue  data.sock.hint
+    ?.  ?=([name=$@(@tas [@tas @]) dad=* *] clue)
+      ~&(>>> fast-bad-clue+clue gen)
+    =/  label=cord
+      ?@  name.clue  name.clue
+      (rap 3 -.name.clue (scot %ud -.name.clue) ~)
+    ::
+    ?~  parent=(fast-parent dad.clue)  ~&(>>> fast-bad-clue+clue gen)
+    ?~  u.parent
+      ::  register root
+      ::
+      ?.  =(& cape.sock.result)  ~&(>>> %fast-lost-root gen)
+      %=  gen
+        core.jets  (~(put ju core.jets.gen) ~[label] sock.result)
+        root.jets  (~(put ju root.jets.gen) data.sock.result ~[label])
+      ==
+    ::  register child core
+    ::
+    =/  axis=@  u.u.parent
+    =/  batt  (~(pull so sock.result) 2)
+    ?.  =(& cape.batt)  ~&(>>> fast-lost-batt+label gen)
+    ?.  ?=(^ data.batt)  ~&(>>> fast-atom-batt+data.batt gen)
+    =/  fore  (~(pull so sock.result) axis)
+    =/  past=(set path)
+      ?.  =(& cape.fore)  ~
+      (~(get ju root.jets.gen) data.fore)
+    ::
+    =/  batt-fore  (~(pull so fore) 2)
+    =?  past  &(?=(%& cape.batt-fore) ?=(^ data.batt-fore))
+      (~(uni in past) (~(get ju batt.jets.gen) data.batt-fore))
+    ::
+    =/  past-list  ~(tap in past)
+    |-  ^-  state
+    =*  past-loop  $
+    ?~  past-list  gen
+    =/  pax=path  [label i.past-list]
+    =/  socks  ~(tap in (~(get ju core.jets.gen) i.past-list))
+    |-  ^-  state
+    =*  sock-loop  $
+    ?~  socks  past-loop(past-list t.past-list)
+    ?.  (~(huge so i.socks) fore)  sock-loop(socks t.socks)
+    =/  just-fol=sock
+      =-  ?>(=((~(darn so |+~) 2 batt) -) -)
+      [[& |] data.batt ~]
+    ::
+    =/  template=sock  (~(darn so just-fol) axis i.socks)
+    ::
+    %=  gen
+      core.jets  (~(put ju core.jets.gen) pax template)
+      batt.jets  (~(put ju batt.jets.gen) data.batt pax)
+    ==
+  ==
 ++  jet-simple-gate-hoot
   =/  l=(list)
     =>  hoot
