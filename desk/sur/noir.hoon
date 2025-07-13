@@ -1,5 +1,5 @@
 /+  *soak
-=/  check-noir  &
+:: =/  check-noir  ~
 |%
 ::    Nomm (Nock--)
 ::
@@ -36,15 +36,28 @@
     ::
     process=(map @uxsite [=nomm sub=sock])
     ::  memoized results: finalized, fully direct
-    ::  code, minimized subject for match & for code, full product
+    ::  code, minimized subject for match & for code, full product, provenance
+    ::  relocation map
     ::
     $=  memo
     %+  jar  *
-    [site=@uxsite =nomm less-memo=sock less-code=sock prod=sock-anno]
+    $:  site=@uxsite
+        =nomm
+        less-memo=sock
+        less-code=sock
+        prod=sock
+        map=spring:source
+    ==
   ==
 ::  melo entry: code, subject capture cape, full subject to mask, full product
 ::
-+$  meal  [site=@uxsite =nomm capture=cape sub=sock-anno prod=sock-anno]
++$  meal  $:  site=@uxsite
+              =nomm
+              capture=cape
+              sub=sock-anno
+              prod=sock
+              map=spring:source
+          ==
 ::  urge: evalsite subject requirements
 ::
 +$  urge  (map @uxsite cape)
@@ -54,7 +67,20 @@
   |^  source
   ::
   +$  source  (tree (list peon))
+  +$  spring  (tree (list @axis))
   +$  peon    [ax=@axis sit=@uxsite]
+::
+  ++  check
+    !@  check-noir
+      |=  [a=source b=@uxsite]
+      ^-  ?
+      ?:  =(~ a)  &
+      |-  ^-  ?
+      ?~  a  |
+      ?^  f=(find ~[b] (turn n.a |=(peon sit)))  &
+      |($(a l.a) $(a r.a))
+    _&
+  ::
   ++  norm
     |=  a=source
     ^-  source
@@ -80,7 +106,7 @@
     =-  !@  check-noir
           ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
         -
-    :+  ~(tap in (~(gas in (~(gas in *(set (pair @axis @uxsite))) n.a)) n.b))
+    :+  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
       $(a l.a, b l.b)
     $(a r.a, b r.b)
   ::
@@ -438,6 +464,25 @@
            =/  need=cape  (~(pat ca cap) ax)
            (jib m sit need |=(c=cape (~(uni ca c) need)))
     ==
+  ::
+  ++  route
+    |=  [src=source here=@uxsite]
+    ^-  spring
+    ?~  src  ~
+    =/  n  (murn n.src |=(peon ?.(=(sit here) ~ `ax)))
+    =/  l  $(src l.src)
+    =/  r  $(src r.src)
+    ?:  &(=(~ n) =(~ l) =(~ r))  ~
+    [n l r]
+  ::
+  ++  relo
+    |=  [src=source pin=spring]
+    ^-  source
+    ?~  pin  ~
+    =/  recur  (cons $(pin l.pin) $(pin r.pin))
+    %+  roll  n.pin
+    |:  [ax=*@ out=recur]
+    (uni (slot src ax) out)
   --
 ::
 ::    axis after axis

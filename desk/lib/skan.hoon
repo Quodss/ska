@@ -14,7 +14,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  &
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -467,6 +467,10 @@
   ::  included), removing cousin provenance; also mask down to the product cape
   ::
   =.  src.prod  (mask:source src.prod cape.sock.prod `set.stack)
+  ?.  (check:source src.prod here-site)
+    ~|  src.prod
+    ~|  here-site
+    !!
   =;  fin=(error [loopy=? gen=state])
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
@@ -513,7 +517,9 @@
   =?  memo.results.gen  direct
     =/  capture-res=cape
       (~(gut by (urge:source src.prod cape.sock.prod)) site |)
+    ::  unify +route:source and getting capture-res?
     ::
+    =/  map  (route:source src.prod site)
     =/  mask=cape  (~(uni ca want-site) capture-res)
     =/  less-memo  (~(app ca mask) sock.sub)
     ?.  =(mask cape.less-memo)
@@ -529,7 +535,8 @@
         less-code
         ::  full result, captured subject was included in memo requirement
         ::
-        prod
+        sock.prod
+        map
     ==
   ::
   =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
@@ -694,6 +701,7 @@
     =/  capture-res=cape
       (~(gut by (urge:source src.prod cape.sock.prod)) site |)
     ::
+    =/  map  (route:source src.prod site)
     =/  less-memo=sock
       =/  mask=cape  (~(uni ca want-site) capture-res)
       =/  less  (~(app ca mask) sock.sub)
@@ -708,7 +716,8 @@
         code
         less-memo
         less-code
-        prod
+        sock.prod
+        map
     ==
   ::
   =.  want.gen  (~(del by want.gen) site)
@@ -729,13 +738,15 @@
   =/  capture-res=cape
     (~(gut by (urge:source src.prod cape.sock.prod)) site |)
   ::
+  =/  map  (route:source src.prod site)
   =.  melo.i.cycles.gen
     %+  ~(add ja melo.i.cycles.gen)  fol
     :*  site
         code
         capture-res
         sub
-        prod
+        sock.prod
+        map
     ==
   ::
   =.  process.results.gen  (~(put by process.results.gen) site code sock.sub)
@@ -758,8 +769,8 @@
   =.  final.results.gen
     (~(put by final.results.gen) site less-code.i nomm.i)
   ::
-  =.  src.prod.i  (mask:source src.prod.i cape.sock.prod.i `stack)
-  `[site.i prod.i gen]
+  =/  src  (relo:source src.sub map.i)
+  `[site.i [prod.i src] gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
@@ -787,7 +798,8 @@
       %+  ~(put by process.results.gen)  site
       (~(got by process.results.gen) site.i)
     ::
-    `[[site.i prod.i gen] [site sub q.i.mele] p.i.mele]
+    =/  src  (relo:source src.sub map.i)
+    `[[site.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
   ::
   ::
   ?~  res  ~
