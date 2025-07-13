@@ -47,6 +47,7 @@
         less-code=sock
         prod=sock
         map=spring:source
+        area=(unit spot)
     ==
   ==
 ::  melo entry: code, subject capture cape, full subject to mask, full product
@@ -57,6 +58,7 @@
               sub=sock-anno
               prod=sock
               map=spring:source
+              area=(unit spot)
           ==
 ::  urge: evalsite subject requirements
 ::

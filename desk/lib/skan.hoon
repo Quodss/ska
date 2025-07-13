@@ -12,10 +12,13 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  ~
+=/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
+::  print filename?
+::
+=/  p-file  |
 ::
 |%
 ++  uni-melo
@@ -52,18 +55,132 @@
 ++  scux  ^~((cury scot %ux))
 ::  print analysis stack
 ::
-++  ps
-  |=  [bars=@ud tag=cord comment=cord diff=@s]
-  ^+  bars
-  ?.  p-bars  ((slog (rap 3 tag ' ' comment ~) ~) 0)
-  =/  [bars-print=@ bars-return=@]
-    ?+  diff  ~|(%weird-diff !!)
-      %--0  [bars bars]
-      %--1  [. .]:(succ bars)
-      %-1   [bars ~|(%bars-underrun (dec bars))]
+++  p
+  |%
+  ++  print
+    |=  [bars=@ud tag=cord comment=tank diff=@s]
+    ^+  bars
+    ?.  p-bars  ((slog [%rose [~ ~ ~] tag ': ' comment ~]~) 0)
+    =/  [bars-print=@ bars-return=@]
+      ?+  diff  ~|(%weird-diff !!)
+        %--0  [bars bars]
+        %--1  [. .]:(succ bars)
+        %-1   [bars ~|(%bars-underrun (dec bars))]
+      ==
+    ::
+    %.  bars-return
+    %-  slog
+    :_  ~
+    [%rose [~ ~ ~] tag ': ' leaf+(reap bars-print '|') ' ' comment ~]
+  ::
+  ++  ren
+    |=  pot=spot
+    ^-  tank
+    =/  loc=tank
+      =*  l   p.q.pot
+      =*  r   q.q.pot
+      =/  ud  |=(a=@u (scow %ud a))
+      leaf+"<[{(ud p.l)} {(ud q.l)}].[{(ud p.r)} {(ud q.r)}]>"
+    ::
+    ?.  p-file  loc
+    [%rose [":" ~ ~] (smyt p.pot) loc ~]
+  ::
+  ++  step
+    |=  [site=@uxsite seat=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'step' - --1)
+    ^-  tank
+    ?~  seat  (scux site)
+    [%rose [" " ~ ~] (scux site) (ren u.seat) ~]
+  ::
+  ++  loop
+    |=  $:  kid=@uxsite
+            par=@uxsite
+            kid-seat=(unit spot)
+            par-area=(unit spot)
+            bars=@ud
+        ==
+    ^+  bars
+    =-  (print bars 'loop' - --0)
+    ^-  tank
+    ?:  |(?=(~ kid-seat) ?=(~ par-area))
+      [%rose [" =?= " ~ ~] (scux kid) (scux par) ~]
+    :+  %rose  ["; " ~ ~]
+    :~
+      [%rose [" =?= " ~ ~] ~[(scux kid) (scux par)]]
+      [%rose [" =?> " ~ ~] (ren u.kid-seat) (ren u.par-area) ~]
     ==
   ::
-  ((slog (rap 3 tag ' ' (fil 3 bars-print '|') ' ' comment ~) ~) bars-return)
+  ++  done
+    |=  [site=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'done' - -1)
+    ^-  tank
+    ?~  area  (scux site)
+    :+  %rose  ["; " ~ ~]
+    :~
+      (scux site)
+      [%rose [" ==> " ~ ~] ?~(seat '??' (ren u.seat)) (ren u.area) ~]
+    ==
+  ::
+  ++  indi
+    |=  [site=@uxsite seat=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'indi' - --0)
+    ^-  tank
+    ?~  seat  (scux site)
+    [%rose ["; " ~ ~] (scux site) (ren u.seat) ~]
+  ::
+  ++  fini
+    |=  [site=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'fini' - -1)
+    ^-  tank
+    ?~  area  (scux site)
+    :+  %rose  ["; " ~ ~]
+    :~
+      (scux site)
+      [%rose [" ==> " ~ ~] ?~(seat '??' (ren u.seat)) (ren u.area) ~]
+    ==
+  ::
+  ++  ciao
+    |=  [site=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'ciao' - -1)
+    ^-  tank
+    ?~  area  (scux site)
+    :+  %rose  ["; " ~ ~]
+    :~
+      (scux site)
+      [%rose [" ==> " ~ ~] ?~(seat '??' (ren u.seat)) (ren u.area) ~]
+    ==
+  ::
+  ++  memo
+    |=  [here=@uxsite from=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'memo' - --0)
+    ^-  tank
+    ?~  area
+      [%rose [" === " ~ ~] (scux here) (scux from) ~]
+    :+  %rose  ["; " ~ ~]
+    :~
+      [%rose [" === " ~ ~] (scux here) (scux from) ~]
+      [%rose [" ==> " ~ ~] ?~(seat '??' (ren u.seat)) (ren u.area) ~]
+    ==
+  ::
+  ++  melo
+    |=  [here=@uxsite from=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
+    ^+  bars
+    =-  (print bars 'melo' - --0)
+    ^-  tank
+    ?~  area
+      [%rose [" =?= " ~ ~] (scux here) (scux from) ~]
+    :+  %rose  ["; " ~ ~]
+    :~
+      [%rose [" =?= " ~ ~] (scux here) (scux from) ~]
+      [%rose [" =?> " ~ ~] ?~(seat '??' (ren u.seat)) (ren u.area) ~]
+    ==
+  --
 ::  redo blocklist parent -> children
 ::
 +$  blocklist  (jug @uxsite @uxsite)
@@ -173,6 +290,7 @@
       bars=@ud
       block-loop=blocklist
       block-melo=blocklist
+      area=(unit spot)
   ==
 ::
 +$  stack
@@ -188,6 +306,7 @@
     ::  set: set of evalsites on the stack
     ::
     set=(set @uxsite)
+    areas=(map @uxsite spot)
   ==
 ::
 ++  scan
@@ -205,8 +324,10 @@
       !!
     gen.res-eval
   =^  here-site  gen  [site.gen gen(site +(site.gen))]
+  =|  seat=(unit spot)  ::  call site
   |-  ^-  [[sock-anno flags] gen=state]
   =*  eval-loop  $
+  =|  trace=(list spot)
   ::  retry evalsite analysis if a loop assumption was wrong
   ::
   |-  ^-  [[sock-anno flags] state]
@@ -233,11 +354,10 @@
   ::
   ?^  m=(memo here-site fol sub gen set.stack)
     =>  !@  verb
-          %=  .
-              bars.gen.u.m  %:  ps  bars.gen  'memo:'
-                              (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
-                              --0
-          ==                ==
+          %=    .
+              bars.gen.u.m
+            (memo:p here-site from.u.m seat area.u.m bars.gen.u.m)
+          ==
         .
     =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m deff] gen.u.m]
@@ -245,11 +365,10 @@
   ::
   ?^  m=(melo here-site fol sub gen set.stack)
     =>  !@  verb
-          %=  .
-              bars.gen.u.m  %:  ps  bars.gen  'melo:'
-                              (rap 3 (scux here-site) ' <- ' (scux from.u.m) ~)
-                              --0
-          ==                ==
+          %=    .
+              bars.gen.u.m
+            (melo:p here-site from.u.m seat area.u.m bars.gen.u.m)
+          ==
         .
     =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m [& &]] gen.u.m]
@@ -265,7 +384,7 @@
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
-    =>  !@(verb .(bars.gen (ps bars.gen 'step:' (scux here-site) --1)) .)
+    =>  !@(verb .(bars.gen (step:p here-site seat bars.gen)) .)
     |-  ^-  [[nomm sock-anno flags] state]
     =*  fol-loop  $
     ?+    fol  [[[%0 0] dunno deff] gen]
@@ -297,7 +416,9 @@
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
-        =>  !@(verb .(bars.gen (ps bars.gen 'indi:' (scux there-site) --0)) .)
+        =>  !@  verb
+              .(bars.gen (indi:p there-site ?~(trace ~ `i.trace) bars.gen))
+            .
         :_  gen
         :+  [%2 s-code f-code there-site]
           dunno
@@ -342,11 +463,15 @@
         ::  and vice versa)
         ::
         =>  !@  verb
-              %=  .
-                  bars.gen  %:  ps  bars.gen  'loop:'
-                              (rap 3 (scux there-site) ' =?> ' (scux q.i.tak) ~)
-                              --0
-              ==            ==
+              %=    .
+                  bars.gen
+                =/  kid-seat  ?~(trace ~ `i.trace)
+                =/  par-area=(unit spot)
+                  ?:  =(q.i.tak here-site)  area.gen
+                  (~(get by areas.stack) q.i.tak)
+                ::
+                (loop:p there-site q.i.tak kid-seat par-area bars.gen)
+              ==
             .
         =.  cycles.gen
           (add-frond [q.i.tak there-site sock.p.i.tak s-prod] cycles.gen)
@@ -357,13 +482,18 @@
         (fold-flag s-flags f-flags [& &] ~)
       ::  non-loop case: analyse through
       ::
+      =/  area-stash  area.gen
       =^  [pro=sock-anno =flags]  gen
         %=  eval-loop
-          sub        s-prod
-          fol        fol-new
-          here-site  there-site
+          sub          s-prod
+          fol          fol-new
+          here-site    there-site
+          seat         ?~(trace ~ `i.trace)
+          area.gen     ~
+          areas.stack  ?~  area.gen  areas.stack
+                       (~(put by areas.stack) here-site u.area.gen)
         ==
-      :_  gen
+      :_  gen(area area-stash)
       :+  [%2 s-code f-code there-site]
         =.  src.pro  (mask:source src.pro cape.sock.pro `set.stack)
         pro
@@ -449,8 +579,19 @@
     ::
         [%11 [a=@ h=^] f=^]
       ::
-      =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol f.fol)
       =^  [h-code=nomm h-prod=sock-anno h-flags=flags]  gen  fol-loop(fol h.fol)
+      =>  !@  verb
+            =/  pot=(unit spot)
+              ?.  =(%spot a.fol)  ~
+              ((soft spot) data.sock.h-prod)
+            ::
+            ?~  pot  +
+            %_  +
+              area.gen  ?~(area.gen pot area.gen)
+              trace  [u.pot trace]
+            ==
+          .
+      =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol f.fol)
       :_  gen
       :+  [%d11 [a.fol h-code] f-code]
         f-prod
@@ -476,15 +617,15 @@
     ::  success, non-loopy
     ::
     :+  %&  %|
-    (final-simple here-site sub fol code prod gen direct.flags)
+    (final-simple here-site sub fol code prod gen direct.flags seat)
   ?~  cycles.gen  !!
   ?.  =(here-site entry.i.cycles.gen)
-    &+[& (process here-site sub fol code prod gen)]
+    &+[& (process here-site sub fol code prod gen seat)]
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
   ^-  err-state
-  (final-cycle here-site sub fol code prod gen direct.flags)
+  (final-cycle here-site sub fol code prod gen direct.flags seat)
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
@@ -495,9 +636,10 @@
           prod=sock-anno
           gen=state
           direct=?
+          seat=(unit spot)
       ==
   ^-  state
-  =>  !@(verb .(bars.gen (ps bars.gen 'done:' (scux site) -1)) .)
+  =>  !@(verb .(bars.gen (done:p site seat area.gen bars.gen)) .)
   =/  mayb-site=(unit cape)  (~(get by want.gen) site)
   =/  want-site=cape  ?~(mayb-site | u.mayb-site)
   ::  minified subject for codegen
@@ -535,6 +677,7 @@
         ::
         sock.prod
         map
+        area.gen
     ==
   ::
   =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) site)
@@ -597,6 +740,7 @@
           prod=sock-anno
           gen=state
           direct=?
+          seat=(unit spot)
       ==
   ^-  err-state
   =.  process.results.gen  (~(put by process.results.gen) site code sock.sub)
@@ -674,7 +818,7 @@
   ?:  ?=(%| -.err-gen)  err-gen
   =.  gen  p.err-gen
   =>  +
-  =>  !@(verb .(bars.gen (ps bars.gen 'fini:' (scux site) -1)) .)
+  =>  !@(verb .(bars.gen (fini:p site seat area.gen bars.gen)) .)
   =/  want-site=cape  (~(gut by want.gen) site |)
   =/  less-code=sock  (~(app ca want-site) sock.sub)
   ?.  =(want-site cape.less-code)
@@ -716,6 +860,7 @@
         less-code
         sock.prod
         map
+        area.gen
     ==
   ::
   =.  want.gen  (~(del by want.gen) site)
@@ -728,9 +873,16 @@
 ::  treat analysis result of a non-finalized evalsite
 ::
 ++  process
-  |=  [site=@uxsite sub=sock-anno fol=* code=nomm prod=sock-anno gen=state]
+  |=  $:  site=@uxsite
+          sub=sock-anno
+          fol=*
+          code=nomm
+          prod=sock-anno
+          gen=state
+          seat=(unit spot)
+      ==
   ^-  state
-  =>  !@(verb .(bars.gen (ps bars.gen 'ciao:' (scux site) -1)) .)
+  =>  !@(verb .(bars.gen (ciao:p site seat area.gen bars.gen)) .)
   ?~  cycles.gen  !!
   =.  set.i.cycles.gen   (dive set.i.cycles.gen site)
   =/  capture-res=cape
@@ -745,6 +897,7 @@
         sub
         sock.prod
         map
+        area.gen
     ==
   ::
   =.  process.results.gen  (~(put by process.results.gen) site code sock.sub)
@@ -752,9 +905,9 @@
 ::
 ++  memo
   |=  [site=@uxsite fol=* sub=sock-anno gen=state stack=(set @uxsite)]
-  ^-  (unit [from=@uxsite pro=sock-anno gen=state])
+  ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=state])
   =/  meme  (~(get ja memo.results.gen) fol)
-  |-  ^-  (unit [@uxsite sock-anno state])
+  |-  ^-  (unit [@uxsite (unit spot) sock-anno state])
   ?~  meme  ~
   =*  i  i.meme
   ?.  (~(huge so less-memo.i) sock.sub)  $(meme t.meme)
@@ -768,7 +921,7 @@
     (~(put by final.results.gen) site less-code.i nomm.i)
   ::
   =/  src  (relo:source src.sub map.i)
-  `[site.i [prod.i src] gen]
+  `[site.i area.i [prod.i src] gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
@@ -777,10 +930,10 @@
           gen=state
           stack=(set @uxsite)
       ==
-  ^-  (unit [from=@uxsite pro=sock-anno gen=state])
+  ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=state])
   ?:  =(~ cycles.gen)  ~
   =*  hit  ,[new=@uxsite new-sub=sock-anno =meal]
-  =*  res  ,(unit [out=[@uxsite sock-anno gen=state] =hit depth=@])
+  =*  res  ,(unit [out=[@uxsite (unit spot) sock-anno gen=state] =hit depth=@])
   =/  =res
     =/  melo-dep  (uni-melo (turn cycles.gen |=(cycle melo)))
     =/  mele  (~(get ja melo-dep) fol)
@@ -797,7 +950,7 @@
       (~(got by process.results.gen) site.i)
     ::
     =/  src  (relo:source src.sub map.i)
-    `[[site.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
+    `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
   ::
   ::
   ?~  res  ~
