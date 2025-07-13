@@ -1,8 +1,6 @@
 /-  *noir
 /+  hoot
 /+  playpen
-::  TODO ~2025.7.4:
-::    meloization
 ::    
 =*  stub  !!
 =*  one  `@`1

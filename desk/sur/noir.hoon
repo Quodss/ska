@@ -1,5 +1,5 @@
 /+  *soak
-:: =/  check-noir  ~
+=/  check-noir  ~
 |%
 ::    Nomm (Nock--)
 ::
@@ -476,6 +476,21 @@
     [n l r]
   ::
   ++  relo
+    !@  check-noir
+      |=  [src=source pin=spring]
+      ^-  source
+      =*  sam  +<
+      =/  a
+        :: ~>  %bout
+        (relo1 sam)
+      =/  b
+        :: ~>  %bout
+        (relo2 sam)
+      ?>  (eq a b)
+      a
+    relo2
+  ::
+  ++  relo1
     |=  [src=source pin=spring]
     ^-  source
     ?~  pin  ~
@@ -483,6 +498,22 @@
     %+  roll  n.pin
     |:  [ax=*@ out=recur]
     (uni (slot src ax) out)
+  ::
+  ++  relo2
+    =|  out=source
+    |=  [src=source pin=spring]
+    ^-  source
+    ?~  pin  out
+    =.  out
+      %+  roll  n.pin
+      |:  [ax=*@ out=out]
+      (uni (slot src ax) out)
+    ::
+    ?~  out  (cons $(pin l.pin) $(pin r.pin))
+    =/  l  $(pin l.pin, out l.out)
+    =/  r  $(pin r.pin, out r.out)
+    ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
+    [n.out l r]
   --
 ::
 ::    axis after axis
