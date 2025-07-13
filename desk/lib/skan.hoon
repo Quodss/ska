@@ -350,11 +350,6 @@
                               --0
               ==            ==
             .
-        ::  propagate subject needs
-        ::
-        =.  src.s-prod  (mask:source src.s-prod cape.sock.s-prod `set.stack)
-        =/  sub-urge  (urge:source src.s-prod u.want)
-        =.  want.gen  (uni-urge:source want.gen sub-urge)
         =.  cycles.gen
           (add-frond [q.i.tak there-site sock.p.i.tak s-prod] cycles.gen)
         ::
@@ -788,11 +783,6 @@
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
-    ::  melo hit: propagate subject needs
-    ::
-    =.  src.sub  (mask:source src.sub cape.sock.sub `stack)
-    =/  sub-urge  (urge:source src.sub want-site)
-    =.  want.gen  (uni-urge:source want.gen sub-urge)
     =.  process.results.gen
       %+  ~(put by process.results.gen)  site
       (~(got by process.results.gen) site.i)
