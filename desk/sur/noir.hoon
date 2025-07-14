@@ -556,11 +556,6 @@
                (~(uni ca c-out) (~(pat ca cap) ax.i.n.src))
       ==
     ::
-    ?:  &(=(~ n-pin) !=(~ n-src))
-      ::  latest site not present in the nonempty peon list: no need to go
-      ::  deeper
-      ::
-      [[~ src] c-out]
     =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
     =^  [l-pin=spring l-src=source]  c-out  $(src l.src, cap l-cap)
     =^  [r-pin=spring r-src=source]  c-out  $(src r.src, cap r-cap)
