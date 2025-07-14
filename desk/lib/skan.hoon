@@ -12,7 +12,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-=/  verb  ~
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -377,41 +377,37 @@
           ::
     ==    ==
   ^-  (error [[sock-anno flags] state])
-  ::  record current evalsite in the subject provenance tree
-  ::
-  =.  src.sub
-    ?~  src.sub  [[one here-site]~ ~ ~]
-    src.sub(n [[one here-site] n.src.sub])
   ::  check memo cache
   ::
-  ?^  m=(memo here-site fol sub gen set.stack)
+  ?^  m=(memo here-site fol sub gen)
     =>  !@  verb
           %=    .
               bars.gen.u.m
             (memo:p here-site from.u.m seat area.u.m bars.gen.u.m)
           ==
         .
-    =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m deff] gen.u.m]
   ::  check melo cache (melo hit makes call loopy, might merge some cycles)
   ::
-  ?^  m=(melo here-site fol sub gen set.stack)
+  ?^  m=(melo here-site fol sub gen)
     =>  !@  verb
           %=    .
               bars.gen.u.m
             (melo:p here-site from.u.m seat area.u.m bars.gen.u.m)
           ==
         .
-    =.  src.pro.u.m  (mask:source src.pro.u.m cape.sock.pro.u.m `set.stack)
     &+[[pro.u.m [& &]] gen.u.m]
+  ::  enter analysis
+  ::
+  ::  record current evalsite in the subject provenance tree
+  ::
+  =.  src.sub
+    ?~  src.sub  [[one here-site]~ ~ ~]
+    src.sub(n [[one here-site] n.src.sub])
   ::
   ::  push on the stack
   ::
   =.  set.stack   (~(put in set.stack) here-site)
-  ::  XX excessive masking throughout? invariant: only provenance from above
-  ::
-  =.  src.sub  (mask:source src.sub cape.sock.sub `set.stack)
-  ::
   =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
@@ -458,7 +454,7 @@
       ::  direct call
       ::
       =/  fol-new  data.sock.f-prod
-      =/  fol-urge  (urge:source (mask:source src.f-prod & `set.stack) &)
+      =/  fol-urge  (urge:source src.f-prod &)
       =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::
       ::  check for loop:
@@ -527,7 +523,6 @@
         ==
       :_  gen(area area-stash)
       :+  [%2 s-code f-code there-site]
-        =.  src.pro  (mask:source src.pro cape.sock.pro `set.stack)
         pro
       (fold-flag flags s-flags f-flags ~)
     ::
@@ -558,18 +553,18 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
+      ::  product sock is an intersection
+      ::
+      =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
       ::  any of yes/no branches' code could be used, this is why we 
       ::  unionize the provenance trees
       ::
       =/  uni-source  (uni:source src.y-prod src.n-prod)
-      ::  product sock is an intersection
-      ::
-      =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
       :+  [%6 c-code y-code n-code]
         :-  int-sock
         ::  mask unified provenance tree with intersection cape
         ::
-        (mask:source uni-source cape.int-sock `set.stack)
+        (trim:source uni-source cape.int-sock)
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -634,14 +629,22 @@
       =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
-  ::  prune provenance tree to leave only calls on the stack (ourselves
-  ::  included), removing cousin provenance; also mask down to the product cape
-  ::
-  =.  src.prod  (mask:source src.prod cape.sock.prod `set.stack)
   ?.  (check:source src.prod here-site)
     ~|  src.prod
     ~|  here-site
     !!
+  ::  reverse here-site provenance labeling, getting subject capture cape and
+  ::  relocation map in the meantime; subject capture masked to cape of
+  ::  result sock
+  ::
+  :: =/  capture1  (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
+  =^  [capture=cape map=spring:source]  src.prod
+    (prune:source src.prod here-site cape.sock.prod)
+  ::
+  :: ?.  =(capture1 capture)
+  ::   ~|  capture1
+  ::   ~|  capture
+  ::   !!
   =;  fin=(error [loopy=? gen=state])
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
@@ -649,15 +652,15 @@
     ::  success, non-loopy
     ::
     :+  %&  %|
-    (final-simple here-site sub fol code prod gen direct.flags seat)
+    (final-simple here-site sub fol code prod capture map gen direct.flags seat)
   ?~  cycles.gen  !!
   ?.  =(here-site entry.i.cycles.gen)
-    &+[& (process here-site sub fol code prod gen seat)]
+    &+[& (process here-site sub fol code prod capture map gen seat)]
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
   ^-  err-state
-  (final-cycle here-site sub fol code prod gen direct.flags seat)
+  (final-cycle here-site sub fol code prod capture map gen direct.flags seat)
 ::  finalize analysis of non-loopy formula
 ::
 ++  final-simple
@@ -666,6 +669,8 @@
           fol=*
           code=nomm
           prod=sock-anno
+          capture=cape
+          map=spring:source
           gen=state
           direct=?
           seat=(unit spot)
@@ -683,20 +688,17 @@
   ::
   ?.  =(want-site cape.less-code)
     ~_  'cape.less-code < want-site'
-    ~|  [cape.less-code want-site]
+    ~|  cape.less-code
+    ~|  want-site
     !!
   =.  final.results.gen  (~(put by final.results.gen) site less-code code)
   =?  memo.results.gen  direct
-    =/  capture-res=cape
-      (~(gut by (urge:source src.prod cape.sock.prod)) site |)
-    ::  unify +route:source and getting capture-res?
-    ::
-    =/  map  (route:source src.prod site)
-    =/  mask=cape  (~(uni ca want-site) capture-res)
+    =/  mask=cape  (~(uni ca want-site) capture)
     =/  less-memo  (~(app ca mask) sock.sub)
     ?.  =(mask cape.less-memo)
       ~_  'cape.less-memo < mask'
-      ~|  [cape.less-memo mask]
+      ~|  cape.less-memo
+      ~|  mask
       !!
     %+  ~(add ja memo.results.gen)  fol
     :*  site
@@ -770,6 +772,8 @@
           fol=*
           code=nomm
           prod=sock-anno
+          capture=cape
+          map=spring:source
           gen=state
           direct=?
           seat=(unit spot)
@@ -787,7 +791,6 @@
     ?:  ?=(%| -.err-gen)  err-gen
     =/  gen  p.err-gen
     =^  par-final=sock  gen
-      =.  src.kid-sub  (mask:source src.kid-sub cape.sock.kid-sub ~)
       =/  c  0
       ::
       =/  par-want-1=cape  (~(gut by want.gen) par |)
@@ -822,7 +825,7 @@
                     new-sub=sock-anno
                     old=@uxsite
                     code=nomm
-                    capture=cape
+                    cape  ::  melo hit validation does not require capture
                     old-sub=sock-anno
                     *
                 ==
@@ -831,7 +834,6 @@
     ?:  ?=(%| -.err-gen)  err-gen
     =/  gen  p.err-gen
     =^  old-final=sock  gen
-      =.  src.new-sub  (mask:source src.new-sub cape.sock.new-sub ~)
       =/  old-want-1=cape  (~(gut by want.gen) old |)
       =/  old-masked-1=sock  (~(app ca old-want-1) sock.old-sub)
       |-  ^-  [sock state]
@@ -855,7 +857,8 @@
   =/  less-code=sock  (~(app ca want-site) sock.sub)
   ?.  =(want-site cape.less-code)
     ~_  'cape.less-code < want-site'
-    ~|  [cape.less-code want-site]
+    ~|  cape.less-code
+    ~|  want-site
     !!
   =.  final.results.gen  (~(put by final.results.gen) site less-code code)
   =.  final.results.gen
@@ -867,21 +870,19 @@
     =/  less-code=sock  (~(app ca want-site) sub.proc)
     ?.  =(want-site cape.less-code)
       ~_  'cape.less-code < want-site'
-      ~|  [cape.less-code want-site]
+      ~|  cape.less-code
+      ~|  want-site
       !!
     (~(put by final) site less-code nomm.proc)
   ::
   =?  memo.results.gen  direct
-    =/  capture-res=cape
-      (~(gut by (urge:source src.prod cape.sock.prod)) site |)
-    ::
-    =/  map  (route:source src.prod site)
     =/  less-memo=sock
-      =/  mask=cape  (~(uni ca want-site) capture-res)
+      =/  mask=cape  (~(uni ca want-site) capture)
       =/  less  (~(app ca mask) sock.sub)
       ?.  =(mask cape.less)
         ~_  'cape.less < mask'
-        ~|  [cape.less mask]
+        ~|  cape.less
+        ~|  mask
         !!
       less
     ::
@@ -910,6 +911,8 @@
           fol=*
           code=nomm
           prod=sock-anno
+          capture=cape
+          map=spring:source
           gen=state
           seat=(unit spot)
       ==
@@ -917,15 +920,11 @@
   =>  !@(verb .(bars.gen (ciao:p site seat area.gen bars.gen)) .)
   ?~  cycles.gen  !!
   =.  set.i.cycles.gen   (dive set.i.cycles.gen site)
-  =/  capture-res=cape
-    (~(gut by (urge:source src.prod cape.sock.prod)) site |)
-  ::
-  =/  map  (route:source src.prod site)
   =.  melo.i.cycles.gen
     %+  ~(add ja melo.i.cycles.gen)  fol
     :*  site
         code
-        capture-res
+        capture
         sub
         sock.prod
         map
@@ -936,7 +935,7 @@
   gen
 ::
 ++  memo
-  |=  [site=@uxsite fol=* sub=sock-anno gen=state stack=(set @uxsite)]
+  |=  [site=@uxsite fol=* sub=sock-anno gen=state]
   ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=state])
   =/  meme  (~(get ja memo.results.gen) fol)
   |-  ^-  (unit [@uxsite (unit spot) sock-anno state])
@@ -946,7 +945,7 @@
   ::  memo hit: propagate subject needs
   :: 
   =/  sub-urge
-    (urge:source (mask:source src.sub cape.sock.sub `stack) cape.less-code.i)
+    (urge:source src.sub cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =.  final.results.gen
@@ -960,7 +959,6 @@
           fol=*
           sub=sock-anno
           gen=state
-          stack=(set @uxsite)
       ==
   ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=state])
   ?:  =(~ cycles.gen)  ~
@@ -1064,12 +1062,16 @@
     ?.  ?=(^ data.batt)  ~&(>>> fast-atom-batt+data.batt gen)
     =/  fore  (~(pull so sock.result) axis)
     =/  past=(set path)
-      ?.  =(& cape.fore)  ~
-      (~(get ju root.jets.gen) data.fore)
-    ::
-    =/  batt-fore  (~(pull so fore) 2)
-    =?  past  &(?=(%& cape.batt-fore) ?=(^ data.batt-fore))
-      (~(uni in past) (~(get ju batt.jets.gen) data.batt-fore))
+      %-  %~  uni  in
+          ::  root registrations
+          ::
+          ?.  =(& cape.fore)  ~
+          (~(get ju root.jets.gen) data.fore)
+      ::  child registrations
+      ::
+      =/  batt-fore  (~(pull so fore) 2)
+      ?.  &(=(& cape.batt-fore) ?=(^ data.batt-fore))  ~
+      (~(get ju batt.jets.gen) data.batt-fore)
     ::
     =/  past-list  ~(tap in past)
     |-  ^-  state

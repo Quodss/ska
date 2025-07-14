@@ -83,6 +83,19 @@
       |($(a l.a) $(a r.a))
     _&
   ::
+  ++  sorted
+    !@  check-noir
+      |=  src=source
+      ^-  source
+      ?~  src  ~
+      ?.  =(n.src (sort n.src |=([a=peon b=peon] (gth sit.a sit.b))))
+        ~|  n.src
+        !!
+      :+  n.src
+        $(src l.src)
+      $(src r.src)
+    same
+  ::
   ++  norm
     |=  a=source
     ^-  source
@@ -108,56 +121,52 @@
     =-  !@  check-noir
           ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
         -
-    :+  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
-      $(a l.a, b l.b)
-    $(a r.a, b r.b)
+    =/  n
+      %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
+      |=  [a=peon b=peon]
+      (gth sit.a sit.b)
+    ::
+    [n $(a l.a, b l.b) $(a r.a, b r.b)]
   ::
-  ++  mask
+  ++  trim
     !@  check-noir
-      |=  [src=source cap=cape stack=(unit (set @uxsite))]
+      |=  [src=source cap=cape]
       ^-  source
       =*  sam  +<
       =/  a
         :: ~>  %bout
-        (mask1 sam)
+        (trim1 sam)
       ::
       =/  b
         :: ~>  %bout
-        (mask2 sam)
+        (trim2 sam)
       ::
       ?.  (eq a b)
         ~|  a
         ~|  b
-        ~|  [src cap stack]
+        ~|  [src cap]
         !!
       a
-    mask1
+    trim1
   ::
-  ++  mask1
-    |=  [src=source cap=cape stack=(unit (set @uxsite))]
+  ++  trim1
+    |=  [src=source cap=cape]
     ^-  source
+    %-  sorted
     ?~  src  ~
-    ?^  cap  (cons $(src (hed src), cap -.cap) $(src (tel src), cap +.cap))
     ?:  ?=(%| cap)  ~
-    ?~  stack  src
-    |-  ^-  source
-    =.  n.src  (skim n.src |=(peon (~(has in u.stack) sit)))
-    =/  l  ?~(l.src ~ $(src l.src))
-    =/  r  ?~(r.src ~ $(src r.src))
-    ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
-    [n.src l r]
-  ::  mask provenance tree to a cape, with provenance limited to a 
-  ::  potentially infinite set of evalsites
+    ?:  ?=(%& cap)  src
+    (cons $(src (hed src), cap -.cap) $(src (tel src), cap +.cap))
   ::
-  ++  mask2
-    |=  [src=source cap=cape stack=(unit (set @uxsite))]
+  ++  trim2
+    |=  [src=source cap=cape]
     ^-  source
     ::
     =;  out
       =/  out1  (norm out)
       ?.  =(out out1)
         ~|  %mask-norm
-        ~|  [src cap stack]
+        ~|  [src cap]
         ~|  out1
         ~|  out
         !!
@@ -175,21 +184,11 @@
       ::
       ?:  &(=(~ acc) =(~ src))  ~
       =+  [n l r]=?~(src [~ ~ ~] src)
-      =.  acc  [[rev n] acc]
+      =?  acc  !=(~ n)  [[rev n] acc]
       %+  cons
         $(rev (peg rev 2), src l, cap -.cap)
       $(rev (peg rev 3), src r, cap +.cap)
     ?:  ?=(%| cap)  ~
-    ::  filter for provenance on the stack
-    ::
-    =?  src  ?=(^ stack)
-      |-  ^-  source
-      ?~  src  ~
-      =.  n.src  (skim n.src |=(peon (~(has in u.stack) sit)))
-      =/  l  $(src l.src)
-      =/  r  $(src r.src)
-      ?:  &(=(~ n.src) =(~ l) =(~ r))  ~
-      [n.src l r]
     ::  nothing to push
     ::
     ?:  =(~ acc)  src
@@ -203,27 +202,25 @@
     ^+  n
     ?:  =(~ l)  out
     =/  rel  (hub ax rev)
-    ?~  stack
-      %+  roll  l
-      |:  [p=*peon out=out]
-      [p(ax (peg ax.p rel)) out]
-    %+  roll  l
+    %+  reel  l
     |:  [p=*peon out=out]
-    ?.  (~(has in u.stack) sit.p)  out
     [p(ax (peg ax.p rel)) out]
   ::
   ++  slot
     |=  [src=source ax=@]
     ^-  source
+    ~|  [src ax]
+    %-  sorted
     ?:  =(1 ax)  src
     =/  rev  1
     =|  acc=(list (pair @ (list peon)))
     |-  ^-  source
     =+  [n l r]=?@(src [~ ~ ~] src)
     ?.  =(1 ax)
+      =?  acc  !=(~ n)  [[rev n] acc]
       ?-  (cap ax)
-        %2  $(ax (mas ax), src l, acc [[rev n] acc], rev (peg rev 2))
-        %3  $(ax (mas ax), src r, acc [[rev n] acc], rev (peg rev 3))
+        %2  $(ax (mas ax), src l, rev (peg rev 2))
+        %3  $(ax (mas ax), src r, rev (peg rev 3))
       ==
     ::  rev == ax input
     ::
@@ -231,9 +228,8 @@
       %+  roll  acc
       |:  [[ax=*@ l=*(list peon)] out=n]
       ^+  n
-      ?:  =(~ l)  out
       =/  rel  (hub ax rev)
-      %+  roll  l
+      %+  reel  l
       |:  [p=*peon out=out]
       [p(ax (peg ax.p rel)) out]
     ::
@@ -249,6 +245,28 @@
       ~&  >>>  rev  |
     ?~  a  &
     ?>  ?=(^ b)
+    =/  n-a-check  (sort n.a |=([a=peon b=peon] (gth sit.a sit.b)))
+    =/  n-b-check  (sort n.b |=([a=peon b=peon] (gth sit.a sit.b)))
+    =/  a-check=?
+      |-  ^-  ?
+      ?~  n-a-check  &
+      ?~  n.a  !!
+      ?.  =(sit.i.n.a sit.i.n-a-check)  |
+      $(n.a t.n.a, n-a-check t.n-a-check)
+    ::
+    ?.  a-check
+      ~|  n.a
+      !!
+    =/  b-check=?
+      |-  ^-  ?
+      ?~  n-b-check  &
+      ?~  n.b  !!
+      ?.  =(sit.i.n.b sit.i.n-b-check)  |
+      $(n.b t.n.b, n-b-check t.n-b-check)
+    ::
+    ?.  b-check
+      ~|  n.b
+      !!
     ?:  !=((silt n.a) (silt n.b))
       ~&  >>>  rev  |
     ?&  
@@ -293,7 +311,7 @@
     |-  ^-  source
     ?:  =(1 ax)  don
     =+  [n l r]=?~(rec [~ ~ ~] rec)
-    =.  acc  [[rev n] acc]
+    =?  acc  !=(~ n)  [[rev n] acc]
     %-  cons
     ^-  [source source]
     ?-    (cap ax)
@@ -305,9 +323,8 @@
         %+  roll  acc
         |:  [[ax=*@ l=*(list peon)] out=n-r]
         ^+  n-r
-        ?:  =(~ l)  out
         =/  rel  (hub ax rev)
-        %+  roll  l
+        %+  reel  l
         |:  [p=*peon out=out]
         [p(ax (peg ax.p rel)) out]
       ::
@@ -322,9 +339,8 @@
         %+  roll  acc
         |:  [[ax=*@ l=*(list peon)] out=n-l]
         ^+  n-l
-        ?:  =(~ l)  out
         =/  rel  (hub ax rev)
-        %+  roll  l
+        %+  reel  l
         |:  [p=*peon out=out]
         [p(ax (peg ax.p rel)) out]
       ::
@@ -343,12 +359,12 @@
     =+  l1=[n l r]=?~(l [~ ~ ~] l)
     =+  r1=[n l r]=?~(r [~ ~ ~] r)
     =.  n.l1
-      %+  roll  `(list peon)`n
+      %+  reel  `(list peon)`n
       |:  [p=*peon out=n.l1]
       [p(ax (peg ax.p 2)) out]
     ::
     =.  n.r1
-      %+  roll  `(list peon)`n
+      %+  reel  `(list peon)`n
       |:  [p=*peon out=n.r1]
       [p(ax (peg ax.p 3)) out]
     ::
@@ -367,6 +383,7 @@
   ++  edit3
     |=  [rec=source ax=@ don=source]
     ^-  source
+    %-  sorted
     ?:  =(ax 1)  don
     =|  tack=(list [c=?(%2 %3) p=source])
     |-  ^-  source
@@ -385,22 +402,24 @@
   ++  hed
     |=  src=source
     ^-  source
+    %-  sorted
     ?~  src  ~
     ?:  =(~ n.src)  l.src
     =+  [n lr]=?~(l.src [~ ~ ~] l.src)
     :_  lr
-    %+  roll  n.src
+    %+  reel  n.src
     |:  [p=*peon out=n]
     [p(ax (peg ax.p 2)) out]
   ::
   ++  tel
     |=  src=source
     ^-  source
+    %-  sorted
     ?~  src  ~
     ?:  =(~ n.src)  r.src
     =+  [n lr]=?~(r.src [~ ~ ~] r.src)
     :_  lr
-    %+  roll  n.src
+    %+  reel  n.src
     |:  [p=*peon out=n]
     [p(ax (peg ax.p 3)) out]
   ::
@@ -495,9 +514,10 @@
   ++  relo1
     |=  [src=source pin=spring]
     ^-  source
+    %-  sorted
     ?~  pin  ~
     =/  recur  (cons $(pin l.pin) $(pin r.pin))
-    %+  roll  n.pin
+    %+  reel  n.pin
     |:  [ax=*@ out=recur]
     (uni (slot src ax) out)
   ::
@@ -507,7 +527,7 @@
     ^-  source
     ?~  pin  out
     =.  out
-      %+  roll  n.pin
+      %+  reel  n.pin
       |:  [ax=*@ out=out]
       (uni (slot src ax) out)
     ::
@@ -516,6 +536,37 @@
     =/  r  $(pin r.pin, out r.out)
     ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
     [n.out l r]
+  ::
+  ++  prune
+    =/  c-out=cape  |
+    |=  [src=source site=@uxsite cap=cape]
+    ^-  [[cape spring] source]
+    =<  [[cap pin] src]
+    |-  ^-  [[pin=spring src=source] cap=cape]
+    ?~  src  [[~ ~] c-out]
+    =^  [n-src=(list peon) n-pin=(list @)]  c-out
+      =|  l-out=(list @)
+      |-  ^-  [[(list peon) (list @)] cape]
+      ?~  n.src  [[~ l-out] c-out]
+      ?.  =(site sit.i.n.src)  [[n.src l-out] c-out]
+      %=  $
+        n.src  t.n.src
+        l-out  [ax.i.n.src l-out]
+        c-out  ?:  ?=(%| cap)  c-out
+               (~(uni ca c-out) (~(pat ca cap) ax.i.n.src))
+      ==
+    ::
+    ?:  &(=(~ n-pin) !=(~ n-src))
+      ::  latest site not present in the nonempty peon list: no need to go
+      ::  deeper
+      ::
+      [[~ src] c-out]
+    =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
+    =^  [l-pin=spring l-src=source]  c-out  $(src l.src, cap l-cap)
+    =^  [r-pin=spring r-src=source]  c-out  $(src r.src, cap r-cap)
+    :_  c-out
+    :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
+    ?:(&(=(~ n-src) =(~ l-src) =(~ r-src)) ~ [n-src l-src r-src])
   --
 ::
 ::    axis after axis
