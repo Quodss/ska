@@ -16,6 +16,9 @@
 ::  print bars?
 ::
 =/  p-bars  &
+::  fixed width of barstack?
+::
+=/  f-bars  &
 ::  print filename?
 ::
 =/  p-file  |
@@ -91,7 +94,15 @@
     %.  bars-return
     %-  slog
     :_  ~
-    [%rose [~ ~ ~] tag ': ' leaf+(reap bars-print '|') ' ' comment ~]
+    =/  bars=tank
+      ?.  f-bars  leaf+(reap bars-print '|')
+      ?:  (lte bars-print 5)  leaf+(reap bars-print '|')
+      =/  num  (scow %ud bars-print)
+      =/  len  (lent num)
+      =?  num  (lth len 3)  (weld (reap (sub 3 len) ' ') num)
+      [%rose [~ "|" "|"] leaf+num ~]
+    ::
+    [%rose [~ ~ ~] tag ': ' bars ' ' comment ~]
   ::
   ++  ren
     |=  pot=spot
