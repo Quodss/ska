@@ -12,13 +12,13 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  ~
+=/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
 ::  fixed width of barstack?
 ::
-=/  f-bars  &
+=/  f-bars  |
 ::  print filename?
 ::
 =/  p-file  |
@@ -351,11 +351,12 @@
     set=(set @uxsite)
     areas=(map @uxsite spot)
   ==
+::  stateful analysis of bus/fol pair
 ::
 ++  scan
+  =|  gen=state
   |=  [bus=* fol=*]  :: no autocons disassembly
   ^-  state
-  =|  gen=state
   =|  =stack  ::  lexically scoped
   =/  sub=sock-anno  [&+bus ~]
   =;  res-eval
@@ -1241,4 +1242,39 @@
       [%12 *]
     ~|  %no-scry  !!
   ==
+::
+::  Long-term analysis state
+::
++$  cold
+  $:
+    $=  jets
+    $:  root=(jug * path)
+        core=(jug path sock)  ::  XX why multiple socks per path?
+        batt=(jug ^ path)
+    ==
+  ::
+    $=  memo
+    %+  jar  *
+    $:  arm=@uvarm
+        site=@uxsite
+        =nomm
+        less-memo=sock
+        less-code=sock
+        prod=sock
+        map=spring:source
+        area=(unit spot)
+    ==
+  ::
+    $=  arms
+    %+  map  @uvarm
+    $:  ices=(map @uxsite [sub=sock fol=* =nomm])
+        loop=(set (pair @uxsite @uxsite))  ::  parent-kid pairs
+        area=(unit spot)
+    ==
+  ==
+::  Analyze subject/formula pair, descending into jetted cores
+::
+++  rout
+  |=  [s=* f=*]
+  !!
 --

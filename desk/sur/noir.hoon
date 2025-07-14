@@ -1,5 +1,5 @@
 /+  *soak
-=/  check-noir  ~
+:: =/  check-noir  ~
 |%
 ::    Nomm (Nock--)
 ::
@@ -122,6 +122,8 @@
           ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
         -
     =/  n
+      ::  XX insertion sort?
+      ::
       %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
       |=  [a=peon b=peon]
       (gth sit.a sit.b)

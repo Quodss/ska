@@ -1,5 +1,5 @@
 /-  *sock
-=/  check-soak  ~
+:: =/  check-soak  ~
 |%
 ::  operations on $cape
 ++  ca
