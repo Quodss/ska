@@ -31,17 +31,18 @@
   $:
     ::  all finalized call analysis results
     ::
-    final=(map @uxsite [less=sock =nomm])
+    final=(map @uxsite [less=sock fol=* =nomm])
     ::  non-finalized call analysis results
     ::
-    process=(map @uxsite [=nomm sub=sock])
+    process=(map @uxsite [sub=sock fol=* =nomm])
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject for match & for code, full product, provenance
     ::  relocation map
     ::
     $=  memo
     %+  jar  *
-    $:  site=@uxsite
+    $:  arm=@uvarm
+        site=@uxsite
         =nomm
         less-memo=sock
         less-code=sock
@@ -464,7 +465,7 @@
       %+  roll  n.src
       |=  [peon m=^urge]
       =/  need=cape  (~(pat ca cap) ax)
-      (jib m sit need |=(c=cape (~(uni ca c) need)))
+      (jib m sit _need |=(c=cape (~(uni ca c) need)))
     ==
   ::
   ++  urge2
@@ -485,7 +486,7 @@
            %+  roll  n.src
            |=  [peon m=^urge]
            =/  need=cape  (~(pat ca cap) ax)
-           (jib m sit need |=(c=cape (~(uni ca c) need)))
+           (jib m sit _need |=(c=cape (~(uni ca c) need)))
     ==
   ::
   ++  route
@@ -592,9 +593,9 @@
 ::  update a value or push a new one
 ::
 ++  jib
-  |*  [m=(map) k=* v=* g=$-(* *)]
+  |*  [m=(map) k=* v=(trap *) g=$-(* *)]
   ^+  m
-  =-  ?^(- u (~(put by m) k v))
+  =-  ?^(- u (~(put by m) k $:v))
   |-  ^-  (unit _m)
   ?~  m  ~
   ?:  =(k p.n.m)

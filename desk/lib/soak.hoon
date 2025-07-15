@@ -206,12 +206,13 @@
     ^-  ?
     ?:  =(one two)  &
     ?:  ?=(%| cape.one)  &
-    ?:  |(?=(^ cape.one) ?=(^ cape.two))
-      &($(one hed, two hed(one two)) $(one tel, two tel(one two)))
-    ::  if cape.one is %.n then two nests
-    ::  else either cape.two is %.n or data.one != data.two, so doesn't nest
-    ::
-    |
+    ?:  ?=(%& cape.one)
+      ::  either cape.two is not %.y or data.one != data.two
+      ::  either way, two does not nest
+      ::
+      |
+    ?:  ?=(%| cape.two)  |
+    &($(one hed, two hed(one two)) $(one tel, two tel(one two)))
   ::
   ++  huge2
     |=  two=sock
@@ -296,6 +297,22 @@
     %-  %~  knit  so
         $(data.one -.data.one, data.two -.data.two)
     $(data.one +.data.one, data.two +.data.two)
+  ::    union
+  ::
+  ::  take the union of two socks, but crash if they disagree on a known
+  ::  axis
+  ++  pack
+    |=  two=sock
+    |-  ^-  sock
+    ?:  ?=(%| cape.one)  two
+    ?:  ?=(%| cape.two)  one
+    ?:  ?=(%& cape.one)  ?>(=(one two) one)
+    ?:  ?=(%& cape.two)  ?>(=(one two) two)
+    ?>  ?=(^ data.one)
+    ?>  ?=(^ data.two)
+    %-  %~  knit  so
+        (pack(one [-.cape.one -.data.one]) [-.cape.two -.data.two]) 
+    (pack(one [+.cape.one +.data.one]) [+.cape.two +.data.two])
   ::    edit
   ::
   ::  update mask and data at an axis into a sock

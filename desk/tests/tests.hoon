@@ -55,7 +55,7 @@
   =/  cor
     =>  ..ride:hoot
     |%
-    ++  test  (expr-parse "3+3+4+1+2")
+    ++  test  (expr-parse "33+3+4\\\0a/1+1+2")
     ++  expr-parse
       |=  math=tape
       (scan math expr)
