@@ -1,8 +1,11 @@
 /+  *test, *skan,  playpen, hoot
 ::
-=/  expect-eq-nock
+=/  expect-eq-nock-need
   |=  [sub=* fol=*]
-  (expect-eq !>((mole |.(.*(sub fol)))) !>((run-nomm sub fol)))
+  ^-  tang
+  ?~  mol=(mole |.(.*(sub fol)))
+    ~[leaf+"bad test"]
+  (expect-eq !>(mol) !>((run-nomm sub fol)))
 ::
 |%
 ++  test-once-dabl
@@ -16,7 +19,7 @@
     [((slam once) 1) ((slam dabl) 1)]
   ::
   =/  fol  [9 2 0 1]
-  (expect-eq-nock cor fol)
+  (expect-eq-nock-need cor fol)
 ::
 ++  test-dec
   =/  cor
@@ -33,7 +36,7 @@
     $(c +(c))
   ::
   =/  fol  [9 2 0 1]
-  (expect-eq-nock cor fol)
+  (expect-eq-nock-need cor fol)
 ::
 ++  test-scow-playpen
   =/  cor  ..scow:playpen
@@ -41,7 +44,7 @@
     =>  cor  !=
     (scow %ud 5)
   ::
-  (expect-eq-nock cor fol)
+  (expect-eq-nock-need cor fol)
 ::
 ++  test-scow-hoot
   =/  cor  ..scow:hoot
@@ -49,7 +52,7 @@
     =>  cor  !=
     (scow %ud 5)
   ::
-  (expect-eq-nock cor fol)
+  (expect-eq-nock-need cor fol)
 ::
 ++  test-parser
   =/  cor
@@ -73,5 +76,5 @@
     =>  cor  !=
     test
   ::
-  (expect-eq-nock cor fol)
+  (expect-eq-nock-need cor fol)
 --
