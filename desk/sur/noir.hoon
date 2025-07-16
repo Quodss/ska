@@ -34,7 +34,16 @@
     final=(map @uxsite [less=sock fol=* =nomm])
     ::  non-finalized call analysis results
     ::
-    process=(map @uxsite [sub=sock fol=* =nomm])
+    $=  process
+    %+  map  @uxsite
+    $:  sub=sock
+        fol=*
+        =nomm
+        capture=cape
+        prod=sock
+        map=spring:source
+        area=(unit spot)
+    ==
     ::  memoized results: finalized, fully direct
     ::  code, minimized subject for match & for code, full product, provenance
     ::  relocation map

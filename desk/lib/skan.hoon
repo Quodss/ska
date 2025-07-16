@@ -12,7 +12,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-=/  verb  ~
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -718,7 +718,6 @@
   ?.  =(here-site entry.i.cycles.gen)
     ::  sucess, loopy
     ::
-    :: &+[& (process here-site sub fol code prod capture map gen seat)]
     :+  %&  %&
     ::  return without finalizing
     ::
@@ -737,30 +736,34 @@
       ==
     ::
     =.  process.results.gen
-      (~(put by process.results.gen) here-site sock.sub fol code)
+      %+  ~(put by process.results.gen)  here-site
+      [sock.sub fol code capture sock.prod map area.gen]
     ::
     gen
   ::  cycle entry not loopy if finalized
   ::
   =-  ?:  ?=(%| -<)  -  &+[| p]
-  :: (final-cycle here-site sub fol code prod capture map gen direct.flags seat)
   ::  attempt to finalize cycle entry
   ::
   ^-  err-state
   =.  process.results.gen
-    (~(put by process.results.gen) here-site sock.sub fol code)
+    %+  ~(put by process.results.gen)  here-site
+    [sock.sub fol code capture sock.prod map area.gen]
   ::
   =>  .(cycles.gen `(list cycle)`cycles.gen)
   =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
-  ::  validate fronds
+  ::  validate fronds, produce set of kids of backedges (only necessary for
+  ::  memoization of non-entry calls)
   ::
-  =/  err-gen=err-state
+  =/  err-res=(error (pair state (set @uxsite)))
     %+  reel-deep  frond.pop
     |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno]
-        err-gen=`err-state`&+gen
-    ^-  err-state
-    ?:  ?=(%| -.err-gen)  err-gen
-    =/  gen  p.err-gen
+        acc=`(error (pair state (set @uxsite)))`&+[gen ~]
+    ^+  acc
+    ?:  ?=(%| -.acc)  acc
+    =/  gen  p.p.acc
+    =/  kids  q.p.acc
+    =.  kids  (~(put in kids) kid)
     =^  par-final=sock  gen
       =/  c  0
       ::
@@ -779,15 +782,17 @@
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
     =.  process.results.gen
       %+  ~(put by process.results.gen)  kid
-      (~(got by process.results.gen) par)
+      =/  proc  (~(got by process.results.gen) par)
+      proc(sub sock.kid-sub, capture |, prod |+~, map ~)
     ::
-    &+gen
+    &+[gen kids]
   ::
-  ?:  ?=(%| -.err-gen)  err-gen
-  =.  gen  p.err-gen
-  ::  remove err-gen
+  ?:  ?=(%| -.err-res)  err-res
+  =.  gen  p.p.err-res
+  =/  kids=(set @uxsite)  q.p.err-res
+  ::  remove err-res
   ::
-  =>  +
+  =>  [- +>]
   ::  validate melo hits
   ::
   =/  err-gen=err-state
@@ -824,20 +829,12 @@
   =.  gen  p.err-gen
   =>  +
   =>  !@(verb .(bars.gen (fini:p here-site seat area.gen bars.gen)) .)
-  =/  want-site=cape  (~(gut by want.gen) here-site |)
-  =/  less-code=sock  (~(app ca want-site) sock.sub)
-  ?.  =(want-site cape.less-code)
-    ~_  'cape.less-code < want-site'
-    ~|  cape.less-code
-    ~|  want-site
-    !!
-  =.  final.results.gen
-    (~(put by final.results.gen) here-site less-code fol code)
   ::
-  =.  final.results.gen
+  =.  set.pop  (dive set.pop here-site)
+  =.  gen
     %+  roll-deep  set.pop
-    |:  [site=*@uxsite final=final.results.gen]
-    ^+  final
+    |:  [site=*@uxsite gen=gen]
+    ^-  state
     =/  proc  (~(got by process.results.gen) site)
     =/  want-site=cape  (~(gut by want.gen) site |)
     =/  less-code=sock  (~(app ca want-site) sub.proc)
@@ -846,30 +843,42 @@
       ~|  cape.less-code
       ~|  want-site
       !!
-    (~(put by final) site less-code fol.proc nomm.proc)
-  ::
-  =?  memo.results.gen  direct.flags
-    =/  less-memo=sock
-      =/  mask=cape  (~(uni ca want-site) capture)
-      =/  less  (~(app ca mask) sock.sub)
-      ?.  =(mask cape.less)
-        ~_  'cape.less < mask'
-        ~|  cape.less
-        ~|  mask
-        !!
-      less
+    =.  final.results.gen
+      (~(put by final.results.gen) site less-code fol.proc nomm.proc)
+    ::  XX sock nest fails when memoizing loop calls
+    ::  (we shouldn't memoize them but still, why?)
     ::
-    %+  ~(add ja memo.results.gen)  fol
-    :*  arm
-        here-site
-        code
-        less-memo
-        less-code
-        sock.prod
-        map
-        area.gen
-    ==
-  ::
+    ::  Computation time-wise it might not be worth it to memoize anything
+    ::  except the entry point into the cycle
+    ::
+    ::  A -> B -> C -> A -- loop, A is memoized
+    ::  (later)
+    ::  B -> C -> A -- memo hit, C and B also memoized
+    ::
+    ::  Most cycles don't have multiple entry points so this extra work won't be
+    ::  done
+    ::
+    :: =?  memo.results.gen  &(direct.flags =(site here-site))
+    =?  memo.results.gen  &(direct.flags !(~(has in kids) site))
+      =/  memo-mask=cape  (~(uni ca want-site) capture.proc)
+      =/  memo-less  (~(app ca memo-mask) sub.proc)
+      ?.  =(memo-mask cape.memo-less)
+        ~_  'cape.less < mask'
+        ~|  cape.memo-less
+        ~|  memo-mask
+        !!
+      %+  ~(add ja memo.results.gen)  fol.proc
+      :*  arm
+          site
+          nomm.proc
+          memo-less
+          less-code
+          prod.proc
+          map.proc
+          area.proc
+      ==
+    ::
+    gen
   =.  want.gen  (~(del by want.gen) here-site)
   =.  want.gen
     %+  roll-deep  set.pop
@@ -969,7 +978,8 @@
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
     =.  process.results.gen
       %+  ~(put by process.results.gen)  site
-      (~(got by process.results.gen) site.i)
+      =/  proc  (~(got by process.results.gen) site.i)
+      proc(sub sock.sub)
     ::
     =/  src  (relo:source src.sub map.i)
     `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
@@ -1134,7 +1144,7 @@
   ^-  (unit)
   !.
   =/  gen
-    :: ~>  %bout
+    ~>  %bout
     (scan &+s f)
   =/  n  nomm:(~(got by final.results.gen) 0x0)
   |-  ^-  (unit)
@@ -1168,6 +1178,7 @@
       ~|  site.n
       :: ~|  [need+less.u.call got+[& u.s1]]
       ~|  %sock-nest-error
+      ~|  (dif-so less.u.call & u.s1)
       !!
     ?^  res=(jet u.s1 u.f1)  u.res
     $(s u.s1, n nomm.u.call)
