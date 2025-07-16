@@ -77,4 +77,12 @@
     test
   ::
   (expect-eq-nock-need cor fol)
+::
+++  test-muk
+  =/  cor  playpen
+  =/  fol
+    =>  cor  !=
+    (muk 0xcafe.babe 1 42)  ::  XX 42 42 42 is a jet mismatch
+  ::
+  (expect-eq-nock-need cor fol)
 --

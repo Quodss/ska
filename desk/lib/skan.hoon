@@ -12,7 +12,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  ~
+=/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -847,6 +847,8 @@
       (~(put by final.results.gen) site less-code fol.proc nomm.proc)
     ::  XX sock nest fails when memoizing loop calls
     ::  (we shouldn't memoize them but still, why?)
+    ::  (prob has smth to do with kid want not being as restricted i.e. smaller
+    ::  than the parent's want)
     ::
     ::  Computation time-wise it might not be worth it to memoize anything
     ::  except the entry point into the cycle
@@ -1045,7 +1047,7 @@
       ~&(>>> fast-bad-clue+clue gen)
     =/  label=cord
       ?@  name.clue  name.clue
-      (rap 3 -.name.clue (scot %ud -.name.clue) ~)
+      (rap 3 -.name.clue (scot %ud +.name.clue) ~)
     ::
     ?~  parent=(fast-parent dad.clue)  ~&(>>> fast-bad-clue+clue gen)
     ?~  u.parent
@@ -1147,6 +1149,7 @@
     ~>  %bout
     (scan &+s f)
   =/  n  nomm:(~(got by final.results.gen) 0x0)
+  =|  trace=(list spot)
   |-  ^-  (unit)
   ?-    n
       [p=^ q=*]
@@ -1157,7 +1160,10 @@
     `[u.l u.r]
   ::
       [%0 p=@]
-    ?:  =(0 p.n)  ~&  '[%0 0]'  ~
+    ?:  =(0 p.n)
+      ~&  '[%0 0]'
+      ~&  trace
+      ~
     ?:  =(1 p.n)  `s
     =-  ~?  ?=(~ -)  '%0 crash'  -
     (mole |.(.*(s [0 p.n])))
@@ -1227,6 +1233,11 @@
     $(n q.n)
   ::
       [%d11 *]
+    =?  trace  =(p.p.n %spot)
+      =/  pot=(unit spot)  ((soft spot) +.q.p.n)
+      ?~  pot  trace
+      [u.pot trace]
+    ::
     =/  h  $(n q.p.n)
     ?~  h  ~
     $(n q.n)
@@ -1294,7 +1305,7 @@
     =*  cold-loop  $
     ?~  queu
       ?~  load  this
-      ~&  cold-loop+(lent load)
+      ~&  >>  cold-loop+(lent load)
       cold-loop(queu (flop load), load ~)
     ?:  ?&(?=(^ break.i.queu) cons.u.break.i.queu)
       ::  merge analysis of an autocons head and tail
@@ -1332,7 +1343,10 @@
     =.  batt.jets.gen.can     batt.jets.cod
     ::  analyze
     ::
+    ~?  >  ?=(^ break.i.queu)  [%enter point.u.break.i.queu]
+    ~?  >  ?=(~ break.i.queu)  %enter
     =/  gen=state  (can [sub fol]:i.queu)
+    ~&  >  %done
     ::  propagate updates
     ::
     =/  new  ((dif-ju core.jets.gen) core.jets.cod)
@@ -1385,7 +1399,7 @@
           |=([p=path q=(set sock)] [(lent p) p q])
         |=([l=[len=@ *] r=[len=@ *]] (lth len.l len.r))
       |:  [[len=*@ p=*path q=*(set sock)] load=load]
-      ?:  =(1 len)  ~&(> [%cold-root-reg p q] load)
+      ~&  >  [%enqueu p]
       %-  ~(rep in q)
       |:  [s=*sock load=load]
       =/  batt  (~(pull so s) 2)
