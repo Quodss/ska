@@ -1,6 +1,14 @@
 /+  *soak
 :: =/  check-noir  ~
 |%
+::  call label for Nomm 2: indirect call or entry in global
+::  code table or arm-local callsite
+::
++$  call  $~  ~
+          $@  ~
+          $%  [%memo p=@uxmemo]
+              [%site p=(pair @uvarm @uxsite)]
+          ==
 ::    Nomm (Nock--)
 ::
 ::  [%9 p q] => [%7 q %2 [%0 1] %0 p]
@@ -9,7 +17,7 @@
 +$  nomm
   $^  [nomm nomm]                             ::  autocons
   $%  [%1 p=*]                                ::  Nock 1
-      [%2 p=nomm q=nomm site=@uxsite]         ::  Nock 2
+      [%2 p=nomm q=nomm site=call]            ::  Nock 2
       [%3 p=nomm]                             ::  Nock 3
       [%4 p=nomm]                             ::  Nock 4
       [%5 p=nomm q=nomm]                      ::  Nock 5
@@ -21,55 +29,155 @@
       [%12 p=nomm q=nomm]                     ::  "Nock 12"
       [%0 p=@]                                ::  Nock 0
   ==
-::  TODO leave essential to traverse less
 ::
-::  generic info at directly called evalsites
+::  formula registration coordinate: path + axis in the core
 ::
-::  analysis results
++$  bell  (pair path @)
+::  memoization table entry
 ::
-+$  results
++$  meme
+  $:  idx=@uxmemo
+      arm=@uvarm
+      site=@uxsite
+      fol=*
+      code=nomm
+      less-memo=sock
+      less-code=sock
+      prod=sock
+      map=spring:source
+      area=(unit spot)
+  ==
+::  meloization table entry
+::
++$  meal
+  $:  site=@uxsite
+      =nomm
+      capture=cape
+      sub=sock-anno
+      prod=sock
+      map=spring:source
+      area=(unit spot)
+  ==
+::  cross-arm analysis global state
+::
++$  long
+  $+  long
   $:
-    ::  all finalized call analysis results
+    ::  arm index generator
     ::
-    final=(map @uxsite [less=sock fol=* =nomm])
-    ::  non-finalized call analysis results
+    arm-gen=@uvarm
+  ::::  memo index generator
     ::
-    $=  process
-    %+  map  @uxsite
-    $:  sub=sock
-        fol=*
-        =nomm
-        capture=cape
-        prod=sock
-        map=spring:source
-        area=(unit spot)
-    ==
-    ::  memoized results: finalized, fully direct
-    ::  code, minimized subject for match & for code, full product, provenance
-    ::  relocation map
+    memo-idx=@uxmemo
+  ::::  cold state
+    ::
+    $=  jets
+    $:  root=(jug * path)
+        core=(jug path sock)
+        batt=(jug ^ path)
+        ::  [sub fol]  <--> bell bidirectional mapping
+        ::
+        $=  cole
+        $:  call=(map [sock *] bell) 
+            back=(jug bell [sub=sock fol=*])
+    ==  ==
+  ::::  global code table for memoized entries
     ::
     $=  memo
-    %+  jar  *
-    $:  arm=@uvarm
-        site=@uxsite
-        =nomm
-        less-memo=sock
-        less-code=sock
-        prod=sock
-        map=spring:source
-        area=(unit spot)
+    $:  fols=(jar * meme)
+        idxs=(map @uxmemo meme)
+        sits=(map [@uvarm @uxsite] meme)
+    ==
+  ::::  arm-local info
+    ::    areas: call target spots
+    ::    doors: entry points into arms: either memo hits or a 0x0 code entry
+    ::    sites: finalized code entries for non-0x0 sites
+    ::
+    $=  arms
+    $:  areas=(map @uvarm spot)
+        doors=(map @uvarm $@(@uxmemo [less=sock fol=* =nomm]))
+        sites=(map [@uvarm @uxsite] [less=sock fol=* =nomm])
     ==
   ==
-::  melo entry: code, subject capture cape, full subject to mask, full product
 ::
-+$  meal  $:  site=@uxsite
-              =nomm
-              capture=cape
-              sub=sock-anno
-              prod=sock
-              map=spring:source
-              area=(unit spot)
-          ==
++$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno])
++$  cycle
+  $:  entry=@uxsite
+      latch=@uxsite
+      =frond
+      set=(deep @uxsite)
+      process=(deep @uxsite)
+      melo=(jar * meal)
+      hits=(deep [new=@uxsite new-sub=sock-anno =meal])
+  ==
+::
++$  blocklist  (jug @uxsite @uxsite)
+::  arm-local analysis state
+::
+::    site: evalsite index generator
+::    cycles:   stack of call graph cycles (aka natural loops aka strongly
+::    connected components)
+::      entry: top-most entry into a cyclical call graph
+::      latch: right-most, bottom-most evalsite of the cycle
+::      frond: set of parent-kid pairs of loop assumptions
+::             (target of hypothetical backedge, target of the actual edge,
+::              subject socks at the par/kid evalsites)
+::      set: set of all vertices in the cycle (to delete from want.gen when
+::           done, does not include cycle entry)
+::      process: same as set but without kids
+::      melo: cycle-local meloization cache
+::      hits: melo hits to validate
+::
+::      When new assumptions are made, we either extend an old cycle, possibly
+::      merging multiple predecessor cycles, or add a new one if its
+::      finalization does not depend on previous cycles. Thus, when we finish
+::      analysis of a site which is recorded as an entry in `cycles`, we only
+::      have to check top cycle entry and we can finalize that loop
+::      independently of loops deeper in the stack.
+::
+::      New cycle condition for a parent-kid pair:
+::        parent > latch.i.-.cycles (compare site labels)
+::      If false, extend top cycle (set latch to kid, entry to
+::      min(entry, parent)), then iterate over the rest of the list, 
+::      merging if new cycle overlaps with the predecessor
+::      (new entry <= previous latch)
+::
+::    want: evalsite subject requirements of non-finalized evalsites: parts of
+::      the subject that are used as code
+::
+::    what: subject sock of an unfinalized eval
+::
+::    bars: number of bars for printing
+::    block-loop/melo: blocklists for future guesses during retries
+::    area: outermost spot in the current eval
+::    locals: finalized call entries that were not memoized
+::    memo-entry: potential memo hit for the entry point
+::    process: map of non-finalized calls
+::
++$  short
+  $+  short
+  $:  long
+      here-arm=@uvarm
+      site-gen=@uxsite
+      cycles=(list cycle)
+      want=urge
+      what=(map @uxsite sock)  ::  XX unify w/ want.gen to traverse less?
+      bars=@ud
+      block-loop=blocklist
+      block-melo=blocklist
+      area=(unit spot)
+      locals=(list [site=@uxsite less=sock fol=* =nomm])
+      memo-entry=(unit @uxmemo)
+      $=  process
+      %+  map  @uxsite
+      $:  sub=sock
+          fol=*
+          =nomm
+          capture=cape
+          prod=sock
+          map=spring:source
+          area=(unit spot)
+  ==  ==
 ::  urge: evalsite subject requirements
 ::
 +$  urge  (map @uxsite cape)

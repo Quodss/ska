@@ -22,6 +22,7 @@
 ::  print filename?
 ::
 =/  p-file  |
+::  check that the formula does not crash, returning constant product
 ::
 |%
 ++  safe
@@ -32,7 +33,9 @@
     [%11 @ p=*]    $(fol p.fol)
     [%11 [@ h=^] p=*]  ?~(s=(safe h.fol) ~ $(fol p.fol))
   ==
-::  returns ~ on failure, `~ on root registration, ``@ on child registration
+::  treat %fast hint formula
+::  returns ~ on failure, [~ ~] on root registration, [~ ~ @] on child
+::  registration
 ::
 ++  fast-parent
   |=  fol=*
@@ -76,6 +79,7 @@
   (weld ls)
 ::
 ++  scux  ^~((cury scot %ux))
+++  scuv  ^~((cury scot %uv))
 ::  print analysis stack
 ::
 ++  p
@@ -155,12 +159,12 @@
     ==
   ::
   ++  indi
-    |=  [site=@uxsite seat=(unit spot) bars=@ud]
+    |=  [seat=(unit spot) bars=@ud]
     ^+  bars
     =-  (print bars 'indi' - --0)
     ^-  tank
-    ?~  seat  (scux site)
-    [%rose ["; " ~ ~] (scux site) (ren u.seat) ~]
+    ?~  seat  ''
+    (ren u.seat)
   ::
   ++  fini
     |=  [site=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
@@ -187,15 +191,15 @@
     ==
   ::
   ++  memo
-    |=  [here=@uxsite from=@uxsite seat=(unit spot) area=(unit spot) bars=@ud]
+    |=  [from=(pair @uvarm @uxsite) seat=(unit spot) area=(unit spot) bars=@ud]
     ^+  bars
     =-  (print bars 'memo' - --0)
     ^-  tank
     ?~  area
-      [%rose [" === " ~ ~] (scux here) (scux from) ~]
+      [%rose ["/" ~ ~] (scuv p.from) (scux q.from) ~]
     :+  %rose  ["; " ~ ~]
     :~
-      [%rose [" === " ~ ~] (scux here) (scux from) ~]
+      [%rose ["/" ~ ~] (scuv p.from) (scux q.from) ~]
       [%rose [" ==> " ~ ~] ?~(seat '??' (ren u.seat)) (ren u.area) ~]
     ==
   ::
@@ -235,16 +239,7 @@
   |$  [m]
   (each m (trel ?(%loop %melo) @uxsite @uxsite))
 ::
-+$  err-state  (error state)
-+$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno])
-+$  cycle
-  $:  entry=@uxsite
-      latch=@uxsite
-      =frond
-      set=(deep @uxsite)
-      melo=(jar * meal)
-      hits=(deep [new=@uxsite new-sub=sock-anno =meal])
-  ==
++$  err-state  (error short)
 ::
 ++  add-frond
   |=  [new=[par=@uxsite kid=@uxsite sock sock-anno] cycles=(list cycle)]
@@ -254,7 +249,7 @@
     ::
     :_  cycles
     ^-  cycle
-    [par.new kid.new [%list new ~] [%list ~[kid.new]] ~ list+~]
+    [par.new kid.new [%list new ~] [%list ~[kid.new]] list+~ ~ list+~]
   ::  pop and extend top cycle
   ::
   =/  new-cycle=cycle
@@ -262,6 +257,7 @@
         kid.new
         (dive frond.i.cycles new)
         (dive set.i.cycles kid.new)
+        process.i.cycles
         melo.i.cycles
         hits.i.cycles
     ==
@@ -275,68 +271,14 @@
     [new-cycle rest]
   ::  pop and merge overlapping cycle
   ::
-  =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
-  =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
-  =.  set.new-cycle    [%deep set.new-cycle set.i.rest]
-  =.  melo.new-cycle   ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
-  =.  hits.new-cycle   [%deep hits.new-cycle hits.i.rest]
+  =.  entry.new-cycle    (min entry.new-cycle entry.i.rest)
+  =.  frond.new-cycle    [%deep frond.new-cycle frond.i.rest]
+  =.  set.new-cycle      [%deep set.new-cycle set.i.rest]
+  =.  process.new-cycle  [%deep process.new-cycle process.i.rest]
+  =.  melo.new-cycle     ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
+  =.  hits.new-cycle     [%deep hits.new-cycle hits.i.rest]
   ::
   $(rest t.rest)
-::
-+$  state
-  ::  global state
-  ::    results:  result table
-  ::    site:     eval index generator
-  ::    cycles:   stack of call graph cycles (aka natural loops aka strongly
-  ::    connected components)
-  ::      entry: top-most entry into a cyclical call graph
-  ::      latch: right-most, bottom-most evalsite of the cycle
-  ::      frond: set of parent-kid pairs of loop assumptions
-  ::             (target of hypothetical backedge, target of the actual edge,
-  ::              subject socks at the par/kid evalsites)
-  ::      set: set of all vertices in the cycle (to delete from want.gen when
-  ::           done)
-  ::
-  ::      When new assumptions are made, we either extend an old cycle, possibly
-  ::      merging multiple predecessor cycles, or add a new one if its
-  ::      finalization does not depend on previous cycles. Thus, when we finish
-  ::      analysis of a site which is recorded as an entry in `cycles`, we only
-  ::      have to check top cycle entry and we can finalize that loop
-  ::      independently of loops deeper in the stack.
-  ::
-  ::      New cycle condition for a parent-kid pair:
-  ::        parent > latch.i.-.cycles (compare site labels)
-  ::      If false, extend top cycle (set latch to kid, entry to
-  ::      min(entry, parent)), then iterate over the rest of the list, 
-  ::      merging if new cycle overlaps with the predecessor
-  ::      (new entry <= previous latch)
-  ::
-  ::    loop: parent -> kid map of backedges
-  ::    want: evalsite subject requirements of non-finalized evalsites:
-  ::      parts of the subject that are used as code
-  ::
-  ::    bars: number of bars for printing
-  ::    block-loop/melo: blocklists for future guesses during retries
-  ::    area: outermost spot in the current eval
-  ::    jets: accumulated cold state:
-  ::      root: root noun -> path
-  ::      core: path -> core sock
-  ::      batt: core battery -> path
-  ::
-  $:  =results
-      site=@uxsite
-      cycles=(list cycle)
-      loop=(list (pair @uxsite @uxsite))
-      want=urge
-      bars=@ud
-      block-loop=blocklist
-      block-melo=blocklist
-      area=(unit spot)
-      $=  jets
-      $:  root=(jug * path)
-          core=(jug path sock)
-          batt=(jug ^ path)
-  ==  ==
 ::
 +$  stack
   ::  TODO leave essential
@@ -344,42 +286,53 @@
   $:
     ::  list: linear stack of evalsites
     ::    
-    list=(list (trel sock * @uxsite))
+    :: list=(list (trel sock * @uxsite))
     ::  fols: search by formula
     ::
     fols=(jar * (pair sock-anno @uxsite))
     ::  set: set of evalsites on the stack
     ::
-    set=(set @uxsite)
+    :: set=(set @uxsite)
     areas=(map @uxsite spot)
   ==
 ::  stateful analysis of bus/fol pair
 ::
 ++  scan
-  =|  gen=state
-  =|  arm=@uvarm
+  =|  gen=short
   |=  [bus=sock fol=*]
-  ^-  state
+  ^-  short
   =|  =stack  ::  lexically scoped
   =/  sub=sock-anno  [bus ~]
-  =;  res-eval
+  =;  res-eval-entry=short
     ::  debug asserts
     ::
-    ?>  =(~ cycles.gen.res-eval)
-    ?.  =(~ want.gen.res-eval)
-      ~|  ~(key by want.gen.res-eval)
+    ?>  =(~ cycles.res-eval-entry)
+    ?.  =(~ want.res-eval-entry)
+      ~|  ~(key by want.res-eval-entry)
       !!
-    gen.res-eval
-  =^  here-site  gen  [site.gen gen(site +(site.gen))]
+    ?>  =(~ process.res-eval-entry)
+    ?>  =(~ what.res-eval-entry)
+    res-eval-entry
+  =^  here-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
+  ?>  =(0x0 here-site)
+  ?^  m=(memo & fol sub gen)
+    =>  !@  verb
+          %=    .
+              bars.gen.u.m
+            (memo:p from.u.m ~ area.u.m bars.gen.u.m)
+          ==
+        .
+    gen.u.m
+  =<  gen
   =|  seat=(unit spot)  ::  call site
-  |-  ^-  [[sock-anno flags] gen=state]
+  |-  ^-  [[sock-anno flags] gen=short]
   =*  eval-loop  $
   =|  trace=(list spot)
   ::  retry evalsite analysis if a loop assumption was wrong
   ::
-  |-  ^-  [[sock-anno flags] state]
+  |-  ^-  [[sock-anno flags] short]
   =*  redo-loop  $
-  =;  res
+  =;  res=(error [[sock-anno flags] short])
     ?-  -.res
       %&  p.res
       %|  =>  !@(verb ~&(>>> [%redo res] .) .)
@@ -391,27 +344,27 @@
             redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
           ::
     ==    ==
-  ^-  (error [[sock-anno flags] state])
+  ^-  (error [[sock-anno flags] short])
   ::  check memo cache
   ::
-  ?^  m=(memo here-site fol sub gen)
-    =>  !@  verb
-          %=    .
-              bars.gen.u.m
-            (memo:p here-site from.u.m seat area.u.m bars.gen.u.m)
-          ==
-        .
-    &+[[pro.u.m deff] gen.u.m]
-  ::  check melo cache (melo hit makes call loopy, might merge some cycles)
-  ::
-  ?^  m=(melo here-site fol sub gen)
-    =>  !@  verb
-          %=    .
-              bars.gen.u.m
-            (melo:p here-site from.u.m seat area.u.m bars.gen.u.m)
-          ==
-        .
-    &+[[pro.u.m [& &]] gen.u.m]
+  :: ?^  m=(memo here-site fol sub gen)
+  ::   =>  !@  verb
+  ::         %=    .
+  ::             bars.gen.u.m
+  ::           (memo:p here-site from.u.m seat area.u.m bars.gen.u.m)
+  ::         ==
+  ::       .
+  ::   &+[[pro.u.m deff] gen.u.m]
+  :: ::  check melo cache (melo hit makes call loopy, might merge some cycles)
+  :: ::
+  :: ?^  m=(melo here-site fol sub gen)
+  ::   =>  !@  verb
+  ::         %=    .
+  ::             bars.gen.u.m
+  ::           (melo:p here-site from.u.m seat area.u.m bars.gen.u.m)
+  ::         ==
+  ::       .
+  ::   &+[[pro.u.m [& &]] gen.u.m]
   ::  enter analysis
   ::
   ::  record current evalsite in the subject provenance tree
@@ -422,13 +375,15 @@
   ::
   ::  push on the stack
   ::
-  =.  set.stack   (~(put in set.stack) here-site)
-  =.  list.stack  [[sock.sub fol here-site] list.stack]
+  :: =.  set.stack   (~(put in set.stack) here-site)
+  :: =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
+  ::
+  =.  what.gen  (~(put by what.gen) here-site sock.sub)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
     =>  !@(verb .(bars.gen (step:p here-site seat bars.gen)) .)
-    |-  ^-  [[nomm sock-anno flags] state]
+    |-  ^-  [[nomm sock-anno flags] short]
     =*  fol-loop  $
     ?+    fol  [[[%0 0] dunno deff] gen]
         [p=^ q=^]
@@ -455,15 +410,14 @@
         [%2 p=^ q=^]
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
       =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol q.fol)
-      =^  there-site  gen  [site.gen gen(site +(site.gen))]
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
         =>  !@  verb
-              .(bars.gen (indi:p there-site ?~(trace ~ `i.trace) bars.gen))
+              .(bars.gen (indi:p ?~(trace ~ `i.trace) bars.gen))
             .
         :_  gen
-        :+  [%2 s-code f-code there-site]
+        :+  [%2 s-code f-code ~]
           dunno
         (fold-flag s-flags f-flags [| |] ~)
       ::  direct call
@@ -471,7 +425,35 @@
       =/  fol-new  data.sock.f-prod
       =/  fol-urge  (urge:source src.f-prod &)
       =.  want.gen  (uni-urge:source want.gen fol-urge)
+      ::  check memo cache
       ::
+      ?^  m=(memo | fol-new s-prod gen)
+        =>  !@  verb
+              %=    .
+                  bars.gen.u.m
+                (memo:p from.u.m ?~(trace ~ `i.trace) area.u.m bars.gen.u.m)
+              ==
+            .
+        :_  gen.u.m
+        :+  [%2 s-code f-code memo+idx.u.m]
+          pro.u.m
+        (fold-flag s-flags f-flags ~)
+      ::  fallible checks or analyse through: allocate new evalsite
+      ::
+      =^  there-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
+      ::  check melo cache
+      ::
+      ?^  m=(melo there-site fol sub gen)
+        =>  !@  verb
+              %=    .
+                  bars.gen.u.m
+                (melo:p there-site from.u.m ?~(trace ~ `i.trace) area.u.m bars.gen.u.m)
+              ==
+            .
+        :_  gen.u.m
+        :+  [%2 s-code f-code site+[here-arm.gen from.u.m]]
+          pro.u.m
+        (fold-flag s-flags f-flags [& &] ~)
       ::  check for loop:
       ::    Check if there is formula in the stack above us that has a
       ::    quasi-compatible sock (heuristic), if yes we guess that this is
@@ -486,7 +468,7 @@
       ::  stack filtered by formula
       ::
       =/  tak  (~(get ja fols.stack) fol-new)
-      |-  ^-  [[nomm sock-anno flags] state]
+      |-  ^-  [[nomm sock-anno flags] short]
       =*  stack-loop  $
       ?^  tak
         ::  loop heuristic:
@@ -519,9 +501,8 @@
         =.  cycles.gen
           (add-frond [q.i.tak there-site sock.p.i.tak s-prod] cycles.gen)
         ::
-        =.  loop.gen  [[q.i.tak there-site] loop.gen]
         :_  gen
-        :+  [%2 s-code f-code there-site]
+        :+  [%2 s-code f-code site+[here-arm.gen q.i.tak]]
           dunno
         (fold-flag s-flags f-flags [& &] ~)
       ::  non-loop case: analyse through
@@ -537,8 +518,17 @@
           areas.stack  ?~  area.gen  areas.stack
                        (~(put by areas.stack) here-site u.area.gen)
         ==
+      ::
+      =/  code=nomm
+        :^  %2  s-code  f-code
+        ?:  ?=([%| %&] flags)
+          ::  the call got memoized
+          ::
+          memo+idx:(~(got by sits.memo.gen) here-arm.gen there-site)
+        site+[here-arm.gen there-site]
+      ::
       :_  gen(area area-stash)
-      :+  [%2 s-code f-code there-site]
+      :+  code
         pro
       (fold-flag flags s-flags f-flags ~)
     ::
@@ -661,7 +651,7 @@
   ::   ~|  capture1
   ::   ~|  capture
   ::   !!
-  =;  fin=(error [loopy=? gen=state])
+  =;  fin=(error [loopy=? gen=short])
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
   ?.  loopy.flags
@@ -670,7 +660,7 @@
     :+  %&  %|
     ::  finalize simple
     ::
-    ^-  state
+    ^-  short
     =>  !@(verb .(bars.gen (done:p here-site seat area.gen bars.gen)) .)
     =/  mayb-site=(unit cape)  (~(get by want.gen) here-site)
     =/  want-site=cape  ?~(mayb-site | u.mayb-site)
@@ -686,10 +676,10 @@
       ~|  cape.less-code
       ~|  want-site
       !!
-    =.  final.results.gen
-      (~(put by final.results.gen) here-site less-code fol code)
+    ::  memoize
     ::
-    =?  memo.results.gen  direct.flags
+    =?  gen  direct.flags
+      =^  idx  memo-idx.gen  [memo-idx.gen +(memo-idx.gen)]
       =/  mask=cape  (~(uni ca want-site) capture)
       =/  less-memo  (~(app ca mask) sock.sub)
       ?.  =(mask cape.less-memo)
@@ -697,33 +687,31 @@
         ~|  cape.less-memo
         ~|  mask
         !!
-      %+  ~(add ja memo.results.gen)  fol
-      :*  arm
-          here-site
-          code
-          ::  minimized subjects' socks for memo checks and code checks
-          ::
-          less-memo
-          less-code
-          ::  full result, captured subject was included in memo requirement
-          ::
-          sock.prod
-          map
-          area.gen
-      ==
+      =/  =meme
+        :^  idx  here-arm.gen  here-site
+        [fol code less-memo less-code sock.prod map area.gen]
+      ::
+      =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
+      =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
+      =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
+      gen
+    ::  if not memoized: save local
     ::
+    =?  locals.gen  !direct.flags  [[here-site less-code fol code] locals.gen]
     =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
+    =.  what.gen  (~(del by what.gen) here-site)
     gen
   ?~  cycles.gen  !!
   ?.  =(here-site entry.i.cycles.gen)
-    ::  sucess, loopy
+    ::  success, loopy
     ::
     :+  %&  %&
     ::  return without finalizing
     ::
-    ^-  state
+    ^-  short
     =>  !@(verb .(bars.gen (ciao:p here-site seat area.gen bars.gen)) .)
-    =.  set.i.cycles.gen   (dive set.i.cycles.gen here-site)
+    =.  set.i.cycles.gen      (dive set.i.cycles.gen here-site)
+    =.  process.i.cycles.gen  (dive process.i.cycles.gen here-site)
     =.  melo.i.cycles.gen
       %+  ~(add ja melo.i.cycles.gen)  fol
       :*  here-site
@@ -735,8 +723,8 @@
           area.gen
       ==
     ::
-    =.  process.results.gen
-      %+  ~(put by process.results.gen)  here-site
+    =.  process.gen
+      %+  ~(put by process.gen)  here-site
       [sock.sub fol code capture sock.prod map area.gen]
     ::
     gen
@@ -746,30 +734,29 @@
   ::  attempt to finalize cycle entry
   ::
   ^-  err-state
-  =.  process.results.gen
-    %+  ~(put by process.results.gen)  here-site
+  =.  process.gen
+    %+  ~(put by process.gen)  here-site
     [sock.sub fol code capture sock.prod map area.gen]
   ::
   =>  .(cycles.gen `(list cycle)`cycles.gen)
   =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
   ::  validate fronds, produce set of kids of backedges (only necessary for
   ::  memoization of non-entry calls)
+  ::  XX use all subjects in what.gen to check for fixpoint condition 
   ::
-  =/  err-res=(error (pair state (set @uxsite)))
+  =/  err-gen=err-state
     %+  reel-deep  frond.pop
     |:  :-  *[par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno]
-        acc=`(error (pair state (set @uxsite)))`&+[gen ~]
-    ^+  acc
-    ?:  ?=(%| -.acc)  acc
-    =/  gen  p.p.acc
-    =/  kids  q.p.acc
-    =.  kids  (~(put in kids) kid)
+        err-gen=`err-state`&+gen
+    ^+  err-gen
+    ?:  ?=(%| -.err-gen)  err-gen
+    =/  gen  p.err-gen
     =^  par-final=sock  gen
       =/  c  0
       ::
       =/  par-want-1=cape  (~(gut by want.gen) par |)
       =/  par-masked-1=sock  (~(app ca par-want-1) par-sub)
-      |-  ^-  [sock state]
+      |-  ^-  [sock short]
       =/  kid-sub-urge  (urge:source src.kid-sub par-want-1)
       =.  want.gen  (uni-urge:source want.gen kid-sub-urge)
       =/  par-want-2=cape  (~(gut by want.gen) par |)
@@ -780,19 +767,13 @@
       $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
     ::
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
-    =.  process.results.gen
-      %+  ~(put by process.results.gen)  kid
-      =/  proc  (~(got by process.results.gen) par)
-      proc(sub sock.kid-sub, capture |, prod |+~, map ~)
-    ::
-    &+[gen kids]
+    &+gen
   ::
-  ?:  ?=(%| -.err-res)  err-res
-  =.  gen  p.p.err-res
-  =/  kids=(set @uxsite)  q.p.err-res
-  ::  remove err-res
+  ?:  ?=(%| -.err-gen)  err-gen
+  =.  gen  p.err-gen
+  ::  remove err-gen
   ::
-  =>  [- +>]
+  =>  +
   ::  validate melo hits
   ::
   =/  err-gen=err-state
@@ -812,7 +793,7 @@
     =^  old-final=sock  gen
       =/  old-want-1=cape  (~(gut by want.gen) old |)
       =/  old-masked-1=sock  (~(app ca old-want-1) sock.old-sub)
-      |-  ^-  [sock state]
+      |-  ^-  [sock short]
       =/  new-sub-urge  (urge:source src.new-sub old-want-1)
       =.  want.gen  (uni-urge:source want.gen new-sub-urge)
       =/  old-want-2=cape  (~(gut by want.gen) old |)
@@ -830,12 +811,14 @@
   =>  +
   =>  !@(verb .(bars.gen (fini:p here-site seat area.gen bars.gen)) .)
   ::
-  =.  set.pop  (dive set.pop here-site)
+  :: =.  set.pop  (dive set.pop here-site)
+  ::  finalize in-process sites
+  ::
   =.  gen
-    %+  roll-deep  set.pop
+    %+  roll-deep  process.pop
     |:  [site=*@uxsite gen=gen]
-    ^-  state
-    =/  proc  (~(got by process.results.gen) site)
+    ^-  short
+    =/  proc  (~(got by process.gen) site)
     =/  want-site=cape  (~(gut by want.gen) site |)
     =/  less-code=sock  (~(app ca want-site) sub.proc)
     ?.  =(want-site cape.less-code)
@@ -843,49 +826,42 @@
       ~|  cape.less-code
       ~|  want-site
       !!
-    =.  final.results.gen
-      (~(put by final.results.gen) site less-code fol.proc nomm.proc)
-    ::  XX sock nest fails when memoizing loop calls
-    ::  (we shouldn't memoize them but still, why?)
-    ::  (prob has smth to do with kid want not being as restricted i.e. smaller
-    ::  than the parent's want)
+    =.  locals.gen  [[site less-code fol.proc nomm.proc] locals.gen]
+    gen
+  ::  memoize loop entry point
+  ::
+  =?  gen  direct.flags
+    =^  idx  memo-idx.gen  [memo-idx.gen +(memo-idx.gen)]
+    =/  want-site  (~(gut by want.gen) here-site |)
+    =/  less-code=sock  (~(app ca want-site) sock.sub)
+    ?.  =(want-site cape.less-code)
+      ~_  'cape.less-code < want-site'
+      ~|  cape.less-code
+      ~|  want-site
+      !!
+    =/  memo-mask=cape  (~(uni ca want-site) capture)
+    =/  memo-less  (~(app ca memo-mask) sock.sub)
+    ?.  =(memo-mask cape.memo-less)
+      ~_  'cape.less < mask'
+      ~|  cape.memo-less
+      ~|  memo-mask
+      !!
+    =/  meme
+      :^  idx  here-arm.gen  here-site
+      [fol code memo-less less-code sock.prod map area.gen]
     ::
-    ::  Computation time-wise it might not be worth it to memoize anything
-    ::  except the entry point into the cycle
-    ::
-    ::  A -> B -> C -> A -- loop, A is memoized
-    ::  (later)
-    ::  B -> C -> A -- memo hit, C and B also memoized
-    ::
-    ::  Most cycles don't have multiple entry points so this extra work won't be
-    ::  done
-    ::
-    :: =?  memo.results.gen  &(direct.flags =(site here-site))
-    =?  memo.results.gen  &(direct.flags !(~(has in kids) site))
-      =/  memo-mask=cape  (~(uni ca want-site) capture.proc)
-      =/  memo-less  (~(app ca memo-mask) sub.proc)
-      ?.  =(memo-mask cape.memo-less)
-        ~_  'cape.less < mask'
-        ~|  cape.memo-less
-        ~|  memo-mask
-        !!
-      %+  ~(add ja memo.results.gen)  fol.proc
-      :*  arm
-          site
-          nomm.proc
-          memo-less
-          less-code
-          prod.proc
-          map.proc
-          area.proc
-      ==
-    ::
+    =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
+    =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
+    =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
     gen
   =.  want.gen  (~(del by want.gen) here-site)
-  =.  want.gen
+  =.  what.gen  (~(del by what.gen) here-site)
+  =.  gen
     %+  roll-deep  set.pop
-    |:  [v=*@uxsite acc=want.gen]
-    (~(del by acc) v)
+    |:  [v=*@uxsite gen=gen]
+    =.  want.gen  (~(del by want.gen) v)
+    =.  what.gen  (~(del by what.gen) v)
+    gen
   ::
   &+gen
 ::  given that b > a, for each axis that used to be %.n in a and became not that
@@ -936,12 +912,19 @@
   |-  ^-  @
   ?@  n  (xeb rev)
   (max $(n -.n, rev (peg rev 2)) $(n +.n, rev (peg rev 3)))
+::  XX inline for is-entry=%.y
 ::
 ++  memo
-  |=  [site=@uxsite fol=* sub=sock-anno gen=state]
-  ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=state])
-  =/  meme  (~(get ja memo.results.gen) fol)
-  |-  ^-  (unit [@uxsite (unit spot) sock-anno state])
+  |=  [is-entry=? fol=* sub=sock-anno gen=short]
+  ^-  %-  unit
+      $:  idx=@uxmemo
+          from=[@uvarm @uxsite]
+          area=(unit spot)
+          pro=sock-anno
+          gen=short
+      ==
+  =/  meme  (~(get ja fols.memo.gen) fol)
+  |-
   ?~  meme  ~
   =*  i  i.meme
   ?.  (~(huge so less-memo.i) sock.sub)  $(meme t.meme)
@@ -951,22 +934,20 @@
     (urge:source src.sub cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
-  =.  final.results.gen
-    (~(put by final.results.gen) site less-code.i fol nomm.i)
-  ::
+  =?  memo-entry.gen  is-entry  `idx.i
   =/  src  (relo:source src.sub map.i)
-  `[site.i area.i [prod.i src] gen]
+  `[idx.i [arm.i site.i] area.i [prod.i src] gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
           fol=*
           sub=sock-anno
-          gen=state
+          gen=short
       ==
-  ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=state])
+  ^-  (unit [from=@uxsite area=(unit spot) pro=sock-anno gen=short])
   ?:  =(~ cycles.gen)  ~
   =*  hit  ,[new=@uxsite new-sub=sock-anno =meal]
-  =*  res  ,(unit [out=[@uxsite (unit spot) sock-anno gen=state] =hit depth=@])
+  =*  res  ,(unit [out=[@uxsite (unit spot) sock-anno gen=short] =hit depth=@])
   =/  =res
     =/  melo-dep  (uni-melo (turn cycles.gen |=(cycle melo)))
     =/  mele  (~(get ja melo-dep) fol)
@@ -978,10 +959,10 @@
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
-    =.  process.results.gen
-      %+  ~(put by process.results.gen)  site
-      =/  proc  (~(got by process.results.gen) site.i)
-      proc(sub sock.sub)
+    :: =.  process.gen
+    ::   %+  ~(put by process.gen)  site
+    ::   =/  proc  (~(got by process.gen) site.i)
+    ::   proc(sub sock.sub)
     ::
     =/  src  (relo:source src.sub map.i)
     `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
@@ -993,9 +974,10 @@
   ?:  =(0 depth.u.res)
     ?~  cycles.gen.out.u.res  !!
     =*  i   i.cycles.gen.out.u.res
-    =.  hits.i  (dive hits.i hit.u.res)
-    =.  set.i   (dive set.i site)
-    =.  latch.i  site
+    =.  hits.i     (dive hits.i hit.u.res)
+    =.  set.i      (dive set.i site)
+    =.  process.i  (dive process.i site)
+    =.  latch.i    site
     `out.u.res
   =/  depth  depth.u.res
   =/  gen  gen.out.u.res
@@ -1003,24 +985,26 @@
   =/  rest  ,.+.cycles.gen
   |-
   ?:  =(0 depth)
-    =.  hits.new-cycle   (dive hits.new-cycle hit.u.res)
-    =.  set.new-cycle    (dive set.new-cycle site)
-    =.  latch.new-cycle  site
+    =.  hits.new-cycle     (dive hits.new-cycle hit.u.res)
+    =.  set.new-cycle      (dive set.new-cycle site)
+    =.  process.new-cycle  (dive process.new-cycle site)
+    =.  latch.new-cycle    site
     =.  cycles.gen  [new-cycle rest]
     `out.u.res(gen gen)
   ?~  rest  !!
-  =.  entry.new-cycle  (min entry.new-cycle entry.i.rest)
-  =.  frond.new-cycle  [%deep frond.new-cycle frond.i.rest]
-  =.  set.new-cycle    [%deep set.new-cycle set.i.rest]
-  =.  melo.new-cycle   ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
-  =.  hits.new-cycle   [%deep hits.new-cycle hits.i.rest]
+  =.  entry.new-cycle    (min entry.new-cycle entry.i.rest)
+  =.  frond.new-cycle    [%deep frond.new-cycle frond.i.rest]
+  =.  set.new-cycle      [%deep set.new-cycle set.i.rest]
+  =.  process.new-cycle  [%deep process.new-cycle process.i.rest]
+  =.  melo.new-cycle     ((~(uno by melo.new-cycle) melo.i.rest) weld-meal)
+  =.  hits.new-cycle     [%deep hits.new-cycle hits.i.rest]
   $(rest t.rest, depth (dec depth))
 ::  given kid and parent subject socks and parent evalsite label, check if
 ::  the kid sock is compatible with parent for a loop call. heuristic.
 ::  returns code usage cape if compatible
 ::
 ++  close
-  |=  [kid-sub=sock par-sub=sock par-site=@uxsite gen=state]
+  |=  [kid-sub=sock par-sub=sock par-site=@uxsite gen=short]
   ^-  (unit cape)
   =/  par-want=cape  (~(gut by want.gen) par-site |)
   =/  par-masked=sock  (~(app ca par-want) par-sub)
@@ -1037,8 +1021,8 @@
   [|(loopy.f loopy.out) &(direct.f direct.out)]
 ::
 ++  hint
-  |=  [tag=@ hint=sock-anno result=sock-anno gen=state]
-  ^-  state
+  |=  [tag=@ hint=sock-anno result=sock-anno gen=short]
+  ^-  short
   ?+    tag  gen
       %fast
     ?.  =(& cape.sock.hint)  ~&(>>> %fast-lost-clue gen)
@@ -1079,12 +1063,12 @@
       (~(get ju batt.jets.gen) data.batt-fore)
     ::
     =/  past-list  ~(tap in past)
-    |-  ^-  state
+    |-  ^-  short
     =*  past-loop  $
     ?~  past-list  gen
     =/  pax=path  [label i.past-list]
     =/  socks  ~(tap in (~(get ju core.jets.gen) i.past-list))
-    |-  ^-  state
+    |-  ^-  short
     =*  sock-loop  $
     ?~  socks  past-loop(past-list t.past-list)
     ?.  (~(huge so i.socks) fore)  sock-loop(socks t.socks)
@@ -1141,291 +1125,249 @@
 ::  Indirect calls reanalyze
 ::  Direct calls are verified with subject sock nest checking
 ::
-++  run-nomm
-  |=  [s=* f=*]
-  ^-  (unit)
-  !.
-  =/  gen
-    ~>  %bout
-    (scan &+s f)
-  =/  n  nomm:(~(got by final.results.gen) 0x0)
-  =|  trace=(list spot)
-  |-  ^-  (unit)
-  ?-    n
-      [p=^ q=*]
-    =/  l  $(n p.n)
-    ?~  l  ~
-    =/  r  $(n q.n)
-    ?~  r  ~
-    `[u.l u.r]
-  ::
-      [%0 p=@]
-    ?:  =(0 p.n)
-      ~&  '[%0 0]'
-      ~&  trace
-      ~
-    ?:  =(1 p.n)  `s
-    =-  ~?  ?=(~ -)  '%0 crash'  -
-    (mole |.(.*(s [0 p.n])))
-  ::
-      [%1 p=*]
-    `p.n
-  ::
-      [%2 *]
-    =/  s1  $(n p.n)
-    ?~  s1  ~
-    =/  f1  $(n q.n)
-    ?~  f1  ~
-    ?~  call=(~(get by final.results.gen) site.n)
-      ~&  indirect+site.n
-      :: (run-nomm u.s1 u.f1)
-      !!
-    ?.  (~(huge so less.u.call) & u.s1)
-      ~|  site.n
-      :: ~|  [need+less.u.call got+[& u.s1]]
-      ~|  %sock-nest-error
-      ~|  (dif-so less.u.call & u.s1)
-      !!
-    ?^  res=(jet u.s1 u.f1)  u.res
-    $(s u.s1, n nomm.u.call)
-  ::
-      [%3 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    `.?(u.p)
-  ::
-      [%4 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    ?^  u.p  ~&  '%4 cell'  ~
-    `+(u.p)
-  ::
-      [%5 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    =/  q  $(n q.n)
-    ?~  q  ~
-    `=(u.p u.q)
-  ::
-      [%6 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    ?+  u.p  ~&('%6 non-loobean' ~)
-      %&  $(n q.n)
-      %|  $(n r.n)
-    ==
-  ::
-      [%7 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    $(s u.p, n q.n)
-  ::
-      [%10 *]
-    ?:  =(0 p.p.n)  ~&  '%10 0'  ~
-    =/  don  $(n q.p.n)
-    ?~  don  ~
-    =/  rec  $(n q.n)
-    ?~  rec  ~
-    =-  ~?  ?=(~ -)  '%10 crash'  -
-    (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
-  ::
-      [%s11 *]
-    $(n q.n)
-  ::
-      [%d11 *]
-    =?  trace  =(p.p.n %spot)
-      =/  pot=(unit spot)  ((soft spot) +.q.p.n)
-      ?~  pot  trace
-      [u.pot trace]
-    ::
-    =/  h  $(n q.p.n)
-    ?~  h  ~
-    $(n q.n)
-  ::
-      [%12 *]
-    ~|  %no-scry  !!
-  ==
-::  formula registration coordinate: path + axis in the core
-::
-+$  bell  (pair path @)
-::  Long-term analysis state
-::
-+$  cold
-  $:
-    ::  arm index generator
-    ::
-    arm=@uvarm
-    $=  jets
-    $:  root=(jug * path)
-        core=(jug path sock)
-        batt=(jug ^ path)
-        ::  [sub fol]  <--> bell bidirectional mapping
-        ::
-        $=  cole
-        $:  call=(map [sock *] bell) 
-            back=(jug bell [sub=sock fol=*])
-    ==  ==
-  ::
-    $=  memo
-    %+  jar  *
-    $:  arm=@uvarm
-        site=@uxsite
-        =nomm
-        less-memo=sock
-        less-code=sock
-        prod=sock
-        map=spring:source
-        area=(unit spot)
-    ==
-  ::
-    $=  arms
-    %+  map  @uvarm
-    $:  ices=(map @uxsite [less=sock fol=* =nomm])
-        ::  parent -> kid map of backedges
-        ::
-        loop=(map @uxsite [sites=(set @uxsite) less=sock fol=* =nomm])
-        area=(unit spot)
-    ==
-  ==
+:: ++  run-nomm
+::   |=  [s=* f=*]
+::   ^-  (unit)
+::   !.
+::   =/  gen
+::     ~>  %bout
+::     (scan &+s f)
+::   =/  n  nomm:(~(got by final.results.gen) 0x0)
+::   =|  trace=(list spot)
+::   |-  ^-  (unit)
+::   ?-    n
+::       [p=^ q=*]
+::     =/  l  $(n p.n)
+::     ?~  l  ~
+::     =/  r  $(n q.n)
+::     ?~  r  ~
+::     `[u.l u.r]
+::   ::
+::       [%0 p=@]
+::     ?:  =(0 p.n)
+::       ~&  '[%0 0]'
+::       ~&  trace
+::       ~
+::     ?:  =(1 p.n)  `s
+::     =-  ~?  ?=(~ -)  '%0 crash'  -
+::     (mole |.(.*(s [0 p.n])))
+::   ::
+::       [%1 p=*]
+::     `p.n
+::   ::
+::       [%2 *]
+::     =/  s1  $(n p.n)
+::     ?~  s1  ~
+::     =/  f1  $(n q.n)
+::     ?~  f1  ~
+::     ?~  call=(~(get by final.results.gen) site.n)
+::       ~&  indirect+site.n
+::       :: (run-nomm u.s1 u.f1)
+::       !!
+::     ?.  (~(huge so less.u.call) & u.s1)
+::       ~|  site.n
+::       :: ~|  [need+less.u.call got+[& u.s1]]
+::       ~|  %sock-nest-error
+::       ~|  (dif-so less.u.call & u.s1)
+::       !!
+::     ?^  res=(jet u.s1 u.f1)  u.res
+::     $(s u.s1, n nomm.u.call)
+::   ::
+::       [%3 *]
+::     =/  p  $(n p.n)
+::     ?~  p  ~
+::     `.?(u.p)
+::   ::
+::       [%4 *]
+::     =/  p  $(n p.n)
+::     ?~  p  ~
+::     ?^  u.p  ~&  '%4 cell'  ~
+::     `+(u.p)
+::   ::
+::       [%5 *]
+::     =/  p  $(n p.n)
+::     ?~  p  ~
+::     =/  q  $(n q.n)
+::     ?~  q  ~
+::     `=(u.p u.q)
+::   ::
+::       [%6 *]
+::     =/  p  $(n p.n)
+::     ?~  p  ~
+::     ?+  u.p  ~&('%6 non-loobean' ~)
+::       %&  $(n q.n)
+::       %|  $(n r.n)
+::     ==
+::   ::
+::       [%7 *]
+::     =/  p  $(n p.n)
+::     ?~  p  ~
+::     $(s u.p, n q.n)
+::   ::
+::       [%10 *]
+::     ?:  =(0 p.p.n)  ~&  '%10 0'  ~
+::     =/  don  $(n q.p.n)
+::     ?~  don  ~
+::     =/  rec  $(n q.n)
+::     ?~  rec  ~
+::     =-  ~?  ?=(~ -)  '%10 crash'  -
+::     (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
+::   ::
+::       [%s11 *]
+::     $(n q.n)
+::   ::
+::       [%d11 *]
+::     =?  trace  =(p.p.n %spot)
+::       =/  pot=(unit spot)  ((soft spot) +.q.p.n)
+::       ?~  pot  trace
+::       [u.pot trace]
+::     ::
+::     =/  h  $(n q.p.n)
+::     ?~  h  ~
+::     $(n q.n)
+::   ::
+::       [%12 *]
+::     ~|  %no-scry  !!
+::   ==
 ::  unit of work: subject, formula, if comes from jetted core dissasembly:
 ::    cons frame? jet registration coordinate
 ::
 +$  todo  [sub=sock fol=* break=(unit [cons=? point=bell])]
 ::  Analyze subject/formula pair, descending into jetted cores
 ::
-++  ka
-  |_  cod=cold
-  +*  this  .
-  ++  rout
-    |=  [s=* f=*]
-    ^+  this
-    =/  queu=(list todo)  [[& s] f ~]~
-    =|  load=(list todo)
-    |-  ^+  this
-    =*  cold-loop  $
-    ?~  queu
-      ?~  load  this
-      ~&  >>  cold-loop+(lent load)
-      cold-loop(queu (flop load), load ~)
-    ?:  ?&(?=(^ break.i.queu) cons.u.break.i.queu)
-      ::  merge analysis of an autocons head and tail
-      ::
-      =*  p  point.u.break.i.queu
-      =*  b  back.cole.jets.cod
-      =/  heds=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 2)))
-      =/  lets=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 3)))
-      ?@  fol.i.queu  !!
-      |-  ^+  this
-      =*  hed-loop  $
-      ?~  heds  cold-loop(queu t.queu)
-      ?.  =(fol.i.heds -.fol.i.queu)          hed-loop(heds t.heds)
-      ?.  (~(huge so sub.i.heds) sub.i.queu)  hed-loop(heds t.heds)
-      =/  tels  lets
-      |-  ^+  this
-      =*  tel-loop  $
-      ?~  tels  hed-loop(heds t.heds)
-      ?.  =(fol.i.heds +.fol.i.queu)          tel-loop(tels t.tels)
-      ?.  (~(huge so sub.i.tels) sub.i.queu)  tel-loop(tels t.tels)
-      =/  join  (~(pack so sub.i.heds) sub.i.tels)
-      =.  call.cole.jets.cod  (~(put by call.cole.jets.cod) [join fol.i.queu] p)
-      =.  back.cole.jets.cod  (~(put ju back.cole.jets.cod) p join fol.i.queu)
-      tel-loop(tels t.tels)
-    ::  analyze a formula from a queue, push new tasks in the back queu
-    ::
-    ::  prepare state
-    ::
-    =^  here-arm  cod  [arm.cod cod(arm +(arm.cod))]
-    =/  can  scan
-    =.  arm.can               here-arm
-    =.  memo.results.gen.can  memo.cod
-    =.  root.jets.gen.can     root.jets.cod
-    =.  core.jets.gen.can     core.jets.cod
-    =.  batt.jets.gen.can     batt.jets.cod
-    ::  analyze
-    ::
-    ~?  >  ?=(^ break.i.queu)  [%enter point.u.break.i.queu]
-    ~?  >  ?=(~ break.i.queu)  %enter
-    =/  gen=state  (can [sub fol]:i.queu)
-    ~&  >  %done
-    ::  propagate updates
-    ::
-    =/  new  ((dif-ju core.jets.gen) core.jets.cod)
-    %=    cold-loop
-        queu           t.queu
-        memo.cod       memo.results.gen
-        root.jets.cod  root.jets.gen
-        core.jets.cod  core.jets.gen
-        batt.jets.cod  batt.jets.gen
-        arms.cod
-      %+  ~(put by arms.cod)  here-arm
-      :-  final.results.gen
-      :_  area.gen
-      =|  m=(map @uxsite [sites=(set @uxsite) less=sock fol=* =nomm])
-      =/  l  loop.gen
-      |-  ^+  m
-      ?~  l  m
-      =/  data=(trap [(set @uxsite) sock * nomm])
-        |.
-        :-  [q.i.l ~ ~]
-        (~(got by final.results.gen) p.i.l)
-      ::
-      %:  jib
-        m
-        p.i.l
-        data
-        |=  v=[s=(set @uxsite) sock * nomm]
-        v(s (~(put in s.v) q.i.l))
-      ==
-    ::
-        cole.jets.cod
-      ?~  break.i.queu  cole.jets.cod
-      =*  p  point.u.break.i.queu
-      =/  boot=(pair sock *)
-        [less:(~(got by final.results.gen) 0x0) fol.i.queu]
-      ::
-      %=  cole.jets.cod
-        call  (~(put by call.cole.jets.cod) boot p)
-        back  (~(put ju back.cole.jets.cod) p boot)
-      ==
-    ::
-        load
-      ::  we sort the list of new jet registrations by ascending order of path
-      ::  length, to analyze short paths before the long ones. roll here and 
-      ::  flop above cancel each other out
-      ::
-      %+  roll
-        %+  sort
-          %+  turn  ~(tap by new)
-          |=([p=path q=(set sock)] [(lent p) p q])
-        |=([l=[len=@ *] r=[len=@ *]] (lth len.l len.r))
-      |:  [[len=*@ p=*path q=*(set sock)] load=load]
-      ~&  >  [%enqueu p]
-      %-  ~(rep in q)
-      |:  [s=*sock load=load]
-      =/  batt  (~(pull so s) 2)
-      ?.  =(& cape.batt)  ~&(>>> [%cold-miss-batt p] load)
-      =*  f  data.batt
-      =/  ax=@  2
-      |-  ^+  load
-      ?.  ?=([^ *] f)  [[s f `[| p ax]] load]
-      =.  load  $(f -.f, ax (peg ax 2))
-      =.  load  $(f +.f, ax (peg ax 3))
-      [[s f `[& p ax]] load]
-    ==
-  --
-::
-++  dif-ju
-  |*  a=(jug)
-  |*  b=_a
-  ^+  a
-  =/  c=_a  (~(dif by a) b)
-  =/  i=_a  (~(int by a) b)
-  ?:  =(~ i)  c
-  %-  ~(rep by i)
-  |=  [[p=_?>(?=(^ i) p.n.i) q=_?>(?=(^ i) q.n.i)] =_c]
-  =/  r=_q  (~(get ju b) p)
-  =/  s=_q  (~(dif in q) r)
-  ?:  =(~ s)  c
-  (~(put by c) p s)
+:: ++  ka
+::   |_  cod=cold
+::   +*  this  .
+::   ++  rout
+::     |=  [s=* f=*]
+::     ^+  this
+::     =/  queu=(list todo)  [[& s] f ~]~
+::     =|  load=(list todo)
+::     |-  ^+  this
+::     =*  cold-loop  $
+::     ?~  queu
+::       ?~  load  this
+::       ~&  >>  cold-loop+(lent load)
+::       cold-loop(queu (flop load), load ~)
+::     ?:  ?&(?=(^ break.i.queu) cons.u.break.i.queu)
+::       ::  merge analysis of an autocons head and tail
+::       ::
+::       =*  p  point.u.break.i.queu
+::       =*  b  back.cole.jets.cod
+::       =/  heds=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 2)))
+::       =/  lets=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 3)))
+::       ?@  fol.i.queu  !!
+::       |-  ^+  this
+::       =*  hed-loop  $
+::       ?~  heds  cold-loop(queu t.queu)
+::       ?.  =(fol.i.heds -.fol.i.queu)          hed-loop(heds t.heds)
+::       ?.  (~(huge so sub.i.heds) sub.i.queu)  hed-loop(heds t.heds)
+::       =/  tels  lets
+::       |-  ^+  this
+::       =*  tel-loop  $
+::       ?~  tels  hed-loop(heds t.heds)
+::       ?.  =(fol.i.heds +.fol.i.queu)          tel-loop(tels t.tels)
+::       ?.  (~(huge so sub.i.tels) sub.i.queu)  tel-loop(tels t.tels)
+::       =/  join  (~(pack so sub.i.heds) sub.i.tels)
+::       =.  call.cole.jets.cod  (~(put by call.cole.jets.cod) [join fol.i.queu] p)
+::       =.  back.cole.jets.cod  (~(put ju back.cole.jets.cod) p join fol.i.queu)
+::       tel-loop(tels t.tels)
+::     ::  analyze a formula from a queue, push new tasks in the back queu
+::     ::
+::     ::  prepare state
+::     ::
+::     =^  here-arm  cod  [arm.cod cod(arm +(arm.cod))]
+::     =/  can  scan
+::     =.  arm.can               here-arm
+::     =.  memo.results.gen.can  memo.cod
+::     =.  root.jets.gen.can     root.jets.cod
+::     =.  core.jets.gen.can     core.jets.cod
+::     =.  batt.jets.gen.can     batt.jets.cod
+::     ::  analyze
+::     ::
+::     ~?  >  ?=(^ break.i.queu)  [%enter point.u.break.i.queu]
+::     ~?  >  ?=(~ break.i.queu)  %enter
+::     =/  gen=short  (can [sub fol]:i.queu)
+::     ~&  >  %done
+::     ::  propagate updates
+::     ::
+::     =/  new  ((dif-ju core.jets.gen) core.jets.cod)
+::     %=    cold-loop
+::         queu           t.queu
+::         memo.cod       memo.results.gen
+::         root.jets.cod  root.jets.gen
+::         core.jets.cod  core.jets.gen
+::         batt.jets.cod  batt.jets.gen
+::         arms.cod
+::       %+  ~(put by arms.cod)  here-arm
+::       :-  final.results.gen
+::       :_  area.gen
+::       =|  m=(map @uxsite [sites=(set @uxsite) less=sock fol=* =nomm])
+::       =/  l  loop.gen
+::       |-  ^+  m
+::       ?~  l  m
+::       =/  data=(trap [(set @uxsite) sock * nomm])
+::         |.
+::         :-  [q.i.l ~ ~]
+::         (~(got by final.results.gen) p.i.l)
+::       ::
+::       %:  jib
+::         m
+::         p.i.l
+::         data
+::         |=  v=[s=(set @uxsite) sock * nomm]
+::         v(s (~(put in s.v) q.i.l))
+::       ==
+::     ::
+::         cole.jets.cod
+::       ?~  break.i.queu  cole.jets.cod
+::       =*  p  point.u.break.i.queu
+::       =/  boot=(pair sock *)
+::         [less:(~(got by final.results.gen) 0x0) fol.i.queu]
+::       ::
+::       %=  cole.jets.cod
+::         call  (~(put by call.cole.jets.cod) boot p)
+::         back  (~(put ju back.cole.jets.cod) p boot)
+::       ==
+::     ::
+::         load
+::       ::  we sort the list of new jet registrations by ascending order of path
+::       ::  length, to analyze short paths before the long ones. roll here and 
+::       ::  flop above cancel each other out
+::       ::
+::       %+  roll
+::         %+  sort
+::           %+  turn  ~(tap by new)
+::           |=([p=path q=(set sock)] [(lent p) p q])
+::         |=([l=[len=@ *] r=[len=@ *]] (lth len.l len.r))
+::       |:  [[len=*@ p=*path q=*(set sock)] load=load]
+::       ~&  >  [%enqueu p]
+::       %-  ~(rep in q)
+::       |:  [s=*sock load=load]
+::       =/  batt  (~(pull so s) 2)
+::       ?.  =(& cape.batt)  ~&(>>> [%cold-miss-batt p] load)
+::       =*  f  data.batt
+::       =/  ax=@  2
+::       |-  ^+  load
+::       ?.  ?=([^ *] f)  [[s f `[| p ax]] load]
+::       =.  load  $(f -.f, ax (peg ax 2))
+::       =.  load  $(f +.f, ax (peg ax 3))
+::       [[s f `[& p ax]] load]
+::     ==
+::   --
+:: ::
+:: ++  dif-ju
+::   |*  a=(jug)
+::   |*  b=_a
+::   ^+  a
+::   =/  c=_a  (~(dif by a) b)
+::   =/  i=_a  (~(int by a) b)
+::   ?:  =(~ i)  c
+::   %-  ~(rep by i)
+::   |=  [[p=_?>(?=(^ i) p.n.i) q=_?>(?=(^ i) q.n.i)] =_c]
+::   =/  r=_q  (~(get ju b) p)
+::   =/  s=_q  (~(dif in q) r)
+::   ?:  =(~ s)  c
+::   (~(put by c) p s)
 ::
 --
