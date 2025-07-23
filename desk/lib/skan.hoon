@@ -12,7 +12,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-=/  verb  ~
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -1123,9 +1123,10 @@
   ?^  -.n  [$(n -.n) $(n +.n)]
   ?-    -.n
       %2
-    ?.  ?=([%site *] site.n)  n
-    ?~  m=(~(get by memoized) q.p.site.n)  n
-    [%2 p.n q.n memo+u.m]
+    :^  %2  $(n p.n)  $(n q.n)
+    ?.  ?=([%site *] site.n)               site.n
+    ?~  m=(~(get by memoized) q.p.site.n)  site.n
+    memo+u.m
   ::
     ?(%0 %1)      n
     ?(%3 %4)      n(p $(n p.n))
@@ -1282,141 +1283,178 @@
 ::    cons frame? jet registration coordinate
 ::
 +$  todo  [sub=sock fol=* break=(unit [cons=? point=bell])]
-::  Analyze subject/formula pair, descending into jetted cores
+::  analysis engine
 ::
-:: ++  ka
-::   |_  cod=cold
-::   +*  this  .
-::   ++  rout
-::     |=  [s=* f=*]
-::     ^+  this
-::     =/  queu=(list todo)  [[& s] f ~]~
-::     =|  load=(list todo)
-::     |-  ^+  this
-::     =*  cold-loop  $
-::     ?~  queu
-::       ?~  load  this
-::       ~&  >>  cold-loop+(lent load)
-::       cold-loop(queu (flop load), load ~)
-::     ?:  ?&(?=(^ break.i.queu) cons.u.break.i.queu)
-::       ::  merge analysis of an autocons head and tail
-::       ::
-::       =*  p  point.u.break.i.queu
-::       =*  b  back.cole.jets.cod
-::       =/  heds=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 2)))
-::       =/  lets=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 3)))
-::       ?@  fol.i.queu  !!
-::       |-  ^+  this
-::       =*  hed-loop  $
-::       ?~  heds  cold-loop(queu t.queu)
-::       ?.  =(fol.i.heds -.fol.i.queu)          hed-loop(heds t.heds)
-::       ?.  (~(huge so sub.i.heds) sub.i.queu)  hed-loop(heds t.heds)
-::       =/  tels  lets
-::       |-  ^+  this
-::       =*  tel-loop  $
-::       ?~  tels  hed-loop(heds t.heds)
-::       ?.  =(fol.i.heds +.fol.i.queu)          tel-loop(tels t.tels)
-::       ?.  (~(huge so sub.i.tels) sub.i.queu)  tel-loop(tels t.tels)
-::       =/  join  (~(pack so sub.i.heds) sub.i.tels)
-::       =.  call.cole.jets.cod  (~(put by call.cole.jets.cod) [join fol.i.queu] p)
-::       =.  back.cole.jets.cod  (~(put ju back.cole.jets.cod) p join fol.i.queu)
-::       tel-loop(tels t.tels)
-::     ::  analyze a formula from a queue, push new tasks in the back queu
-::     ::
-::     ::  prepare state
-::     ::
-::     =^  here-arm  cod  [arm.cod cod(arm +(arm.cod))]
-::     =/  can  scan
-::     =.  arm.can               here-arm
-::     =.  memo.results.gen.can  memo.cod
-::     =.  root.jets.gen.can     root.jets.cod
-::     =.  core.jets.gen.can     core.jets.cod
-::     =.  batt.jets.gen.can     batt.jets.cod
-::     ::  analyze
-::     ::
-::     ~?  >  ?=(^ break.i.queu)  [%enter point.u.break.i.queu]
-::     ~?  >  ?=(~ break.i.queu)  %enter
-::     =/  gen=short  (can [sub fol]:i.queu)
-::     ~&  >  %done
-::     ::  propagate updates
-::     ::
-::     =/  new  ((dif-ju core.jets.gen) core.jets.cod)
-::     %=    cold-loop
-::         queu           t.queu
-::         memo.cod       memo.results.gen
-::         root.jets.cod  root.jets.gen
-::         core.jets.cod  core.jets.gen
-::         batt.jets.cod  batt.jets.gen
-::         arms.cod
-::       %+  ~(put by arms.cod)  here-arm
-::       :-  final.results.gen
-::       :_  area.gen
-::       =|  m=(map @uxsite [sites=(set @uxsite) less=sock fol=* =nomm])
-::       =/  l  loop.gen
-::       |-  ^+  m
-::       ?~  l  m
-::       =/  data=(trap [(set @uxsite) sock * nomm])
-::         |.
-::         :-  [q.i.l ~ ~]
-::         (~(got by final.results.gen) p.i.l)
-::       ::
-::       %:  jib
-::         m
-::         p.i.l
-::         data
-::         |=  v=[s=(set @uxsite) sock * nomm]
-::         v(s (~(put in s.v) q.i.l))
-::       ==
-::     ::
-::         cole.jets.cod
-::       ?~  break.i.queu  cole.jets.cod
-::       =*  p  point.u.break.i.queu
-::       =/  boot=(pair sock *)
-::         [less:(~(got by final.results.gen) 0x0) fol.i.queu]
-::       ::
-::       %=  cole.jets.cod
-::         call  (~(put by call.cole.jets.cod) boot p)
-::         back  (~(put ju back.cole.jets.cod) p boot)
-::       ==
-::     ::
-::         load
-::       ::  we sort the list of new jet registrations by ascending order of path
-::       ::  length, to analyze short paths before the long ones. roll here and 
-::       ::  flop above cancel each other out
-::       ::
-::       %+  roll
-::         %+  sort
-::           %+  turn  ~(tap by new)
-::           |=([p=path q=(set sock)] [(lent p) p q])
-::         |=([l=[len=@ *] r=[len=@ *]] (lth len.l len.r))
-::       |:  [[len=*@ p=*path q=*(set sock)] load=load]
-::       ~&  >  [%enqueu p]
-::       %-  ~(rep in q)
-::       |:  [s=*sock load=load]
-::       =/  batt  (~(pull so s) 2)
-::       ?.  =(& cape.batt)  ~&(>>> [%cold-miss-batt p] load)
-::       =*  f  data.batt
-::       =/  ax=@  2
-::       |-  ^+  load
-::       ?.  ?=([^ *] f)  [[s f `[| p ax]] load]
-::       =.  load  $(f -.f, ax (peg ax 2))
-::       =.  load  $(f +.f, ax (peg ax 3))
-::       [[s f `[& p ax]] load]
-::     ==
-::   --
-:: ::
-:: ++  dif-ju
-::   |*  a=(jug)
-::   |*  b=_a
-::   ^+  a
-::   =/  c=_a  (~(dif by a) b)
-::   =/  i=_a  (~(int by a) b)
-::   ?:  =(~ i)  c
-::   %-  ~(rep by i)
-::   |=  [[p=_?>(?=(^ i) p.n.i) q=_?>(?=(^ i) q.n.i)] =_c]
-::   =/  r=_q  (~(get ju b) p)
-::   =/  s=_q  (~(dif in q) r)
-::   ?:  =(~ s)  c
-::   (~(put by c) p s)
+++  ka
+  |_  lon=long
+  +*  this  .
+  ::  Analyze subject/formula pair, descending into jetted cores
+  ::
+  ++  rout
+    |=  [s=* f=*]
+    ^+  this
+    =/  queu=(list todo)  [[& s] f ~]~
+    =|  load=(list todo)
+    |-  ^+  this
+    =*  cold-loop  $
+    ?~  queu
+      ?~  load  this
+      ~&  >>  cold-loop+(lent load)
+      cold-loop(queu (flop load), load ~)
+    ?:  ?&(?=(^ break.i.queu) cons.u.break.i.queu)
+      ::  merge analysis of an autocons head and tail
+      ::
+      =*  p  point.u.break.i.queu
+      =*  b  back.cole.jets.lon
+      =/  heds=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 2)))
+      =/  lets=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 3)))
+      ~&  >  [%commence-join (lent heds) (lent lets)]
+      ?@  fol.i.queu  !!
+      |-  ^+  this
+      =*  hed-loop  $
+      ?~  heds
+        ~&  >  %done-joining
+        cold-loop(queu t.queu)
+      ?.  =(fol.i.heds -.fol.i.queu)
+        ~&  >>  %join-head-wrong-fol
+        hed-loop(heds t.heds)
+      ?.  (~(huge so sub.i.heds) sub.i.queu)
+        ~&  >>  %join-head-wrong-sub
+        hed-loop(heds t.heds)
+      =/  tels  lets
+      |-  ^+  this
+      =*  tel-loop  $
+      ?~  tels  hed-loop(heds t.heds)
+      ?.  =(fol.i.tels +.fol.i.queu)
+        ~&  >>  %join-tail-wrong-fol
+        tel-loop(tels t.tels)
+      ?.  (~(huge so sub.i.tels) sub.i.queu)
+        ~&  >>  %join-tail-wrong-sub
+        tel-loop(tels t.tels)
+      ~&  >  joined+p
+      =/  join  (~(pack so sub.i.heds) sub.i.tels)
+      =.  call.cole.jets.lon  (~(put by call.cole.jets.lon) [join fol.i.queu] p)
+      =.  back.cole.jets.lon  (~(put ju back.cole.jets.lon) p join fol.i.queu)
+      tel-loop(tels t.tels)
+    ::  analyze a formula from a queue, push new tasks in the back queu
+    ::
+    ::  prepare state
+    ::
+    =^  here-arm  arm-gen.lon  [arm-gen.lon +(arm-gen.lon)]
+    =/  can  scan
+    =.  -.gen.can  lon
+    =.  here-arm.gen.can  here-arm
+    ::  analyze
+    ::
+    ~?  >  ?=(^ break.i.queu)  [%enter point.u.break.i.queu]
+    ~?  >  ?=(~ break.i.queu)  %enter
+    =/  gen=short  (can [sub fol]:i.queu)
+    ~&  >  %done
+    ::  propagate updates
+    ::
+    =/  new  ((dif-ju core.jets.gen) core.jets.lon)
+    =.  lon  -.gen
+    =/  edit  (rewrite-memo (malt memo-loop-entry.gen))
+    ::  XX iterate only over the new? might have to keep track of old and new
+    ::  memo in short
+    ::
+    =.  idxs.memo.lon
+      %-  ~(run by idxs.memo.lon)
+      |=  m=meme
+      ?.  =(here-arm arm.m)  m
+      m(code (edit code.m))
+    ::
+    =.  sits.memo.lon
+      %-  ~(run by sits.memo.lon)
+      |=  m=meme
+      ?.  =(here-arm arm.m)  m
+      m(code (edit code.m))
+    ::
+    =.  fols.memo.lon
+      %-  ~(run by fols.memo.lon)
+      |=  l=(list meme)
+      %+  turn  l
+      |=  m=meme
+      ?.  =(here-arm arm.m)  m
+      m(code (edit code.m))
+    ::
+    =?  areas.arms.lon  ?=(^ area.gen)
+      (~(put by areas.arms.lon) here-arm u.area.gen)
+    ::
+    =^  sub-0x0=sock  doors.arms.lon
+      ?^  memo-entry.gen
+        =/  m  (~(got by idxs.memo.lon) u.memo-entry.gen)
+        :-  less-code.m
+        (~(put by doors.arms.lon) here-arm [less-code fol code]:m)
+      ?^  m=(~(get by sits.memo.lon) here-arm 0x0)
+        :-  less-code.u.m
+        (~(put by doors.arms.lon) here-arm [less-code fol code]:u.m)
+      ?~  locals.gen  !!
+      ?>  =(0x0 site.i.locals.gen)
+      :-  less.i.locals.gen
+      (~(put by doors.arms.lon) here-arm +.i.locals.gen)
+    ::
+    =/  new-sites=(map [@uvarm @uxsite] [less=sock fol=* =nomm])
+      ?~  locals.gen  ~
+      %+  roll
+        ?.  =(0x0 site.i.locals.gen)  locals.gen
+        t.locals.gen
+      |=  $:  [site=@uxsite less=sock fol=* =nomm]
+              acc=(map [@uvarm @uxsite] [less=sock fol=* =nomm])
+          ==
+      ^+  acc
+      (~(put by acc) [here-arm site] less fol (edit nomm))
+    ::
+    =.  sites.arms.lon  (~(uni by sites.arms.lon) new-sites)
+    %=    cold-loop
+        queu  t.queu
+    ::
+        cole.jets.lon
+      ?~  break.i.queu  cole.jets.lon
+      =*  p  point.u.break.i.queu
+      =/  boot=(pair sock *)  [sub-0x0 fol.i.queu]
+      %=  cole.jets.lon
+        call  (~(put by call.cole.jets.lon) boot p)
+        back  (~(put ju back.cole.jets.lon) p boot)
+      ==
+    ::
+        load
+      ::  we sort the list of new jet registrations by ascending order of path
+      ::  length, to analyze short paths before the long ones. roll here and 
+      ::  flop above cancel each other out
+      ::
+      %+  roll
+        %+  sort
+          %+  turn  ~(tap by new)
+          |=([p=path q=(set sock)] [(lent p) p q])
+        |=([l=[len=@ *] r=[len=@ *]] (lth len.l len.r))
+      |:  [[len=*@ p=*path q=*(set sock)] load=load]
+      ~&  >  [%enqueu p]
+      %-  ~(rep in q)
+      |:  [s=*sock load=load]
+      =/  batt  (~(pull so s) 2)
+      ?.  =(& cape.batt)  ~&(>>> [%cold-miss-batt p] load)
+      =*  f  data.batt
+      =/  ax=@  2
+      |-  ^+  load
+      ?.  ?=([^ *] f)  [[s f `[| p ax]] load]
+      =.  load  $(f -.f, ax (peg ax 2))
+      =.  load  $(f +.f, ax (peg ax 3))
+      [[s f `[& p ax]] load]
+    ==
+  --
 ::
+++  dif-ju
+  |*  a=(jug)
+  |*  b=_a
+  ^+  a
+  =/  c=_a  (~(dif by a) b)
+  =/  i=_a  (~(int by a) b)
+  ?:  =(~ i)  c
+  %-  ~(rep by i)
+  |=  [[p=_?>(?=(^ i) p.n.i) q=_?>(?=(^ i) q.n.i)] =_c]
+  =/  r=_q  (~(get ju b) p)
+  =/  s=_q  (~(dif in q) r)
+  ?:  =(~ s)  c
+  (~(put by c) p s)
 --

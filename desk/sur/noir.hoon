@@ -95,7 +95,7 @@
     ::
     $=  arms
     $:  areas=(map @uvarm spot)
-        doors=(map @uvarm $@(@uxmemo [less=sock fol=* =nomm]))
+        doors=(map @uvarm [less=sock fol=* =nomm])
         sites=(map [@uvarm @uxsite] [less=sock fol=* =nomm])
     ==
   ==
