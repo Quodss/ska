@@ -12,7 +12,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  ~
+=/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -368,7 +368,7 @@
   :: =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
-  =.  what.gen  (~(put by what.gen) here-site here-site sock.sub |)
+  =.  what.gen  (~(put by what.gen) here-site sock.sub |)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
     =>  !@(verb .(bars.gen (step:p here-site seat bars.gen)) .)
@@ -657,7 +657,7 @@
     ::
     ^-  [info short]
     =>  !@(verb .(bars.gen (done:p here-site seat area.gen bars.gen)) .)
-    =/  want-site=cape  r:(~(got by what.gen) here-site)
+    =/  want-site=cape  q:(~(got by what.gen) here-site)
     ::  minified subject for codegen
     ::
     =/  less-code=sock  (~(app ca want-site) sock.sub)
@@ -749,7 +749,7 @@
       ::
       =/  what-left-1=(^map @uxsite sock)  ::  XX ugly
         %-  ~(run by what.gen)
-        |=  [@uxsite sub=sock need=cape]
+        |=  [sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
         (~(app ca need) sub)
@@ -757,11 +757,11 @@
       |-  ^-  [sock short]
       =.  what.gen
         %+  uni-what:source  what.gen
-        (urge:source src.kid-sub r:(~(got by what.gen) par))
+        (urge:source src.kid-sub q:(~(got by what.gen) par))
       ::
       =/  what-left-2=(^map @uxsite sock)
         %-  ~(run by what.gen)
-        |=  [@uxsite sub=sock need=cape]
+        |=  [sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
         (~(app ca need) sub)
@@ -798,7 +798,7 @@
     =^  old-final=sock  gen
       =/  what-left-1=(^map @uxsite sock)
         %-  ~(run by what.gen)
-        |=  [@uxsite sub=sock need=cape]
+        |=  [sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
         (~(app ca need) sub)
@@ -806,11 +806,11 @@
       |-  ^-  [sock short]
       =.  what.gen
         %+  uni-what:source  what.gen
-        (urge:source src.old-sub r:(~(got by what.gen) old))
+        (urge:source src.old-sub q:(~(got by what.gen) old))
       ::
       =/  what-left-2=(^map @uxsite sock)
         %-  ~(run by what.gen)
-        |=  [@uxsite sub=sock need=cape]
+        |=  [sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
         (~(app ca need) sub)
@@ -835,7 +835,7 @@
     |:  [site=*@uxsite gen=gen]
     ^-  short
     =/  proc  (~(got by process.gen) site)
-    =/  want-site=cape  r:(~(got by what.gen) site)
+    =/  want-site=cape  q:(~(got by what.gen) site)
     =/  less-code=sock  (~(app ca want-site) sub.proc)
     ?.  =(want-site cape.less-code)
       ~_  'cape.less-code < want-site'
@@ -848,7 +848,7 @@
   ::  memoize or save loop entry point
   ::
   =^  =info  gen
-    =/  want-site  r:(~(got by what.gen) here-site)
+    =/  want-site  q:(~(got by what.gen) here-site)
     =/  less-code=sock  (~(app ca want-site) sock.sub)
     ?.  =(want-site cape.less-code)
       ~_  'cape.less-code < want-site'
@@ -972,7 +972,7 @@
     ?~  mele  ~
     =*  i  q.i.mele
     ?:  (~(has ju block-melo.gen) site.i site)  $(mele t.mele)
-    =/  want-site=cape  r:(~(got by what.gen) site.i)
+    =/  want-site=cape  q:(~(got by what.gen) site.i)
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
@@ -1016,7 +1016,7 @@
 ++  close
   |=  [kid-sub=sock par-sub=sock par-site=@uxsite gen=short]
   ^-  (unit cape)
-  =/  par-want=cape  r:(~(got by what.gen) par-site)
+  =/  par-want=cape  q:(~(got by what.gen) par-site)
   =/  par-masked=sock  (~(app ca par-want) par-sub)
   ?.  (~(huge so par-masked) kid-sub)  ~
   `par-want
@@ -1361,10 +1361,10 @@
     =.  here-arm.gen.can  here-arm
     ::  analyze
     ::
-    ~?  >  ?=(^ break.i.queu)  [%enter point.u.break.i.queu]
-    ~?  >  ?=(~ break.i.queu)  %enter
+    ~?  >  ?=(^ break.i.queu)  [%enter here-arm point.u.break.i.queu]
+    ~?  >  ?=(~ break.i.queu)  [%enter here-arm]
     =/  gen=short  (can [sub fol]:i.queu)
-    ~&  >  %done
+    ~&  >  [%done here-arm]
     ::  propagate updates
     ::
     =/  new  ((dif-ju core.jets.gen) core.jets.lon)

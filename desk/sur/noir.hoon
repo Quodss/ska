@@ -184,7 +184,7 @@
 +$  urge  (map @uxsite cape)
 ::  sites, subjects, global requirements
 ::
-+$  what-gen  (map @uxsite (trel @uxsite sock cape))
++$  what-gen  (map @uxsite (pair sock cape))
 ::  provenance tree: axes of the subject of evalsite
 ::
 ++  source
@@ -589,7 +589,7 @@
     %+  roll  ~(tap by b)
     |=  [[s=@uxsite c1=cape] acc=_a]
     %+  ~(jab by acc)  s
-    |=  [@ sock c2=cape]
+    |=  [sock c2=cape]
     +<(c2 (~(uni ca c1) c2))
   ::  unify urges
   ::
