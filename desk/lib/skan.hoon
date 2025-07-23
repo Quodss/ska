@@ -752,7 +752,7 @@
         |=  [@uxsite sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
-        ~(norm so (~(app ca need) sub))
+        (~(app ca need) sub)
       ::
       |-  ^-  [sock short]
       =.  what.gen
@@ -764,7 +764,7 @@
         |=  [@uxsite sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
-        ~(norm so (~(app ca need) sub))
+        (~(app ca need) sub)
       ::
       ?:  =(what-left-1 what-left-2)
         [(~(got by what-left-1) par) gen]
@@ -801,7 +801,7 @@
         |=  [@uxsite sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
-        ~(norm so (~(app ca need) sub))
+        (~(app ca need) sub)
       ::
       |-  ^-  [sock short]
       =.  what.gen
@@ -813,7 +813,7 @@
         |=  [@uxsite sub=sock need=cape]
         =>  [need=need sub=sub ..ca]
         ~+
-        ~(norm so (~(app ca need) sub))
+        (~(app ca need) sub)
       ::
       ?:  =(what-left-1 what-left-2)
         [(~(got by what-left-1) old) gen]
