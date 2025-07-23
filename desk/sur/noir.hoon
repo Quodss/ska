@@ -68,7 +68,7 @@
     arm-gen=@uvarm
   ::::  memo index generator
     ::
-    memo-idx=@uxmemo
+    memo-gen=@uxmemo
   ::::  cold state
     ::
     $=  jets
@@ -123,8 +123,8 @@
 ::             (target of hypothetical backedge, target of the actual edge,
 ::              subject socks at the par/kid evalsites)
 ::      set: set of all vertices in the cycle (to delete from want.gen when
-::           done, does not include cycle entry)
-::      process: same as set but without kids
+::           done)
+::      process: same as set but without kids, melo hits and loop entry
 ::      melo: cycle-local meloization cache
 ::      hits: melo hits to validate
 ::
@@ -168,6 +168,7 @@
       area=(unit spot)
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
+      memo-loop-entry=(list (pair @uxsite @uxmemo))
       $=  process
       %+  map  @uxsite
       $:  sub=sock
@@ -230,6 +231,23 @@
     [~ a b]
   ::
   ++  uni
+    !@  check-noir
+      |=  [a=source b=source]
+      =*  sam  +<
+      :: ~&  >>  %comp
+      =/  a
+        :: ~>  %bout
+        (uni1 sam)
+      ::
+      =/  b
+        :: ~>  %bout
+        (uni2 sam)
+      ::
+      ?>  (eq a b)
+      a
+    uni2
+  ::
+  ++  uni1
     |=  [a=source b=source]
     ^-  source
     ?~  a  b
@@ -239,14 +257,31 @@
     =-  !@  check-noir
           ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
         -
-    =/  n
-      ::  XX insertion sort?
-      ::
-      %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
-      |=  [a=peon b=peon]
-      (gth sit.a sit.b)
+    =;  n
+      [n $(a l.a, b l.b) $(a r.a, b r.b)]
+    %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
+    |=  [a=peon b=peon]
+    (gth sit.a sit.b)
+  ::
+  ++  uni2
+    |=  [a=source b=source]
+    ^-  source
+    ?~  a  b
+    ?~  b  a
+    =;  n=(list peon)
+      [n $(a l.a, b l.b) $(a r.a, b r.b)]
+    =/  ns=[a=(list peon) b=(list peon)]  [n.a n.b]
+    |-  ^-  (list peon)
+    ?:  =(~ a.ns)  b.ns
+    ?:  =(~ b.ns)  a.ns
+    =^  head  ns
+      =*  i-a  i.-.a.ns
+      =*  i-b  i.-.b.ns
+      ?:  =(i-a i-b)  [i-a +.a.ns +.b.ns]
+      ?:  (gth sit.i-a sit.i-b)  [i-a +.a.ns b.ns]
+      [i-b a.ns +.b.ns]
     ::
-    [n $(a l.a, b l.b) $(a r.a, b r.b)]
+    [head $]
   ::
   ++  trim
     !@  check-noir

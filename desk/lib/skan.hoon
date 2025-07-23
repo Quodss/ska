@@ -295,6 +295,9 @@
     :: set=(set @uxsite)
     areas=(map @uxsite spot)
   ==
+::  call info
+::
++$  info  [memo=(unit @uxmemo)]
 ::  stateful analysis of bus/fol pair
 ::
 ++  scan
@@ -315,24 +318,33 @@
     res-eval-entry
   =^  here-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
   ?>  =(0x0 here-site)
-  ?^  m=(memo & fol sub gen)
+  ::  check global memo cache
+  ::
+  =/  meme-0  (~(get ja fols.memo.gen) fol)
+  |-  ^-  short
+  =*  memo-loop  $
+  ?^  meme-0
+    =*  i  i.meme-0
+    ?.  (~(huge so less-memo.i) sock.sub)  memo-loop(meme-0 t.meme-0)
+    ::  memo hit for 0x0: record entry
+    ::
     =>  !@  verb
           %=    .
-              bars.gen.u.m
-            (memo:p from.u.m ~ area.u.m bars.gen.u.m)
+              bars.gen
+            (memo:p [arm.i site.i] ~ area.i bars.gen)
           ==
         .
-    gen.u.m
+    gen(memo-entry `idx.i)
   =<  gen
   =|  seat=(unit spot)  ::  call site
-  |-  ^-  [[sock-anno flags] gen=short]
+  |-  ^-  [[sock-anno flags info] gen=short]
   =*  eval-loop  $
   =|  trace=(list spot)
   ::  retry evalsite analysis if a loop assumption was wrong
   ::
-  |-  ^-  [[sock-anno flags] short]
+  |-  ^-  [[sock-anno flags info] short]
   =*  redo-loop  $
-  =;  res=(error [[sock-anno flags] short])
+  =;  res=(error [[sock-anno flags info] short])
     ?-  -.res
       %&  p.res
       %|  =>  !@(verb ~&(>>> [%redo res] .) .)
@@ -344,27 +356,7 @@
             redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
           ::
     ==    ==
-  ^-  (error [[sock-anno flags] short])
-  ::  check memo cache
-  ::
-  :: ?^  m=(memo here-site fol sub gen)
-  ::   =>  !@  verb
-  ::         %=    .
-  ::             bars.gen.u.m
-  ::           (memo:p here-site from.u.m seat area.u.m bars.gen.u.m)
-  ::         ==
-  ::       .
-  ::   &+[[pro.u.m deff] gen.u.m]
-  :: ::  check melo cache (melo hit makes call loopy, might merge some cycles)
-  :: ::
-  :: ?^  m=(melo here-site fol sub gen)
-  ::   =>  !@  verb
-  ::         %=    .
-  ::             bars.gen.u.m
-  ::           (melo:p here-site from.u.m seat area.u.m bars.gen.u.m)
-  ::         ==
-  ::       .
-  ::   &+[[pro.u.m [& &]] gen.u.m]
+  ^-  (error [[sock-anno flags info] short])
   ::  enter analysis
   ::
   ::  record current evalsite in the subject provenance tree
@@ -427,7 +419,7 @@
       =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::  check memo cache
       ::
-      ?^  m=(memo | fol-new s-prod gen)
+      ?^  m=(memo fol-new s-prod gen)
         =>  !@  verb
               %=    .
                   bars.gen.u.m
@@ -447,7 +439,13 @@
         =>  !@  verb
               %=    .
                   bars.gen.u.m
-                (melo:p there-site from.u.m ?~(trace ~ `i.trace) area.u.m bars.gen.u.m)
+                %:  melo:p
+                  there-site
+                  from.u.m
+                  ?~(trace ~ `i.trace)
+                  area.u.m
+                  bars.gen.u.m
+                ==
               ==
             .
         :_  gen.u.m
@@ -508,7 +506,7 @@
       ::  non-loop case: analyse through
       ::
       =/  area-stash  area.gen
-      =^  [pro=sock-anno =flags]  gen
+      =^  [pro=sock-anno =flags =info]  gen
         %=  eval-loop
           sub          s-prod
           fol          fol-new
@@ -521,10 +519,10 @@
       ::
       =/  code=nomm
         :^  %2  s-code  f-code
-        ?:  ?=([%| %&] flags)
+        ?^  memo.info
           ::  the call got memoized
           ::
-          memo+idx:(~(got by sits.memo.gen) here-arm.gen there-site)
+          memo+u.memo.info
         site+[here-arm.gen there-site]
       ::
       :_  gen(area area-stash)
@@ -651,16 +649,16 @@
   ::   ~|  capture1
   ::   ~|  capture
   ::   !!
-  =;  fin=(error [loopy=? gen=short])
+  =;  fin=(error [loopy=? =info gen=short])
     ?:  ?=(%| -.fin)  fin
-    &+[[prod flags(loopy loopy.p.fin)] gen.p.fin]
+    &+[[prod flags(loopy loopy.p.fin) info.p.fin] gen.p.fin]
   ?.  loopy.flags
     ::  success, non-loopy
     ::
     :+  %&  %|
     ::  finalize simple
     ::
-    ^-  short
+    ^-  [info short]
     =>  !@(verb .(bars.gen (done:p here-site seat area.gen bars.gen)) .)
     =/  mayb-site=(unit cape)  (~(get by want.gen) here-site)
     =/  want-site=cape  ?~(mayb-site | u.mayb-site)
@@ -676,10 +674,12 @@
       ~|  cape.less-code
       ~|  want-site
       !!
-    ::  memoize
+    ::  memoize globally or save locally
     ::
-    =?  gen  direct.flags
-      =^  idx  memo-idx.gen  [memo-idx.gen +(memo-idx.gen)]
+    =^  =info  gen
+      ?.  direct.flags
+        [~ gen(locals [[here-site less-code fol code] locals.gen])]
+      =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
       =/  mask=cape  (~(uni ca want-site) capture)
       =/  less-memo  (~(app ca mask) sock.sub)
       ?.  =(mask cape.less-memo)
@@ -694,13 +694,11 @@
       =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
       =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
       =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
-      gen
-    ::  if not memoized: save local
+      [`idx gen]
     ::
-    =?  locals.gen  !direct.flags  [[here-site less-code fol code] locals.gen]
     =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
     =.  what.gen  (~(del by what.gen) here-site)
-    gen
+    [info gen]
   ?~  cycles.gen  !!
   ?.  =(here-site entry.i.cycles.gen)
     ::  success, loopy
@@ -708,6 +706,10 @@
     :+  %&  %&
     ::  return without finalizing
     ::
+    ^-  [info short]
+    ::  never memoized
+    ::
+    :-  ~
     ^-  short
     =>  !@(verb .(bars.gen (ciao:p here-site seat area.gen bars.gen)) .)
     =.  set.i.cycles.gen      (dive set.i.cycles.gen here-site)
@@ -733,11 +735,7 @@
   =-  ?:  ?=(%| -<)  -  &+[| p]
   ::  attempt to finalize cycle entry
   ::
-  ^-  err-state
-  =.  process.gen
-    %+  ~(put by process.gen)  here-site
-    [sock.sub fol code capture sock.prod map area.gen]
-  ::
+  ^-  (error (pair info short))
   =>  .(cycles.gen `(list cycle)`cycles.gen)
   =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
   ::  validate fronds, produce set of kids of backedges (only necessary for
@@ -811,7 +809,6 @@
   =>  +
   =>  !@(verb .(bars.gen (fini:p here-site seat area.gen bars.gen)) .)
   ::
-  :: =.  set.pop  (dive set.pop here-site)
   ::  finalize in-process sites
   ::
   =.  gen
@@ -827,11 +824,11 @@
       ~|  want-site
       !!
     =.  locals.gen  [[site less-code fol.proc nomm.proc] locals.gen]
+    =.  process.gen  (~(del by process.gen) site)
     gen
-  ::  memoize loop entry point
+  ::  memoize or save loop entry point
   ::
-  =?  gen  direct.flags
-    =^  idx  memo-idx.gen  [memo-idx.gen +(memo-idx.gen)]
+  =^  =info  gen
     =/  want-site  (~(gut by want.gen) here-site |)
     =/  less-code=sock  (~(app ca want-site) sock.sub)
     ?.  =(want-site cape.less-code)
@@ -839,6 +836,10 @@
       ~|  cape.less-code
       ~|  want-site
       !!
+    ?.  direct.flags
+      [~ gen(locals [[here-site less-code fol code] locals.gen])]
+    =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
+    =.  memo-loop-entry.gen  [[here-site idx] memo-loop-entry.gen]
     =/  memo-mask=cape  (~(uni ca want-site) capture)
     =/  memo-less  (~(app ca memo-mask) sock.sub)
     ?.  =(memo-mask cape.memo-less)
@@ -853,9 +854,9 @@
     =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
     =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
     =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
-    gen
-  =.  want.gen  (~(del by want.gen) here-site)
-  =.  what.gen  (~(del by what.gen) here-site)
+    [`idx gen]
+  ::
+  =.  set.pop  (dive set.pop here-site)
   =.  gen
     %+  roll-deep  set.pop
     |:  [v=*@uxsite gen=gen]
@@ -863,7 +864,7 @@
     =.  what.gen  (~(del by what.gen) v)
     gen
   ::
-  &+gen
+  &+[info gen]
 ::  given that b > a, for each axis that used to be %.n in a and became not that
 ::  in b, what subaxes are set to %.y?
 ::
@@ -915,7 +916,7 @@
 ::  XX inline for is-entry=%.y
 ::
 ++  memo
-  |=  [is-entry=? fol=* sub=sock-anno gen=short]
+  |=  [fol=* sub=sock-anno gen=short]
   ^-  %-  unit
       $:  idx=@uxmemo
           from=[@uvarm @uxsite]
@@ -934,7 +935,6 @@
     (urge:source src.sub cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
-  =?  memo-entry.gen  is-entry  `idx.i
   =/  src  (relo:source src.sub map.i)
   `[idx.i [arm.i site.i] area.i [prod.i src] gen]
 ::
@@ -959,11 +959,6 @@
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
-    :: =.  process.gen
-    ::   %+  ~(put by process.gen)  site
-    ::   =/  proc  (~(got by process.gen) site.i)
-    ::   proc(sub sock.sub)
-    ::
     =/  src  (relo:source src.sub map.i)
     `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
   ::
@@ -976,7 +971,6 @@
     =*  i   i.cycles.gen.out.u.res
     =.  hits.i     (dive hits.i hit.u.res)
     =.  set.i      (dive set.i site)
-    =.  process.i  (dive process.i site)
     =.  latch.i    site
     `out.u.res
   =/  depth  depth.u.res
@@ -987,7 +981,6 @@
   ?:  =(0 depth)
     =.  hits.new-cycle     (dive hits.new-cycle hit.u.res)
     =.  set.new-cycle      (dive set.new-cycle site)
-    =.  process.new-cycle  (dive process.new-cycle site)
     =.  latch.new-cycle    site
     =.  cycles.gen  [new-cycle rest]
     `out.u.res(gen gen)
@@ -1121,114 +1114,170 @@
   ::  place for jets with nontrivial templates
   ::
   ~
+::
+++  rewrite-memo
+  |=  memoized=(map @uxsite @uxmemo)
+  |=  n=nomm
+  ^-  nomm
+  ~+
+  ?^  -.n  [$(n -.n) $(n +.n)]
+  ?-    -.n
+      %2
+    ?.  ?=([%site *] site.n)  n
+    ?~  m=(~(get by memoized) q.p.site.n)  n
+    [%2 p.n q.n memo+u.m]
+  ::
+    ?(%0 %1)      n
+    ?(%3 %4)      n(p $(n p.n))
+    %s11          n(q $(n q.n))
+    ?(%5 %7 %12)  n(p $(n p.n), q $(n q.n))
+    ?(%10 %d11)   n(q.p $(n q.p.n), q $(n q.n))
+    %6            n(p $(n p.n), q $(n q.n), r $(n r.n))
+  ==
 ::  Analyze s/f pair, then run Nomm interpreter on the result
 ::  Indirect calls reanalyze
 ::  Direct calls are verified with subject sock nest checking
 ::
-:: ++  run-nomm
-::   |=  [s=* f=*]
-::   ^-  (unit)
-::   !.
-::   =/  gen
-::     ~>  %bout
-::     (scan &+s f)
-::   =/  n  nomm:(~(got by final.results.gen) 0x0)
-::   =|  trace=(list spot)
-::   |-  ^-  (unit)
-::   ?-    n
-::       [p=^ q=*]
-::     =/  l  $(n p.n)
-::     ?~  l  ~
-::     =/  r  $(n q.n)
-::     ?~  r  ~
-::     `[u.l u.r]
-::   ::
-::       [%0 p=@]
-::     ?:  =(0 p.n)
-::       ~&  '[%0 0]'
-::       ~&  trace
-::       ~
-::     ?:  =(1 p.n)  `s
-::     =-  ~?  ?=(~ -)  '%0 crash'  -
-::     (mole |.(.*(s [0 p.n])))
-::   ::
-::       [%1 p=*]
-::     `p.n
-::   ::
-::       [%2 *]
-::     =/  s1  $(n p.n)
-::     ?~  s1  ~
-::     =/  f1  $(n q.n)
-::     ?~  f1  ~
-::     ?~  call=(~(get by final.results.gen) site.n)
-::       ~&  indirect+site.n
-::       :: (run-nomm u.s1 u.f1)
-::       !!
-::     ?.  (~(huge so less.u.call) & u.s1)
-::       ~|  site.n
-::       :: ~|  [need+less.u.call got+[& u.s1]]
-::       ~|  %sock-nest-error
-::       ~|  (dif-so less.u.call & u.s1)
-::       !!
-::     ?^  res=(jet u.s1 u.f1)  u.res
-::     $(s u.s1, n nomm.u.call)
-::   ::
-::       [%3 *]
-::     =/  p  $(n p.n)
-::     ?~  p  ~
-::     `.?(u.p)
-::   ::
-::       [%4 *]
-::     =/  p  $(n p.n)
-::     ?~  p  ~
-::     ?^  u.p  ~&  '%4 cell'  ~
-::     `+(u.p)
-::   ::
-::       [%5 *]
-::     =/  p  $(n p.n)
-::     ?~  p  ~
-::     =/  q  $(n q.n)
-::     ?~  q  ~
-::     `=(u.p u.q)
-::   ::
-::       [%6 *]
-::     =/  p  $(n p.n)
-::     ?~  p  ~
-::     ?+  u.p  ~&('%6 non-loobean' ~)
-::       %&  $(n q.n)
-::       %|  $(n r.n)
-::     ==
-::   ::
-::       [%7 *]
-::     =/  p  $(n p.n)
-::     ?~  p  ~
-::     $(s u.p, n q.n)
-::   ::
-::       [%10 *]
-::     ?:  =(0 p.p.n)  ~&  '%10 0'  ~
-::     =/  don  $(n q.p.n)
-::     ?~  don  ~
-::     =/  rec  $(n q.n)
-::     ?~  rec  ~
-::     =-  ~?  ?=(~ -)  '%10 crash'  -
-::     (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
-::   ::
-::       [%s11 *]
-::     $(n q.n)
-::   ::
-::       [%d11 *]
-::     =?  trace  =(p.p.n %spot)
-::       =/  pot=(unit spot)  ((soft spot) +.q.p.n)
-::       ?~  pot  trace
-::       [u.pot trace]
-::     ::
-::     =/  h  $(n q.p.n)
-::     ?~  h  ~
-::     $(n q.n)
-::   ::
-::       [%12 *]
-::     ~|  %no-scry  !!
-::   ==
+++  run-nomm
+  |=  [s=* f=*]
+  ^-  (unit)
+  !.
+  =/  gen
+    ~>  %bout
+    (scan &+s f)
+  ::
+  =/  map-locals=(map @uxsite [less=sock fol=* =nomm])  (malt locals.gen)
+  =/  edit  (rewrite-memo (malt memo-loop-entry.gen))
+  =.  map-locals
+    %-  ~(run by map-locals)
+    |=  [sock * =nomm]
+    +<(nomm (edit nomm))
+  ::
+  =.  idxs.memo.gen
+    %-  ~(run by idxs.memo.gen)
+    |=  meme
+    +<(code (edit code))
+  ::
+  =.  sits.memo.gen
+    %-  ~(run by sits.memo.gen)
+    |=  meme
+    +<(code (edit code))
+  ::
+  =.  fols.memo.gen
+    %-  ~(run by fols.memo.gen)
+    |=  l=(list meme)
+    %+  turn  l
+    |=  meme
+    +<(code (edit code))
+  ::
+  =/  n=nomm
+    ?^  m=(~(get by sits.memo.gen) 0v0 0x0)
+      code.u.m
+    =/  loc  (~(got by map-locals) 0x0)
+    ?>  =(f fol.loc)
+    nomm.loc
+  ::
+  =|  trace=(list spot)
+  |-  ^-  (unit)
+  ?-    n
+      [p=^ q=*]
+    =/  l  $(n p.n)
+    ?~  l  ~
+    =/  r  $(n q.n)
+    ?~  r  ~
+    `[u.l u.r]
+  ::
+      [%0 p=@]
+    ?:  =(0 p.n)
+      ~&  '[%0 0]'
+      ~&  trace
+      ~
+    ?:  =(1 p.n)  `s
+    =-  ~?  ?=(~ -)  '%0 crash'  -
+    (mole |.(.*(s [0 p.n])))
+  ::
+      [%1 p=*]
+    `p.n
+  ::
+      [%2 *]
+    =/  s1  $(n p.n)
+    ?~  s1  ~
+    =/  f1  $(n q.n)
+    ?~  f1  ~
+    ?~  site.n
+      ~&  %indirect
+      !!
+    =;  new=nomm
+      ?^  res=(jet u.s1 u.f1)  u.res
+      $(s u.s1, n new)
+    ?-    -.site.n
+        %memo
+      =/  m  ~|  p.site.n  (~(got by idxs.memo.gen) p.site.n)
+      ?>  =(u.f1 fol.m)  
+      code.m
+    ::
+        %site
+      =/  loc  ~|  q.p.site.n  (~(got by map-locals) q.p.site.n)
+      ?>  =(u.f1 fol.loc)
+      nomm.loc
+    ==
+  ::
+      [%3 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    `.?(u.p)
+  ::
+      [%4 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    ?^  u.p  ~&  '%4 cell'  ~
+    `+(u.p)
+  ::
+      [%5 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    =/  q  $(n q.n)
+    ?~  q  ~
+    `=(u.p u.q)
+  ::
+      [%6 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    ?+  u.p  ~&('%6 non-loobean' ~)
+      %&  $(n q.n)
+      %|  $(n r.n)
+    ==
+  ::
+      [%7 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    $(s u.p, n q.n)
+  ::
+      [%10 *]
+    ?:  =(0 p.p.n)  ~&  '%10 0'  ~
+    =/  don  $(n q.p.n)
+    ?~  don  ~
+    =/  rec  $(n q.n)
+    ?~  rec  ~
+    =-  ~?  ?=(~ -)  '%10 crash'  -
+    (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
+  ::
+      [%s11 *]
+    $(n q.n)
+  ::
+      [%d11 *]
+    =?  trace  =(p.p.n %spot)
+      =/  pot=(unit spot)  ((soft spot) +.q.p.n)
+      ?~  pot  trace
+      [u.pot trace]
+    ::
+    =/  h  $(n q.p.n)
+    ?~  h  ~
+    $(n q.n)
+  ::
+      [%12 *]
+    ~|  %no-scry  !!
+  ==
 ::  unit of work: subject, formula, if comes from jetted core dissasembly:
 ::    cons frame? jet registration coordinate
 ::
