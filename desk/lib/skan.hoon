@@ -310,9 +310,6 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.res-eval-entry)
-    ?.  =(~ want.res-eval-entry)
-      ~|  ~(key by want.res-eval-entry)
-      !!
     ?>  =(~ process.res-eval-entry)
     ?>  =(~ what.res-eval-entry)
     res-eval-entry
@@ -371,7 +368,7 @@
   :: =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
-  =.  what.gen  (~(put by what.gen) here-site sock.sub)
+  =.  what.gen  (~(put by what.gen) here-site here-site sock.sub |)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
     =>  !@(verb .(bars.gen (step:p here-site seat bars.gen)) .)
@@ -416,7 +413,7 @@
       ::
       =/  fol-new  data.sock.f-prod
       =/  fol-urge  (urge:source src.f-prod &)
-      =.  want.gen  (uni-urge:source want.gen fol-urge)
+      =.  what.gen  (uni-what:source what.gen fol-urge)
       ::  check memo cache
       ::
       ?^  m=(memo fol-new s-prod gen)
@@ -660,8 +657,7 @@
     ::
     ^-  [info short]
     =>  !@(verb .(bars.gen (done:p here-site seat area.gen bars.gen)) .)
-    =/  mayb-site=(unit cape)  (~(get by want.gen) here-site)
-    =/  want-site=cape  ?~(mayb-site | u.mayb-site)
+    =/  want-site=cape  r:(~(got by what.gen) here-site)
     ::  minified subject for codegen
     ::
     =/  less-code=sock  (~(app ca want-site) sock.sub)
@@ -696,7 +692,6 @@
       =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
       [`idx gen]
     ::
-    =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
     =.  what.gen  (~(del by what.gen) here-site)
     [info gen]
   ?~  cycles.gen  !!
@@ -752,17 +747,29 @@
     =^  par-final=sock  gen
       =/  c  0
       ::
-      =/  par-want-1=cape  (~(gut by want.gen) par |)
-      =/  par-masked-1=sock  (~(app ca par-want-1) par-sub)
+      =/  what-left-1=(^map @uxsite sock)  ::  XX ugly
+        %-  ~(run by what.gen)
+        |=  [@uxsite sub=sock need=cape]
+        =>  [need=need sub=sub ..ca]
+        ~+
+        ~(norm so (~(app ca need) sub))
+      ::
       |-  ^-  [sock short]
-      =/  kid-sub-urge  (urge:source src.kid-sub par-want-1)
-      =.  want.gen  (uni-urge:source want.gen kid-sub-urge)
-      =/  par-want-2=cape  (~(gut by want.gen) par |)
-      =/  par-masked-2=sock  (~(app ca par-want-2) par-sub)
-      ?:  =(~(norm so par-masked-1) ~(norm so par-masked-2))
-        [par-masked-1 gen]
+      =.  what.gen
+        %+  uni-what:source  what.gen
+        (urge:source src.kid-sub r:(~(got by what.gen) par))
+      ::
+      =/  what-left-2=(^map @uxsite sock)
+        %-  ~(run by what.gen)
+        |=  [@uxsite sub=sock need=cape]
+        =>  [need=need sub=sub ..ca]
+        ~+
+        ~(norm so (~(app ca need) sub))
+      ::
+      ?:  =(what-left-1 what-left-2)
+        [(~(got by what-left-1) par) gen]
       =>  !@(verb ~&(>> fixpoint-loop+c .) .)
-      $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
+      $(what-left-1 what-left-2, c +(c))
     ::
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
     &+gen
@@ -789,17 +796,29 @@
     ?:  ?=(%| -.err-gen)  err-gen
     =/  gen  p.err-gen
     =^  old-final=sock  gen
-      =/  old-want-1=cape  (~(gut by want.gen) old |)
-      =/  old-masked-1=sock  (~(app ca old-want-1) sock.old-sub)
+      =/  what-left-1=(^map @uxsite sock)
+        %-  ~(run by what.gen)
+        |=  [@uxsite sub=sock need=cape]
+        =>  [need=need sub=sub ..ca]
+        ~+
+        ~(norm so (~(app ca need) sub))
+      ::
       |-  ^-  [sock short]
-      =/  new-sub-urge  (urge:source src.new-sub old-want-1)
-      =.  want.gen  (uni-urge:source want.gen new-sub-urge)
-      =/  old-want-2=cape  (~(gut by want.gen) old |)
-      =/  old-masked-2=sock  (~(app ca old-want-2) sock.old-sub)
-      ?:  =(~(norm so old-masked-1) ~(norm so old-masked-2))
-        [old-masked-1 gen]
+      =.  what.gen
+        %+  uni-what:source  what.gen
+        (urge:source src.old-sub r:(~(got by what.gen) old))
+      ::
+      =/  what-left-2=(^map @uxsite sock)
+        %-  ~(run by what.gen)
+        |=  [@uxsite sub=sock need=cape]
+        =>  [need=need sub=sub ..ca]
+        ~+
+        ~(norm so (~(app ca need) sub))
+      ::
+      ?:  =(what-left-1 what-left-2)
+        [(~(got by what-left-1) old) gen]
       ~&  >>  %fixpoint-melo
-      $(old-masked-1 old-masked-2, old-want-1 old-want-2)
+      $(what-left-1 what-left-2)
     ::
     ?.  (~(huge so old-final) sock.new-sub)  |+[%melo old new]
     &+gen
@@ -816,7 +835,7 @@
     |:  [site=*@uxsite gen=gen]
     ^-  short
     =/  proc  (~(got by process.gen) site)
-    =/  want-site=cape  (~(gut by want.gen) site |)
+    =/  want-site=cape  r:(~(got by what.gen) site)
     =/  less-code=sock  (~(app ca want-site) sub.proc)
     ?.  =(want-site cape.less-code)
       ~_  'cape.less-code < want-site'
@@ -829,7 +848,7 @@
   ::  memoize or save loop entry point
   ::
   =^  =info  gen
-    =/  want-site  (~(gut by want.gen) here-site |)
+    =/  want-site  r:(~(got by what.gen) here-site)
     =/  less-code=sock  (~(app ca want-site) sock.sub)
     ?.  =(want-site cape.less-code)
       ~_  'cape.less-code < want-site'
@@ -860,7 +879,6 @@
   =.  gen
     %+  roll-deep  set.pop
     |:  [v=*@uxsite gen=gen]
-    =.  want.gen  (~(del by want.gen) v)
     =.  what.gen  (~(del by what.gen) v)
     gen
   ::
@@ -913,7 +931,6 @@
   |-  ^-  @
   ?@  n  (xeb rev)
   (max $(n -.n, rev (peg rev 2)) $(n +.n, rev (peg rev 3)))
-::  XX inline for is-entry=%.y
 ::
 ++  memo
   |=  [fol=* sub=sock-anno gen=short]
@@ -934,7 +951,7 @@
   =/  sub-urge
     (urge:source src.sub cape.less-code.i)
   ::
-  =.  want.gen  (uni-urge:source want.gen sub-urge)
+  =.  what.gen  (uni-what:source what.gen sub-urge)
   =/  src  (relo:source src.sub map.i)
   `[idx.i [arm.i site.i] area.i [prod.i src] gen]
 ::
@@ -955,7 +972,7 @@
     ?~  mele  ~
     =*  i  q.i.mele
     ?:  (~(has ju block-melo.gen) site.i site)  $(mele t.mele)
-    =/  want-site=cape  (~(gut by want.gen) site.i |)
+    =/  want-site=cape  r:(~(got by what.gen) site.i)
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
@@ -999,7 +1016,7 @@
 ++  close
   |=  [kid-sub=sock par-sub=sock par-site=@uxsite gen=short]
   ^-  (unit cape)
-  =/  par-want=cape  (~(gut by want.gen) par-site |)
+  =/  par-want=cape  r:(~(got by what.gen) par-site)
   =/  par-masked=sock  (~(app ca par-want) par-sub)
   ?.  (~(huge so par-masked) kid-sub)  ~
   `par-want
@@ -1065,9 +1082,7 @@
     =*  sock-loop  $
     ?~  socks  past-loop(past-list t.past-list)
     ?.  (~(huge so i.socks) fore)  sock-loop(socks t.socks)
-    =/  just-fol=sock
-      =-  ?>(=((~(darn so |+~) 2 batt) -) -)  ::  XX remove
-      [[& |] data.batt ~]
+    =/  just-fol=sock  [[& |] data.batt ~]
     ::
     =/  template=sock  (~(darn so just-fol) axis i.socks)
     ::

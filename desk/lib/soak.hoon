@@ -172,6 +172,7 @@
   ::  throw away unknown axes in data (setting to ~)
   ++  norm
     |-  ^-  sock
+    =-  ~?  >>>  !=(- one)  %norm-so  -  
     ?-  cape.one
         %|  lost
         %&  one
