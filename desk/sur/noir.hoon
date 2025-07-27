@@ -4,11 +4,48 @@
 ::  call label for Nomm 2: indirect call or entry in global
 ::  code table or arm-local callsite
 ::
-+$  call  $~  ~
-          $@  ~
-          $%  [%memo p=@uxmemo]
-              [%site p=(pair @uvarm @uxsite)]
-          ==
++$  call
+  $~  ~
+  $@(~ glob)
+::
++$  glob
+  $%  [%memo p=@uxmemo]
+      [%site p=(pair @uvarm @uxsite)]
+  ==
++$  glob-atom  @uwglob  ::  more efficient?
+++  en-glob
+  |=  $=  call
+      $%  [%memo p=@uxmemo]
+          [%site p=(pair @uvarm @uxsite)]
+      ==
+  ^-  glob-atom
+  ?:  ?=(%memo -.call)  (lsh 0 p.call)
+  .+
+  %+  lsh  0
+  ::  cantor pairing
+  ::
+  %+  add  q.p.call
+  %+  rsh  0
+  %+  mul  (add p.call)
+  +((add p.call))
+::
+++  de-glob
+  |=  g=glob-atom
+  ^-  $%  [%memo p=@uxmemo]
+          [%site p=(pair @uvarm @uxsite)]
+      ==
+  ?:  =(0 (end 0 g))  [%memo (rsh 0 g)]
+  =.  g  (rsh 0 g)
+  =/  w  p:(sqt (lsh 0 g))
+  =/  t  (rsh 0 (mul w +(w)))
+  =?  .  (lth g t)
+    =.  w  (dec w)
+    =.  t  (rsh 0 (mul w +(w)))
+    .
+  ::
+  =/  y  (sub g t)
+  =/  x  (sub w y)
+  [%site x y]
 ::    Nomm (Nock--)
 ::
 ::  [%9 p q] => [%7 q %2 [%0 1] %0 p]
@@ -730,6 +767,16 @@
     :_  c-out
     :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
     ?:(&(=(~ n-src) =(~ l-src) =(~ r-src)) ~ [n-src l-src r-src])
+  ::  XX use the fact that n.src is sorted?
+  ::
+  :: ++  contains
+  ::   |=  [src=source site=@uxsite]
+  ::   ^-  ?
+  ::   ?~  src  |
+  ::   ?|  (lien n.src |=(peon =(site sit)))
+  ::       $(src l.src)
+  ::       $(src r.src)
+  ::   ==
   --
 ::
 ::    axis after axis

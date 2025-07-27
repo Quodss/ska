@@ -1,5 +1,8 @@
 /-  *sock
-:: =/  check-soak  ~
+:: =/  check-soak
+::   :*  reg=~
+::       :: norm=~
+::   ==
 |%
 ::  operations on $cape
 ++  ca
@@ -172,7 +175,10 @@
   ::  throw away unknown axes in data (setting to ~)
   ++  norm
     |-  ^-  sock
-    =-  ~?  >>>  !=(- one)  %norm-so  -  
+    =-  =>  !@  norm:check-soak
+              ~?  >>>  !=(- one)  %norm-so  .
+            .
+        -
     ?-  cape.one
         %|  lost
         %&  one
