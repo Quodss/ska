@@ -9,28 +9,39 @@
 ::
 +$  line
   $:  progs=(map glob-atom prog)
+      fols=(jar * prog)
   ==
-::
-+$  prog  (list op)
+::  a program: body, requirements for entry (subject template, formula)
+:: 
++$  prog
+  $:  body=(list op)
+      less=sock
+      fol=*
+  ==
 ::  stack VM ops
 ::  when compiling %2 to %call and %calf q.nomm should be ignored
 ::  (never crashes, know the result)
 ::
-::  transfer/consume subject? idiosyncratic applicability
-::
-+$  op  [o=op-raw eat=?]
-+$  op-raw  ::  XX scrying, hints
-  $@  $?  %slow  ::  [fol sub ...]  -->  [pro ...]
-          %swap  ::  [som mos ...]  -->  [mos som ...]
-          %cons  ::  [tel hed ...]  -->  [pro ...]
-          %depf  ::  [som ...]      -->  [lob ...], nock 3
-          %rise  ::  [som ...]      -->  [som + 1 ...], nock 4
-          %equi  ::  [som mos ...]  -->  [lob ...], nock 5
++$  op  ::  XX scrying, hints
+  $~  %bail
+  $@  $?  %slow  ::  [fol sub ...]      -->  [pro ...], nock 2 indirect call
+          %swap  ::  [som mos ...]      -->  [mos som ...]
+          %cons  ::  [tel hed ...]      -->  [pro ...]
+          %depf  ::  [som ...]          -->  [lob ...], nock 3
+          %rise  ::  [som ...]          -->  [som + 1 ...], nock 4
+          %equi  ::  [som mos ...]      -->  [lob ...], nock 5
+          %bail  ::  crash
+          %copy  ::  [som ...]          -->  [som som ...]
+          %lose  ::  [som ...]          -->  [...]
       ==
-  $%  [%call p=glob-atom]         ::  [sub ...]      -->  [pro ...], direct call
-      [%calf p=glob-atom q=bell]  ::  [sub ...]      -->  [pro ...], direct call, jetted
-      [%cnst p=*]                 ::  [sub ...]      -->  [p ...]
+  $%  [%axis p=@]                 ::  [sub ...]      -->  [pro ...], nock 0
+      [%call p=glob-atom]         ::  [sub ...]      -->  [pro ...], nock 2 direct call
+      [%calf p=glob-atom q=bell]  ::  [sub ...]      -->  [pro ...], nock 2 direct call, jetted
+      [%jump p=glob-atom]         ::  tail calls
+      [%jumf p=glob-atom q=bell]  ::  
+      [%cnst p=*]                 ::  [sub ...]      -->  [p ...], nock 1
       [%skip p=@]                 ::  skip {p} instructions unconditionally
-      [%skim p=@]                 ::  [lob ...]      -->  [...], skip {p} instructions if p == 0
-      [%edit p=@]                 ::  [don rec ...]  -->  [pro ...], edit {rec} with {don} at {p}
+      [%skim p=@]                 ::  [lob ...]      -->  [...], skip {p} instructions if p == 0, else crash if p != 1 
+      [%edit p=@]                 ::  [don rec ...]  -->  [pro ...], edit {rec} with {don} at {p}, nock 10
   ==
+--
