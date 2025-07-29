@@ -72,28 +72,30 @@
       =/  idx=glob-atom  (en-glob site.n)
       =;  jet=(unit bell)
         =/  options  [f=flag j=jet]
+        :_  out
         ?-  options
-          [%tel ~]  [jump+idx out]
-          [%tel ^]  [jumf+[idx u.j.options] out]
-          [* ~]     [call+idx out]
-          [* ^]     [calf+[idx u.j.options] out]
+          [%tel ~]  jump+idx
+          [%tel ^]  jumf+[idx u.j.options]
+          [* ~]     call+idx
+          [* ^]     calf+[idx u.j.options]
         ==
-      =/  [less=sock fol=^]
+      ::
+      =/  less=sock
         ?-    -.site.n
             %memo
           =/  =meme  (~(got by idxs.memo.lon) p.site.n)
-          ?>  ?=(^ fol.meme)
-          [less-code.meme fol.meme]
+          less-code.meme
         ::
             %site
           =/  site  (~(got by sites.arms.lon) p.site.n)
-          ?>  ?=(^ fol.site)
-          [less.site fol.site]
+          less.site
         ==
       ::
       ?.  ?=([%0 @] q.n)  ~
       =/  ax=@  p.q.n
-      =/  paths=(list path)  ~(tap in (~(get ju batt.jets.lon) fol))
+      =/  batt  (~(pull so less) 2)
+      ?.  =(& cape.batt)  ~
+      =/  paths=(list path)  ~(tap in (~(get ju batt.jets.lon) data.batt))
       |-  ^-  (unit bell)
       =*  path-loop  $
       ?~  paths  ~
@@ -236,9 +238,8 @@
   ::
       [%skim p=@]
     ?>  ?=([* *] stack)
-    ?:  =(0 i.stack)
-      $(stack t.stack, bod (slag p.o bod))
-    ?.  =(1 i.stack)  ~
+    ?.  ?=(? i.stack)  ~
+    =?  bod  i.stack  (slag p.o bod)
     $(stack t.stack)
   ::
       [%edit p=@]

@@ -39,7 +39,7 @@
       [%calf p=glob-atom q=bell]  ::  [sub ...]      -->  [pro ...], nock 2 direct call, jetted
       [%jump p=glob-atom]         ::  tail calls
       [%jumf p=glob-atom q=bell]  ::  
-      [%cnst p=*]                 ::  [sub ...]      -->  [p ...], nock 1
+      [%cnst p=*]                 ::  [...]          -->  [p ...], nock 1
       [%skip p=@]                 ::  skip {p} instructions unconditionally
       [%skim p=@]                 ::  [lob ...]      -->  [...], skip {p} instructions if p == 0, else crash if p != 1 
       [%edit p=@]                 ::  [don rec ...]  -->  [pro ...], edit {rec} with {don} at {p}, nock 10
