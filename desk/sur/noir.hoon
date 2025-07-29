@@ -206,6 +206,7 @@
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
       memo-loop-entry=(list (pair @uxsite @uxmemo))
+      guesses=(jug @uxsite guess:gave)  ::  parent -> guesses
       $=  process
       %+  map  @uxsite
       $:  sub=sock
@@ -883,7 +884,7 @@
   +$  hole  [ax=@axis par=@uxsite kid=@uxsite]
   +$  guess
     $%  [%know p=sock q=hole]  ::  equality to a sock
-        [%qual p=hole q=hole]  ::  equality of holes
+        :: [%qual p=hole q=hole]  ::  equality of holes
     ==
   ::
   ++  full  full+~
@@ -935,10 +936,7 @@
   ::
   ++  int-uni
     |=  [a=[=sock gav=gave] b=[=sock gav=gave]]
-    ^-  [[sock gave] (list guess)]
-    =-  [[s g] (flatten dip)]
-    |-  ^-  [[s=sock g=gave] dip=(deep guess)]
-    ::
+    ^-  [[s=sock g=gave] gs=(deep guess)]
     =/  gav-a1  (norm gav.a)
     =/  gav-b1  (norm gav.b)
     ~?  >>>  |(!=(gav-a1 gav.a) !=(gav-b1 gav.b))  %gave-int-uni-norm
@@ -953,7 +951,11 @@
     ::  matter?), guess equality
     ::  
     ?:  &(?=(%hole -.gav.a) ?=(%hole -.gav.b))
-      [?:((gth par.gav.a par.gav.b) a b) list+~[[%qual +.gav.a +.gav.b]]]
+      :: [?:((gth par.gav.a par.gav.b) a b) list+~[[%qual +.gav.a +.gav.b]]]
+      ::
+      ::  punt on that for now, forget everything
+      ::
+      [[|+~ full] list+~]
     ::  one doesn't capture, another captures: overwrite with known, guess
     ::  that we know the product
     ::
@@ -970,7 +972,7 @@
     =/  r-b=[sock gave]  [~(tel so sock.b) (tel gav.b)]
     =/  l  $(a l-a, b l-b)
     =/  r  $(a r-a, b r-b)
-    [[(~(knit so s.l) s.r) (cons g.l g.r)] [%deep dip.l dip.r]]
+    [[(~(knit so s.l) s.r) (cons g.l g.r)] [%deep gs.l gs.r]]
   ::
   ++  edit
     |=  [rec=gave ax=@ don=gave]
@@ -990,7 +992,15 @@
       %2  [$(rec p, ax (mas ax)) q]
       %3  [p $(rec q, ax (mas ax))]
     ==
+  ::
+  ++  fill
+    |=  [gav=gave site=@uxsite]
+    ^-  gave
+    ?:  ?=(%full -.gav)  full
+    ?^  -.gav  (cons $(gav -.gav) $(gav +.gav))
+    ?:  =(site par.gav)  full
+    gav
   --
 ::
-+$  sock-anno  [=sock src=source]
++$  sock-anno  [=sock src=source gav=gave]
 --

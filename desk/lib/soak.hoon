@@ -154,6 +154,15 @@
         [p -.one t]
       ==
     ==
+  ::
+  ++  axi
+    |=  axe=@
+    ^-  cape
+    ?@  one  one
+    ?-  (cap axe)
+      %2  $(one -.one, axe (mas axe))
+      %3  $(one +.one, axe (mas axe))
+    ==
   --
 ::  operations on sock
 ++  so
