@@ -432,7 +432,7 @@
       =^  there-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
       ::  check melo cache
       ::
-      ?^  m=(melo there-site fol sub gen)
+      ?^  m=(melo there-site fol-new s-prod gen)
         =>  !@  verb
               %=    .
                   bars.gen.u.m
