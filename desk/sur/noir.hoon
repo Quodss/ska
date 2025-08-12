@@ -197,8 +197,7 @@
       here-arm=@uvarm
       site-gen=@uxsite
       cycles=(list cycle)
-      :: want=urge
-      what=what-gen  ::  XX unify w/ want.gen to traverse less?
+      want=urge
       bars=@ud
       block-loop=blocklist
       block-melo=blocklist
@@ -219,9 +218,6 @@
 ::  urge: evalsite subject requirements
 ::
 +$  urge  (map @uxsite cape)
-::  sites, subjects, global requirements
-::
-+$  what-gen  (map @uxsite (pair sock cape))
 ::  provenance tree: axes of the subject of evalsite
 ::
 ++  source
@@ -617,17 +613,6 @@
     %+  reel  n.src
     |:  [p=*peon out=n]
     [p(ax (peg ax.p 3)) out]
-  ::
-  ::  merge urge with what.gen
-  ::
-  ++  uni-what
-    |=  [a=what-gen b=^urge]
-    ^-  what-gen
-    %+  roll  ~(tap by b)
-    |=  [[s=@uxsite c1=cape] acc=_a]
-    %+  ~(jab by acc)  s
-    |=  [sock c2=cape]
-    +<(c2 (~(uni ca c1) c2))
   ::  unify urges
   ::
   ++  uni-urge
