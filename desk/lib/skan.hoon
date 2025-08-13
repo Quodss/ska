@@ -430,25 +430,6 @@
       ::  fallible checks or analyse through: allocate new evalsite
       ::
       =^  there-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
-      ::  check melo cache
-      ::
-      ?^  m=(melo there-site fol-new s-prod gen)
-        =>  !@  verb
-              %=    .
-                  bars.gen.u.m
-                %:  melo:p
-                  there-site
-                  from.u.m
-                  ?~(trace ~ `i.trace)
-                  area.u.m
-                  bars.gen.u.m
-                ==
-              ==
-            .
-        :_  gen.u.m
-        :+  [%2 s-code f-code site+[here-arm.gen from.u.m]]
-          pro.u.m
-        (fold-flag s-flags f-flags [& &] ~)
       ::  check for loop:
       ::    Check if there is formula in the stack above us that has a
       ::    quasi-compatible sock (heuristic), if yes we guess that this is
@@ -499,6 +480,25 @@
         :_  gen
         :+  [%2 s-code f-code site+[here-arm.gen q.i.tak]]
           dunno
+        (fold-flag s-flags f-flags [& &] ~)
+      ::  check melo cache
+      ::
+      ?^  m=(melo there-site fol-new s-prod gen)
+        =>  !@  verb
+              %=    .
+                  bars.gen.u.m
+                %:  melo:p
+                  there-site
+                  from.u.m
+                  ?~(trace ~ `i.trace)
+                  area.u.m
+                  bars.gen.u.m
+                ==
+              ==
+            .
+        :_  gen.u.m
+        :+  [%2 s-code f-code site+[here-arm.gen from.u.m]]
+          pro.u.m
         (fold-flag s-flags f-flags [& &] ~)
       ::  non-loop case: analyse through
       ::
