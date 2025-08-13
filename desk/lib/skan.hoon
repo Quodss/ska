@@ -6,7 +6,7 @@
 =*  one  `@`1
 ::  ignorant sock-anno
 ::
-=/  dunno  [|+~ ~]
+=/  dunno  [|+~ ~ ~]
 ::  default flags: not loopy, fully direct
 ::
 =/  deff  [| &]
@@ -29,8 +29,8 @@
   |=  fol=*
   ^-  (unit *)
   ?+  fol  ~
-    [%1 p=*]       `p.fol
-    [%11 @ p=*]    $(fol p.fol)
+    [%1 p=*]           `p.fol
+    [%11 @ p=*]        $(fol p.fol)
     [%11 [@ h=^] p=*]  ?~(s=(safe h.fol) ~ $(fol p.fol))
   ==
 ::  treat %fast hint formula
@@ -41,9 +41,9 @@
   |=  fol=*
   ^-  (unit (unit @))
   ?+  fol  ~
-    [%1 %0]        `~
-    [%0 p=@]       ``p.fol
-    [%11 @ p=*]    $(fol p.fol)
+    [%1 %0]            `~
+    [%0 p=@]           ``p.fol
+    [%11 @ p=*]        $(fol p.fol)
     [%11 [@ f=^] p=*]  ?~(s=(safe f.fol) ~ $(fol p.fol))
   ==
 ::
@@ -305,7 +305,7 @@
   |=  [bus=sock fol=*]
   ^-  short
   =|  =stack  ::  lexically scoped
-  =/  sub=sock-anno  [bus ~]
+  =/  sub=sock-anno  [bus ~ ~]
   =;  res-eval-entry=short
     ::  debug asserts
     ::
@@ -314,6 +314,7 @@
       ~|  ~(key by want.res-eval-entry)
       !!
     ?>  =(~ process.res-eval-entry)
+    :: ?>  =(~ want-loop.res-eval-entry)
     res-eval-entry
   =^  here-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
   ?>  =(0x0 here-site)
@@ -343,18 +344,25 @@
   ::
   |-  ^-  [[sock-anno flags info] short]
   =*  redo-loop  $
-  =;  res=(error [[sock-anno flags info] short])
-    ?-  -.res
-      %&  p.res
-      %|  =>  !@(verb ~&(>>> [%redo res] .) .)
-          ?-    p.p.res
-              %loop
-            redo-loop(block-loop.gen (~(put ju block-loop.gen) q.p.res r.p.res))
-          ::
-              %melo
-            redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
-          ::
-    ==    ==
+  =;  res=(error [[sock-anno flags info] gen=short])
+    ?-    -.res
+        %&
+      ?:  ?|  ?=(~ stuck.gen.p.res)
+              =(here-site u.stuck.gen.p.res)
+          ==
+        p.res
+      redo-loop(explored.gen explored.gen.p.res)
+    ::
+        %|
+      =>  !@(verb ~&(>>> [%redo res] .) .)
+      ?-    p.p.res
+          %loop
+          redo-loop(block-loop.gen (~(put ju block-loop.gen) q.p.res r.p.res))
+        ::
+            %melo
+          redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
+      ==
+    ==
   ^-  (error [[sock-anno flags info] short])
   ::  enter analysis
   ::
@@ -380,27 +388,40 @@
       =^  [r-code=nomm r-prod=sock-anno r-flags=flags]  gen  fol-loop(fol q.fol)
       :_  gen
       :+  [l-code r-code]
-        :-  (~(knit so sock.l-prod) sock.r-prod)
-        (cons:source src.l-prod src.r-prod)
+        :+  (~(knit so sock.l-prod) sock.r-prod)
+          (cons:source src.l-prod src.r-prod)
+        (cons:source lop.l-prod lop.r-prod)
       (fold-flag l-flags r-flags ~)
     ::
         [%0 p=@]
       ?:  =(0 p.fol)  [[fol dunno deff] gen]
       :_  gen
       :+  fol
-        :-  (~(pull so sock.sub) p.fol)
-        (slot:source src.sub p.fol)
+        :+  (~(pull so sock.sub) p.fol)
+          (slot:source src.sub p.fol)
+        (slot:source lop.sub p.fol)
       deff
     ::
         [%1 p=*]
       :_  gen
-      [fol [&+p.fol ~] deff]
+      [fol [&+p.fol ~ ~] deff]
     ::
         [%2 p=^ q=^]
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
       =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol q.fol)
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
+        ::  if first call from a loop product: record where we got stuck
+        ::  for retry. exactly one loop product provenance for simplicity
+        ::  XX is that right?
+        ::
+        =?  stuck.gen  ?&  ?=(^ lop.f-prod)
+                           ?=(~ stuck.gen)
+                           ?=([* ~] n.lop.f-prod)
+                           ?=(~ l.lop.f-prod)
+                           ?=(~ r.lop.f-prod)
+                       ==
+          `sit.i.n.lop.f-prod
         ::
         =>  !@  verb
               .(bars.gen (indi:p ?~(trace ~ `i.trace) bars.gen))
@@ -414,6 +435,7 @@
       =/  fol-new  data.sock.f-prod
       =/  fol-urge  (urge:source src.f-prod &)
       =.  want.gen  (uni-urge:source want.gen fol-urge)
+      =.  want-loop.gen  (uni-urge:source want-loop.gen fol-urge)
       ::  check memo cache
       ::
       ?^  m=(memo fol-new s-prod gen)
@@ -479,7 +501,8 @@
         ::
         :_  gen
         :+  [%2 s-code f-code site+[here-arm.gen q.i.tak]]
-          dunno
+          ?^  exp=(~(get by explored.gen) q.i.tak)  u.exp
+          [|+~ ~ [[one q.i.tak]~ ~ ~]]
         (fold-flag s-flags f-flags [& &] ~)
       ::  check melo cache
       ::
@@ -553,19 +576,20 @@
       =^  [c-code=nomm * c-flags=flags]                 gen  fol-loop(fol c.fol)
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
-      :_  gen
-      ::  product sock is an intersection
+      =/  int-uni=[(pair sock source) gs=(deep guess)]
+        (int-uni:source [sock lop]:y-prod [sock lop]:n-prod)
       ::
-      =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
-      ::  any of yes/no branches' code could be used, this is why we 
-      ::  unionize the provenance trees
+      =.  guesses.gen
+        %+  roll-deep  gs.int-uni
+        |=  [g=guess acc=_guesses.gen]
+        (~(put ju acc) g)
       ::
       =/  uni-source  (uni:source src.y-prod src.n-prod)
+      :_  gen
       :+  [%6 c-code y-code n-code]
-        :-  int-sock
-        ::  mask unified provenance tree with intersection cape
-        ::
-        (trim:source uni-source cape.int-sock)
+        :+  p.int-uni
+          (trim:source uni-source cape.p.int-uni)
+        (uni:source lop.y-prod lop.n-prod)
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -594,8 +618,9 @@
       ::
       :_  gen
       :+  [%10 [a.fol don-code] rec-code]
-        :-  (~(darn so sock.rec-prod) a.fol sock.don-prod)
-        (edit:source src.rec-prod a.fol src.don-prod)
+        :+  (~(darn so sock.rec-prod) a.fol sock.don-prod)
+          (edit:source src.rec-prod a.fol src.don-prod)
+        (edit:source lop.rec-prod a.fol lop.don-prod)
       (fold-flag rec-flags don-flags ~)
     ::
         [%11 p=@ q=^]
@@ -630,6 +655,7 @@
       =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
+  ::
   ?.  (check:source src.prod here-site)
     ~|  src.prod
     ~|  here-site
@@ -684,9 +710,10 @@
         ~|  cape.less-memo
         ~|  mask
         !!
+      =/  sock-prod-no-loop  (mask-out:source src.prod sock.prod)
       =/  =meme
         :^  idx  here-arm.gen  here-site
-        [fol code less-memo less-code sock.prod move area.gen]
+        [fol code less-memo less-code sock-prod-no-loop move area.gen]
       ::
       =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
       =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -695,6 +722,36 @@
     ::
     =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
     [info gen]
+  ::  remove loop product provenance, verify guesses
+  ::
+  =/  sock-prod-no-loop  (mask-out:source src.prod sock.prod)
+  =.  lop.prod  (remove:source lop.prod here-site)
+  =/  here-guesses=(list [ax=@axis =sock])
+    ~(tap in (~(gut by guesses.gen) here-site ~))
+  ::
+  =/  need-loop  (~(gut by want-loop.gen) here-site |)
+  =/  it  here-guesses
+  |-
+  ?^  it
+    =/  guess-push  (~(app ca need-loop) (~(darn so |+~) i.it))
+    ?.  (~(huge so guess-push) sock.prod)
+      ~|  guess-push
+      ~|  sock.prod
+      !!  ::  XX proper retries
+    $(it t.it)
+  =.  sock.prod
+    ?:  =(sock.prod sock-prod-no-loop)  sock.prod
+    |-  ^-  sock
+    ?~  here-guesses  sock.prod
+    =/  prod-pushed-guess  (~(darn so sock.prod) i.here-guesses)
+    %=  $
+      here-guesses  t.here-guesses
+      sock.prod     (~(purr so sock.prod) prod-pushed-guess)  ::  XX performance
+    ==
+  ::
+  =?  explored.gen  &(?=(^ stuck.gen) =(here-site u.stuck.gen))
+    (~(put by explored.gen) here-site [sock-prod-no-loop src.prod ~])
+  ::
   ?~  cycles.gen  !!
   ?.  =(here-site entry.i.cycles.gen)
     ::  success, loopy
@@ -716,14 +773,14 @@
           code
           capture
           sub
-          sock.prod
+          sock-prod-no-loop
           move
           area.gen
       ==
     ::
     =.  process.gen
       %+  ~(put by process.gen)  here-site
-      [sock.sub fol code capture sock.prod move area.gen]
+      [sock.sub fol code capture move area.gen]
     ::
     gen
   ::  cycle entry not loopy if finalized
@@ -765,7 +822,7 @@
   ::  remove err-gen
   ::
   =>  +
-  ::  validate melo hits, expanding what.gen
+  ::  validate melo hits, expanding want.gen
   ::
   =/  err-gen=err-state
     %+  reel-deep  hits.pop
@@ -832,7 +889,7 @@
       !!
     =/  meme
       :^  idx  here-arm.gen  here-site
-      [fol code memo-less less-code sock.prod move area.gen]
+      [fol code memo-less less-code sock-prod-no-loop move area.gen]
     ::
     =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
     =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -917,7 +974,7 @@
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =/  src  (relo:source src.sub map.i)
-  `[idx.i [arm.i site.i] area.i [prod.i src] gen]
+  `[idx.i [arm.i site.i] area.i [prod.i src ~] gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
@@ -941,7 +998,7 @@
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
     =/  src  (relo:source src.sub map.i)
-    `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
+    `[[site.i area.i [prod.i src ~] gen] [site sub q.i.mele] p.i.mele]
   ::
   ::
   ?~  res  ~

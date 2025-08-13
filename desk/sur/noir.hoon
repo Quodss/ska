@@ -191,6 +191,7 @@
 ::    memo-entry: potential memo hit for the entry point
 ::    process: map of non-finalized calls
 ::
++$  guess  [parent=@uxsite ax=@axis =sock]
 +$  short
   $+  short
   $:  long
@@ -198,6 +199,7 @@
       site-gen=@uxsite
       cycles=(list cycle)
       want=urge
+      want-loop=urge
       bars=@ud
       block-loop=blocklist
       block-melo=blocklist
@@ -205,13 +207,15 @@
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
       memo-loop-entry=(list (pair @uxsite @uxmemo))
+      guesses=(jug @uxsite [ax=@axis =sock])
+      stuck=(unit @uxsite)
+      explored=(map @uxsite sock-anno)
       $=  process
       %+  map  @uxsite
       $:  sub=sock
           fol=*
           =nomm
           capture=cape
-          prod=sock
           map=spring:source
           area=(unit spot)
   ==  ==
@@ -227,6 +231,24 @@
   +$  spring  (tree (list @axis))
   +$  peon    [ax=@axis sit=@uxsite]
 ::
+  ++  remove
+    |=  [src=source site=@uxsite]
+    ^-  source
+    ?~  src  ~
+    =-  ?:  =([~ ~ ~] -)  ~  -
+    :+  (skip n.src |=(p=peon =(site sit.p)))
+      $(src l.src)
+    $(src r.src)
+  ::
+  ++  mask-out
+    |=  [src=source sok=sock]
+    ^-  sock
+    ?~  src  sok
+    ?:  =(| cape.sok)  |+~
+    ?^  n.src  |+~
+    %-  ~(knit so $(src l.src, sok ~(hed so sok)))
+    $(src r.src, sok ~(tel so sok))
+  ::
   ++  check
     !@  check-noir
       |=  [a=source b=@uxsite]
@@ -752,16 +774,63 @@
     :_  c-out
     :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
     ?:(&(=(~ n-src) =(~ l-src) =(~ r-src)) ~ [n-src l-src r-src])
-  ::  XX use the fact that n.src is sorted?
+  ::  takes two pairs of socks and loop product provenances, and either
+  ::  intersects them or takes a union depending on the values, returning
+  ::  assumptions made
   ::
-  :: ++  contains
-  ::   |=  [src=source site=@uxsite]
-  ::   ^-  ?
-  ::   ?~  src  |
-  ::   ?|  (lien n.src |=(peon =(site sit)))
-  ::       $(src l.src)
-  ::       $(src r.src)
-  ::   ==
+  ++  int-uni
+    |=  [a=(pair sock source) b=(pair sock source)]
+    ^-  [(pair sock source) (deep guess)]
+    ::  one value comes from a loop and is unknown, another is known and has no
+    ::  loop provenance: make a guess to be validated
+    ::
+    ?:  ?|  &(?=(~ q.a) ?=(^ q.b) ?=(^ n.q.b) ?=(%| cape.p.b))
+            &(?=(~ q.b) ?=(^ q.a) ?=(^ n.q.a) ?=(%| cape.p.a))
+        ==
+      =?  .  ?=(~ q.b)  .(a b, b a)
+      ?>  &(?=(~ q.a) ?=(^ q.b) ?=(^ n.q.b))
+      ?>  ?=(%| cape.p.b)
+      =;  guesses=(list guess)
+        [[p.a q.b] list+guesses]
+      =>  .(q.b `source`q.b)
+      =|  out=(list guess)
+      |-  ^-  (list guess)
+      ?~  q.b  out
+      =.  out
+        %+  roll  n.q.b
+        |=  [p=peon acc=_out]
+        [[sit.p ax.p p.a] out]
+      ::
+      =.  out  $(q.b l.q.b, p.a ~(hed so p.a))
+      $(q.b r.q.b, p.a ~(tel so p.a))
+    ::  both values either have root loop provenance or no loop provenance:
+    ::  intersect socks, unify provenances
+    ::
+    ?:  ?&  |(?=(~ q.a) ?=(^ n.q.a))
+            |(?=(~ q.b) ?=(^ n.q.b))
+        ==
+      [[(~(purr so p.a) p.b) (uni:source q.a q.b)] list+~]
+    ::  none of the above: cons case, recur
+    ::
+    =/  l-out=[(pair sock source) gs=(deep guess)]
+      %=  $
+        p.a  ~(hed so p.a)
+        q.a  (hed:source q.a)
+        p.b  ~(hed so p.b)
+        q.b  (hed:source q.b)
+      ==
+    ::
+    =/  r-out=[(pair sock source) gs=(deep guess)]
+      %=  $
+        p.a  ~(tel so p.a)
+        q.a  (tel:source q.a)
+        p.b  ~(tel so p.b)
+        q.b  (tel:source q.b)
+      ==
+    ::
+    :_  [%deep gs.l-out gs.r-out]
+    :-  (~(knit so p.l-out) p.r-out)
+    (cons:source q.l-out q.r-out)
   --
 ::
 ::    axis after axis
@@ -854,128 +923,7 @@
     %list  [p.a out]
     %deep  $(a p.a, out $(a q.a))
   ==
-::
-++  gave
-  |^  gave
-  ::
-  +$  gave
-    $~  [%full ~]
-    $^  [gave gave]   ::  cons
-    $%  [%full ~]     ::  no capture
-        [%hole hole]  ::  capture backedge product
-    ==
-  ::
-  +$  hole  [ax=@axis par=@uxsite kid=@uxsite]
-  +$  guess
-    $%  [%know p=sock q=hole]  ::  equality to a sock
-        [%qual p=hole q=hole]  ::  equality of holes
-    ==
-  ::
-  ++  full  full+~
-  ::
-  ++  norm
-    |=  a=gave
-    ^-  gave
-    ?@  -.a  a
-    =.  -.a  ~=(-.a $(a -.a))
-    =.  +.a  ~=(+.a $(a +.a))
-    ?:  ?=([[%full ~] %full ~] a)  full
-    a
-  ::
-  ++  cons
-    |=  [a=gave b=gave]
-    ^-  gave
-    ?:  &(?=(%full -.a) ?=(%full -.b))  full
-    [a b]
-  ::
-  ++  slot
-    |=  [a=gave ax=@]
-    ^-  gave
-    ?:  =(ax 1)  a
-    ?:  ?=(%full -.a)  a
-    ?@  -.a  a(ax (peg ax.a ax))
-    ?-  (cap ax)
-      %2  $(ax (mas ax), a -.a)
-      %3  $(ax (mas ax), a +.a)
-    ==
-  ::
-  ++  hed
-    |=  a=gave
-    ^-  gave
-    ?:  ?=(%full -.a)  full
-    ?^  -.a  -.a
-    a(ax (lsh 0 ax.a))
-  ::
-  ++  tel
-    |=  a=gave
-    ^-  gave
-    ?:  ?=(%full -.a)  full
-    ?^  -.a  +.a
-    a(ax +((lsh 0 ax.a)))
-  ::
-  ::  intersect socks where they don't capture loops, unify when one of them
-  ::  does. Returns intersected-unified sock-gave pair and a list of assumptions
-  ::  to be validated.
-  ::  
-  ::
-  ++  int-uni
-    |=  [a=[=sock gav=gave] b=[=sock gav=gave]]
-    ^-  [[sock gave] (list guess)]
-    =-  [[s g] (flatten dip)]
-    |-  ^-  [[s=sock g=gave] dip=(deep guess)]
-    ::
-    =/  gav-a1  (norm gav.a)
-    =/  gav-b1  (norm gav.b)
-    ~?  >>>  |(!=(gav-a1 gav.a) !=(gav-b1 gav.b))  %gave-int-uni-norm
-    =.  gav.a  gav-a1
-    =.  gav.b  gav-b1
-    ::
-    ::  both don't capture loop products: intersect
-    ::
-    ?:  &(?=(%full -.gav.a) ?=(%full -.gav.b))
-      [[(~(purr so sock.a) sock.b) full] list+~]
-    ::  both capture: overwrite with the product of latest parent (does it
-    ::  matter?), guess equality
-    ::  
-    ?:  &(?=(%hole -.gav.a) ?=(%hole -.gav.b))
-      [?:((gth par.gav.a par.gav.b) a b) list+~[[%qual +.gav.a +.gav.b]]]
-    ::  one doesn't capture, another captures: overwrite with known, guess
-    ::  that we know the product
-    ::
-    ?:  &(?=(%full -.gav.a) ?=(%hole -.gav.b))
-      [a list+~[[%know sock.a +.gav.b]]]
-    ?:  &(?=(%full -.gav.b) ?=(%hole -.gav.a))
-      [b list+~[[%know sock.b +.gav.a]]]
-    ::  all other cases (at least one cons case): split sock-gaves, decend,
-    ::  cons products and guesses
-    ::
-    =/  l-a=[sock gave]  [~(hed so sock.a) (hed gav.a)]
-    =/  r-a=[sock gave]  [~(tel so sock.a) (tel gav.a)]
-    =/  l-b=[sock gave]  [~(hed so sock.b) (hed gav.b)]
-    =/  r-b=[sock gave]  [~(tel so sock.b) (tel gav.b)]
-    =/  l  $(a l-a, b l-b)
-    =/  r  $(a r-a, b r-b)
-    [[(~(knit so s.l) s.r) (cons g.l g.r)] [%deep dip.l dip.r]]
-  ::
-  ++  edit
-    |=  [rec=gave ax=@ don=gave]
-    ^-  gave
-    ?:  =(1 ax)  don
-    =/  [p=gave q=gave]
-      ::  [(slot 2 rec) (slot 3 rec)] inlined
-      ::
-      ?-  -.rec
-        ^      rec
-        %full  [full full]
-        %hole  [rec(ax (lsh 0 ax.rec)) rec(ax +((lsh 0 ax.rec)))]
-      ==
-    ::
-    %-  cons
-    ?-  (cap ax)
-      %2  [$(rec p, ax (mas ax)) q]
-      %3  [p $(rec q, ax (mas ax))]
-    ==
-  --
-::
-+$  sock-anno  [=sock src=source]
+::  partial noun, provenance from evalsite subjects, provenance
+::  from loop products
++$  sock-anno  [=sock src=source lop=source]
 --
