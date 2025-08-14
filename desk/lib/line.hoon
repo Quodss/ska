@@ -1,4 +1,6 @@
 /-  *gene
+=/  print-big-literals  |
+::
 |%
 ++  compile-all
   |=  lon=long
@@ -55,6 +57,7 @@
         %0
       ?:  =(0 p.n)  bail+out
       =?  out  ?=(%kip flag)  copy+out
+      ?:  =(1 p.n)  out
       [axis+p.n out]
     ::
         %1
@@ -95,6 +98,7 @@
       =/  ax=@  p.q.n
       =/  batt  (~(pull so less) 2)
       ?.  =(& cape.batt)  ~
+      ?@  data.batt  ~
       =/  paths=(list path)  ~(tap in (~(get ju batt.jets.lon) data.batt))
       |-  ^-  (unit bell)
       =*  path-loop  $
@@ -107,11 +111,11 @@
       `[i.paths ax]
     ::
         %3
-      =?  out  ?=(%kip flag)  copy+out
+      =.  out  $(n p.n)
       depf+out
     ::
         %4
-      =?  out  ?=(%kip flag)  copy+out
+      =.  out  $(n p.n)
       rise+out
     ::
         %5
@@ -130,7 +134,8 @@
       (zing nuh yuh out ~)
     ::
         %7
-      $(n q.n, out $(n p.n, flag %los))
+      =.  out  $(n p.n)
+      $(n q.n, flag %los)
     ::
         %10
       ?:  =(0 p.p.n)  bail+out
@@ -150,6 +155,34 @@
     ==
   --
 ::
+++  tank-limit
+  |=  [n=@ tan=tank]
+  ^-  @t
+  =/  cod  (crip (zing (wash 0^80 tan)))
+  ?:  (gth (met 3 cod) 5)  '...'
+  cod
+::
+++  render
+  |=  ops=(list op)
+  ^-  tank
+  :+  %rose  [" " "\{" "}"]
+  %+  turn  ops
+  |=  o=op
+  ^-  tank
+  ?@  o  (scot %tas o)
+  :+  %rose  [" " "[" "]"]
+  :-  (scot %tas -.o)
+  :_  ~
+  ^-  tank
+  ?-  -.o
+    ?(%axis %skip %skim %edit)  (scot %ud +.o)
+    %cnst  ?:(print-big-literals >p.o< (tank-limit 5 >p.o<))
+    ?(%call %jump)  (scot %ux +.o)
+    ?(%calf %jumf)  :+  %rose  [" " "" ""]
+                    :~  (scot %ux p.o)
+                        >q.o<
+  ==                ==
+::
 ++  exec
   |=  [sub=* fol=* lin=line]
   ^-  (unit *)
@@ -165,12 +198,15 @@
   |-  ^-  (unit *)
   =*  prog-loop  $
   =/  stack=(list *)  ~[sub]
-  =/  bod  body.i.progs
+  =/  bod  body.prog
+  %-  (slog (render bod) ~)
   |-  ^-  (unit *)
+  :: ~&  stack
   ?:  =(~ bod)
     ?>  ?=([* ~] stack)
     `i.stack
   =^  o  bod  [i.-.bod t.+.bod]
+  :: ~&  o
   ?-    o
       %slow
     ?>  ?=([* * *] stack)
@@ -215,11 +251,14 @@
     $(stack [u.r t.stack])
   ::
       [%jump p=glob-atom]
-    $(bod body:(~(got by progs.lin) p.o))
+    =/  new-bod  body:(~(got by progs.lin) p.o)
+    %-  (slog (render new-bod) ~)
+    $(bod new-bod)
   ::
       [%call p=glob-atom]
     ?>  ?=([* *] stack)
     =/  prod  prog-loop(sub i.stack, prog (~(got by progs.lin) p.o))
+    :: ~&  %ret
     ?~  prod  ~
     $(stack [u.prod t.stack])
   ::  no jets for now
@@ -239,7 +278,7 @@
       [%skim p=@]
     ?>  ?=([* *] stack)
     ?.  ?=(? i.stack)  ~
-    =?  bod  i.stack  (slag p.o bod)
+    =?  bod  !i.stack  (slag p.o bod)
     $(stack t.stack)
   ::
       [%edit p=@]

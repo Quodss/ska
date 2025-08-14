@@ -1277,7 +1277,7 @@
     =*  cold-loop  $
     ?~  queu
       ?~  load
-        ~&  ~(wyt by core.jets.lon)
+        :: ~&  ~(wyt by core.jets.lon)
         this
       ~&  >>  cold-loop+(lent load)
       cold-loop(queu (flop load), load ~)
