@@ -134,8 +134,8 @@
       (zing nuh yuh out ~)
     ::
         %7
-      =.  out  $(n p.n)
-      $(n q.n, flag %los)
+      =.  out  $(n p.n, flag ?:(?=(%tel flag) %los flag))
+      $(n q.n, flag ?:(?=(%tel flag) %tel %los))
     ::
         %10
       ?:  =(0 p.p.n)  bail+out
@@ -156,10 +156,10 @@
   --
 ::
 ++  tank-limit
-  |=  [n=@ tan=tank]
+  |=  [n=@ sam=*]
   ^-  @t
-  =/  cod  (crip (zing (wash 0^80 tan)))
-  ?:  (gth (met 3 cod) 5)  '...'
+  =/  cod  (crip (zing (wash 0^80 >sam<)))
+  ?:  (gth (met 3 cod) 5)  (scot %uw (mug sam))
   cod
 ::
 ++  render
@@ -176,7 +176,7 @@
   ^-  tank
   ?-  -.o
     ?(%axis %skip %skim %edit)  (scot %ud +.o)
-    %cnst  ?:(print-big-literals >p.o< (tank-limit 5 >p.o<))
+    %cnst  ?:(print-big-literals >p.o< (tank-limit 5 p.o))
     ?(%call %jump)  (scot %ux +.o)
     ?(%calf %jumf)  :+  %rose  [" " "" ""]
                     :~  (scot %ux p.o)
