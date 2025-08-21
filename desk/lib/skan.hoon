@@ -554,24 +554,16 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
-      :: ::  product sock is an intersection
-      :: ::
-      :: =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
-      :: ::  any of yes/no branches' code could be used, this is why we 
-      :: ::  unionize the provenance trees
-      :: ::
-      :: =/  uni-source  (uni:source src.y-prod src.n-prod)
-      :: :+  [%6 c-code y-code n-code]
-      ::   :-  int-sock
-      ::   ::  mask unified provenance tree with intersection cape
-      ::   ::
-      ::   (trim:source uni-source cape.int-sock)
-      :: (fold-flag c-flags y-flags n-flags ~)
-      =/  int-uni=[=sock src=source]
-        (uni-int-smart:source [sock src]:y-prod [sock src]:n-prod)
+      ::  product sock is an intersection
       ::
+      =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
+      ::  any of yes/no branches' code could be used, this is why we 
+      ::  unionize the provenance trees
+      ::
+      =/  uni-source  (uni:source src.y-prod src.n-prod)
       :+  [%6 c-code y-code n-code]
-        int-uni
+        :-  int-sock
+        uni-source
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]

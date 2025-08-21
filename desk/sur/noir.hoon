@@ -223,120 +223,237 @@
 ++  source
   |^  source
   ::
-  +$  source  (tree (list peon))
+  :: +$  source  (tree (list peon))
+  +$  source
+    $~  [%know ~]
+    $^  [p=source q=source]
+    $%  [%know p=(tree (list peon))]
+        [%uni p=(lest source)]
+        $:  %relo
+            p=(tree (list peon))
+            q=[n=(list @axis) l=(tree (list @axis)) r=(tree (list @axis))]
+    ==  ==
+  ::
   +$  spring  (tree (list @axis))
   +$  peon    [ax=@axis sit=@uxsite]
-::
-  ++  check
-    !@  check-noir
-      |=  [a=source s=(set @uxsite)]
-      ^-  ?
-      ?~  a  &
-      ?&  (levy n.a |=(peon (~(has in s) sit)))
-          $(a l.a)
-          $(a r.a)
+  :: ::
+  :: ++  check
+  ::   !@  check-noir
+  ::     |=  [a=source s=(set @uxsite)]
+  ::     ^-  ?
+  ::     ?-    -.a
+  ::         ^
+  ::       &($(a -.a) $(a +.a))
+  ::     ::
+  ::         %know
+  ::       |-  ^-  ?
+  ::       ?~  p.a  &
+  ::       ?&  (levy n.p.a |=(peon (~(has in s) sit)))
+  ::           $(p.a l.p.a)
+  ::           $(p.a r.p.a)
+  ::       ==
+  ::     ::
+  ::         %relo
+  ::       $(a (collapse p.a q.a))
+  ::     ==
+  ::   _&
+  ::
+  ++  collapse
+    |=  src=source
+    ^-  (tree (list peon))
+    ?-    -.src
+        %know  p.src
+        ^      (cons-tree (collapse p.src) (collapse p.src))
+        %relo
+      =|  out=(tree (list peon))
+      =>  .(q.src `spring`q.src)
+      |-  ^+  out
+      ?~  q.src  out
+      ?~  p.src  out
+      =.  out
+        ?:  =(~ n.q.src)  out
+        %+  reel  n.q.src
+        |:  [ax=*@ out=out]
+        (uni-tree (slot-tree p.src ax) out)
+      ::
+      ?~  out  (cons-tree $(q.src l.q.src) $(q.src r.q.src))
+      =/  l  $(q.src l.q.src, out l.out)
+      =/  r  $(q.src r.q.src, out r.out)
+      ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
+      [n.out l r]
+    ::
+        %uni
+      %+  roll  `(list source)`p.src
+      |=  [s=source acc=(tree (list peon))]
+      (uni-tree (collapse s) acc)
+    ==
+  ::
+  ++  slot-tree
+    |=  [oak=(tree (list peon)) ax=@]
+    ^-  (tree (list peon))
+    ?:  =(1 ax)  oak
+    =/  rev  1
+    =|  acc=(list (pair @ (list peon)))
+    |-  ^-  (tree (list peon))
+    =+  [n l r]=?@(oak [~ ~ ~] oak)
+    ?.  =(1 ax)
+      =?  acc  !=(~ n)  [[rev n] acc]
+      ?-  (cap ax)
+        %2  $(ax (mas ax), oak l, rev (peg rev 2))
+        %3  $(ax (mas ax), oak r, rev (peg rev 3))
       ==
-    _&
+    ::  rev == ax input
+    ::
+    =.  n
+      %+  roll  acc
+      |:  [[ax=*@ l=*(list peon)] out=n]
+      ^+  n
+      =/  rel  (hub ax rev)
+      %+  reel  l
+      |:  [p=*peon out=out]
+      [p(ax (peg ax.p rel)) out]
+    ::
+    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
+    [n l r]
   ::
-  ++  sorted
-    !@  check-noir
-      |=  src=source
-      ^-  source
-      ?~  src  ~
-      ?.  =(n.src (sort n.src |=([a=peon b=peon] (gth sit.a sit.b))))
-        ~|  n.src
-        !!
-      :+  n.src
-        $(src l.src)
-      $(src r.src)
-    same
+  ++  cons-tree
+    |=  [a=(tree (list peon)) b=(tree (list peon))]
+    ^-  (tree (list peon))
+    ?:  &(=(~ a) =(~ b))  ~
+    [~ a b]
   ::
-  ++  norm
-    |=  a=source
-    ^-  source
-    ?~  a  ~
-    =.  l.a  ~=(l.a $(a l.a))
-    =.  r.a  ~=(r.a $(a r.a))
-    ?:  =([~ ~ ~] a)  ~
-    a
+  :: ++  sorted
+  ::   !@  check-noir
+  ::     |=  src=source
+  ::     ^-  source
+  ::     ?~  src  ~
+  ::     ?.  =(n.src (sort n.src |=([a=peon b=peon] (gth sit.a sit.b))))
+  ::       ~|  n.src
+  ::       !!
+  ::     :+  n.src
+  ::       $(src l.src)
+  ::     $(src r.src)
+  ::   same
+  ::
+  :: ++  norm
+  ::   |=  a=source
+  ::   ^-  source
+  ::   ?~  a  ~
+  ::   =.  l.a  ~=(l.a $(a l.a))
+  ::   =.  r.a  ~=(r.a $(a r.a))
+  ::   ?:  =([~ ~ ~] a)  ~
+  ::   a
   ::
   ++  cons
     |=  [a=source b=source]
     ^-  source
-    ?:  &(=(~ a) =(~ b))  ~
-    [~ a b]
+    ?:  &(?=([%know ~] a) ?=([%know ~] b))  [%know ~]
+    [a b]
   ::
   ::
-  ++  formulaic
-    |=  n=*
-    ^-  ?
-    ?=(^ ((soft nock) n))
+  :: ++  formulaic
+  ::   |=  n=*
+  ::   ^-  ?
+  ::   ?=(^ ((soft nock) n))
   ::
-  ++  uni-int-smart
-    |=  [a=[=sock src=source] b=[=sock src=source]]
-    ^-  [sock source]
-    ?:  |(?=(%| cape.sock.a) ?=(%| cape.sock.b))  [|+~ ~]
-    ?:  ?&  ?=(@ cape.sock.a)
-            ?=(@ cape.sock.b)
-            =(data.sock.a data.sock.b)
-            (formulaic data.sock.a)
-        ==
-      [sock.a (uni src.a src.b)]
-    ?:  &(?=(~ src.a) ?=(~ src.b))  [(~(purr so sock.a) sock.b) ~]
-    =/  l=[=sock src=source]
-      %=  $
-        sock.a  ~(hed so sock.a)
-        sock.b  ~(hed so sock.b)
-        src.a   (hed src.a)
-        src.b   (hed src.b)
-      ==
-    ::
-    =/  r=[=sock src=source]
-      %=  $
-        sock.a  ~(tel so sock.a)
-        sock.b  ~(tel so sock.b)
-        src.a   (tel src.a)
-        src.b   (tel src.b)
-      ==
-    ::
-    [(~(knit so sock.l) sock.r) (cons src.l src.r)]
+  :: ++  uni-int-smart
+  ::   |=  [a=[=sock src=source] b=[=sock src=source]]
+  ::   ^-  [sock source]
+  ::   ?:  |(?=(%| cape.sock.a) ?=(%| cape.sock.b))  [|+~ ~]
+  ::   ?:  ?&  ?=(@ cape.sock.a)
+  ::           ?=(@ cape.sock.b)
+  ::           =(data.sock.a data.sock.b)
+  ::           (formulaic data.sock.a)
+  ::       ==
+  ::     [sock.a (uni src.a src.b)]
+  ::   ?:  &(?=(~ src.a) ?=(~ src.b))  [(~(purr so sock.a) sock.b) ~]
+  ::   =/  l=[=sock src=source]
+  ::     %=  $
+  ::       sock.a  ~(hed so sock.a)
+  ::       sock.b  ~(hed so sock.b)
+  ::       src.a   (hed src.a)
+  ::       src.b   (hed src.b)
+  ::     ==
+  ::   ::
+  ::   =/  r=[=sock src=source]
+  ::     %=  $
+  ::       sock.a  ~(tel so sock.a)
+  ::       sock.b  ~(tel so sock.b)
+  ::       src.a   (tel src.a)
+  ::       src.b   (tel src.b)
+  ::     ==
+  ::   ::
+  ::   [(~(knit so sock.l) sock.r) (cons src.l src.r)]
+  ::
+  :: ++  uni
+  ::   !@  check-noir
+  ::     |=  [a=source b=source]
+  ::     =*  sam  +<
+  ::     :: ~&  >>  %comp
+  ::     =/  a
+  ::       :: ~>  %bout
+  ::       (uni1 sam)
+  ::     ::
+  ::     =/  b
+  ::       :: ~>  %bout
+  ::       (uni2 sam)
+  ::     ::
+  ::     ?>  (eq a b)
+  ::     a
+  ::   uni2
+  :: ::
+  :: ++  uni1
+  ::   |=  [a=source b=source]
+  ::   ^-  source
+  ::   ?~  a  b
+  ::   ?~  b  a
+  ::   ::  debug check; shouldn't be necessary if source is normalized?
+  ::   ::
+  ::   =-  !@  check-noir
+  ::         ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
+  ::       -
+  ::   =;  n
+  ::     [n $(a l.a, b l.b) $(a r.a, b r.b)]
+  ::   %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
+  ::   |=  [a=peon b=peon]
+  ::   (gth sit.a sit.b)
+  :: ::
+  :: ++  uni2
+  ::   |=  [a=source b=source]
+  ::   ^-  source
+  ::   ?~  a  b
+  ::   ?~  b  a
+  ::   =;  n=(list peon)
+  ::     [n $(a l.a, b l.b) $(a r.a, b r.b)]
+  ::   =/  ns=[a=(list peon) b=(list peon)]  [n.a n.b]
+  ::   |-  ^-  (list peon)
+  ::   ?:  =(~ a.ns)  b.ns
+  ::   ?:  =(~ b.ns)  a.ns
+  ::   =^  head  ns
+  ::     =*  i-a  i.-.a.ns
+  ::     =*  i-b  i.-.b.ns
+  ::     ?:  =(i-a i-b)  [i-a +.a.ns +.b.ns]
+  ::     ?:  (gth sit.i-a sit.i-b)  [i-a +.a.ns b.ns]
+  ::     [i-b a.ns +.b.ns]
+  ::   ::
+  ::   [head $]
   ::
   ++  uni
-    !@  check-noir
-      |=  [a=source b=source]
-      =*  sam  +<
-      :: ~&  >>  %comp
-      =/  a
-        :: ~>  %bout
-        (uni1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (uni2 sam)
-      ::
-      ?>  (eq a b)
-      a
-    uni2
-  ::
-  ++  uni1
     |=  [a=source b=source]
     ^-  source
-    ?~  a  b
-    ?~  b  a
-    ::  debug check; shouldn't be necessary if source is normalized?
-    ::
-    =-  !@  check-noir
-          ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
-        -
-    =;  n
-      [n $(a l.a, b l.b) $(a r.a, b r.b)]
-    %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
-    |=  [a=peon b=peon]
-    (gth sit.a sit.b)
+    ?:  ?=([%know ~] a)  b
+    ?:  ?=([%know ~] b)  a
+    ?:  &(?=(%uni -.a) ?=(%uni -.b))
+      :-  %uni
+      =-  ?~(- !! -)
+      (weld p.a p.b)
+    ?:  ?=(%uni -.a)  a(p [b p.a])
+    ?:  ?=(%uni -.b)  b(p [a p.b])
+    [%uni a b ~]
   ::
-  ++  uni2
-    |=  [a=source b=source]
-    ^-  source
+  ++  uni-tree
+    |=  [a=(tree (list peon)) b=(tree (list peon))]
+    ^-  (tree (list peon))
     ?~  a  b
     ?~  b  a
     =;  n=(list peon)
@@ -354,262 +471,309 @@
     ::
     [head $]
   ::
-  ++  trim
-    !@  check-noir
-      |=  [src=source cap=cape]
-      ^-  source
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (trim1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (trim2 sam)
-      ::
-      ?.  (eq a b)
-        ~|  a
-        ~|  b
-        ~|  [src cap]
-        !!
-      a
-    trim1
-  ::
-  ++  trim1
-    |=  [src=source cap=cape]
-    ^-  source
-    %-  sorted
-    ?~  src  ~
-    ?:  ?=(%| cap)  ~
-    ?:  ?=(%& cap)  src
-    (cons $(src (hed src), cap -.cap) $(src (tel src), cap +.cap))
-  ::
-  ++  trim2
-    |=  [src=source cap=cape]
-    ^-  source
-    ::
-    =;  out
-      =/  out1  (norm out)
-      ?.  =(out out1)
-        ~|  %mask-norm
-        ~|  [src cap]
-        ~|  out1
-        ~|  out
-        !!
-      out1
-    ::  shortcut: nothing to mask
-    ::
-    ?:  =(~ src)  ~
-    ::  accumulator to be pushed to a %& cape
-    ::
-    =|  acc=(list (pair @ (list peon)))
-    =/  rev  1
-    |-  ^-  source
-    ?^  cap
-      ::  shortcut: nothing to push, nothing to mask
-      ::
-      ?:  &(=(~ acc) =(~ src))  ~
-      =+  [n l r]=?~(src [~ ~ ~] src)
-      =?  acc  !=(~ n)  [[rev n] acc]
-      %+  cons
-        $(rev (peg rev 2), src l, cap -.cap)
-      $(rev (peg rev 3), src r, cap +.cap)
-    ?:  ?=(%| cap)  ~
-    ::  nothing to push
-    ::
-    ?:  =(~ acc)  src
-    ::  push to node list
-    ::
-    =/  [n=(list peon) lr=[source source]]  ?~(src [~ ~ ~] src)
-    =-  ?:  =([~ ~ ~] -)  ~  -
-    :_  lr
-    %+  roll  acc
-    |:  [[ax=*@ l=*(list peon)] out=n]
-    ^+  n
-    ?:  =(~ l)  out
-    =/  rel  (hub ax rev)
-    %+  reel  l
-    |:  [p=*peon out=out]
-    [p(ax (peg ax.p rel)) out]
+  :: ++  trim
+  ::   !@  check-noir
+  ::     |=  [src=source cap=cape]
+  ::     ^-  source
+  ::     =*  sam  +<
+  ::     =/  a
+  ::       :: ~>  %bout
+  ::       (trim1 sam)
+  ::     ::
+  ::     =/  b
+  ::       :: ~>  %bout
+  ::       (trim2 sam)
+  ::     ::
+  ::     ?.  (eq a b)
+  ::       ~|  a
+  ::       ~|  b
+  ::       ~|  [src cap]
+  ::       !!
+  ::     a
+  ::   trim1
+  :: ::
+  :: ++  trim1
+  ::   |=  [src=source cap=cape]
+  ::   ^-  source
+  ::   %-  sorted
+  ::   ?~  src  ~
+  ::   ?:  ?=(%| cap)  ~
+  ::   ?:  ?=(%& cap)  src
+  ::   (cons $(src (hed src), cap -.cap) $(src (tel src), cap +.cap))
+  :: ::
+  :: ++  trim2
+  ::   |=  [src=source cap=cape]
+  ::   ^-  source
+  ::   ::
+  ::   =;  out
+  ::     =/  out1  (norm out)
+  ::     ?.  =(out out1)
+  ::       ~|  %mask-norm
+  ::       ~|  [src cap]
+  ::       ~|  out1
+  ::       ~|  out
+  ::       !!
+  ::     out1
+  ::   ::  shortcut: nothing to mask
+  ::   ::
+  ::   ?:  =(~ src)  ~
+  ::   ::  accumulator to be pushed to a %& cape
+  ::   ::
+  ::   =|  acc=(list (pair @ (list peon)))
+  ::   =/  rev  1
+  ::   |-  ^-  source
+  ::   ?^  cap
+  ::     ::  shortcut: nothing to push, nothing to mask
+  ::     ::
+  ::     ?:  &(=(~ acc) =(~ src))  ~
+  ::     =+  [n l r]=?~(src [~ ~ ~] src)
+  ::     =?  acc  !=(~ n)  [[rev n] acc]
+  ::     %+  cons
+  ::       $(rev (peg rev 2), src l, cap -.cap)
+  ::     $(rev (peg rev 3), src r, cap +.cap)
+  ::   ?:  ?=(%| cap)  ~
+  ::   ::  nothing to push
+  ::   ::
+  ::   ?:  =(~ acc)  src
+  ::   ::  push to node list
+  ::   ::
+  ::   =/  [n=(list peon) lr=[source source]]  ?~(src [~ ~ ~] src)
+  ::   =-  ?:  =([~ ~ ~] -)  ~  -
+  ::   :_  lr
+  ::   %+  roll  acc
+  ::   |:  [[ax=*@ l=*(list peon)] out=n]
+  ::   ^+  n
+  ::   ?:  =(~ l)  out
+  ::   =/  rel  (hub ax rev)
+  ::   %+  reel  l
+  ::   |:  [p=*peon out=out]
+  ::   [p(ax (peg ax.p rel)) out]
   ::
   ++  slot
     |=  [src=source ax=@]
     ^-  source
-    ~|  [src ax]
-    %-  sorted
     ?:  =(1 ax)  src
+    ?-    -.src
+        ^
+      ?-  (cap ax)
+        %2  $(ax (mas ax), src p.src)
+        %3  $(ax (mas ax), src q.src)
+      ==
+    ::
+        %uni
+      =/  p1=(list source)
+        %+  murn  `(list source)`p.src
+        |=  s=source
+        ^-  (unit source)
+        =/  piece  (slot s ax)
+        ?:  ?=([%know ~] piece)  ~
+        `piece
+      ::
+      ?~  p1  know+~
+      uni+p1
+    ::
+        %relo
+      =/  q1  (slot-spring q.src ax)
+      ?~  q1  know+~
+      src(q q1)
+    ::
+        %know  [%know (slot-tree p.src ax)]
+    ==
+  ::
+  ++  slot-spring
+    |=  [pin=(tree (list @axis)) ax=@]
+    ^-  (tree (list @axis))
+    ?:  =(1 ax)  pin
     =/  rev  1
-    =|  acc=(list (pair @ (list peon)))
-    |-  ^-  source
-    =+  [n l r]=?@(src [~ ~ ~] src)
+    =|  acc=(list (pair @ (list @axis)))
+    |-  ^-  (tree (list @axis))
+    =+  [n l r]=?@(pin [~ ~ ~] pin)
     ?.  =(1 ax)
       =?  acc  !=(~ n)  [[rev n] acc]
       ?-  (cap ax)
-        %2  $(ax (mas ax), src l, rev (peg rev 2))
-        %3  $(ax (mas ax), src r, rev (peg rev 3))
+        %2  $(ax (mas ax), pin l, rev (peg rev 2))
+        %3  $(ax (mas ax), pin r, rev (peg rev 3))
       ==
     ::  rev == ax input
     ::
     =.  n
       %+  roll  acc
-      |:  [[ax=*@ l=*(list peon)] out=n]
+      |:  [[ax=*@ l=*(list @axis)] out=n]
       ^+  n
       =/  rel  (hub ax rev)
       %+  reel  l
-      |:  [p=*peon out=out]
-      [p(ax (peg ax.p rel)) out]
+      |:  [a=*@axis out=out]
+      [(peg a rel) out]
     ::
     ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
     [n l r]
-  ::  equality of provenance trees modulo permutation of peons in lists
+  :: ::  equality of provenance trees modulo permutation of peons in lists
+  :: ::
+  :: ++  eq
+  ::   =/  rev  1
+  ::   |=  [a=source b=source]
+  ::   ^-  ?
+  ::   ?:  |(&(?=(~ a) ?=(^ b)) &(?=(~ b) ?=(^ a)))
+  ::     ~&  >>>  rev  |
+  ::   ?~  a  &
+  ::   ?>  ?=(^ b)
+  ::   =/  n-a-check  (sort n.a |=([a=peon b=peon] (gth sit.a sit.b)))
+  ::   =/  n-b-check  (sort n.b |=([a=peon b=peon] (gth sit.a sit.b)))
+  ::   =/  a-check=?
+  ::     |-  ^-  ?
+  ::     ?~  n-a-check  &
+  ::     ?~  n.a  !!
+  ::     ?.  =(sit.i.n.a sit.i.n-a-check)  |
+  ::     $(n.a t.n.a, n-a-check t.n-a-check)
+  ::   ::
+  ::   ?.  a-check
+  ::     ~|  n.a
+  ::     !!
+  ::   =/  b-check=?
+  ::     |-  ^-  ?
+  ::     ?~  n-b-check  &
+  ::     ?~  n.b  !!
+  ::     ?.  =(sit.i.n.b sit.i.n-b-check)  |
+  ::     $(n.b t.n.b, n-b-check t.n-b-check)
+  ::   ::
+  ::   ?.  b-check
+  ::     ~|  n.b
+  ::     !!
+  ::   ?:  !=((silt n.a) (silt n.b))
+  ::     ~&  >>>  rev  |
+  ::   ?&  
+  ::       $(a l.a, b l.b, rev (peg rev 2))
+  ::       $(a r.a, b r.b, rev (peg rev 3))
+  ::   ==
   ::
-  ++  eq
-    =/  rev  1
-    |=  [a=source b=source]
-    ^-  ?
-    ?:  |(&(?=(~ a) ?=(^ b)) &(?=(~ b) ?=(^ a)))
-      ~&  >>>  rev  |
-    ?~  a  &
-    ?>  ?=(^ b)
-    =/  n-a-check  (sort n.a |=([a=peon b=peon] (gth sit.a sit.b)))
-    =/  n-b-check  (sort n.b |=([a=peon b=peon] (gth sit.a sit.b)))
-    =/  a-check=?
-      |-  ^-  ?
-      ?~  n-a-check  &
-      ?~  n.a  !!
-      ?.  =(sit.i.n.a sit.i.n-a-check)  |
-      $(n.a t.n.a, n-a-check t.n-a-check)
-    ::
-    ?.  a-check
-      ~|  n.a
-      !!
-    =/  b-check=?
-      |-  ^-  ?
-      ?~  n-b-check  &
-      ?~  n.b  !!
-      ?.  =(sit.i.n.b sit.i.n-b-check)  |
-      $(n.b t.n.b, n-b-check t.n-b-check)
-    ::
-    ?.  b-check
-      ~|  n.b
-      !!
-    ?:  !=((silt n.a) (silt n.b))
-      ~&  >>>  rev  |
-    ?&  
-        $(a l.a, b l.b, rev (peg rev 2))
-        $(a r.a, b r.b, rev (peg rev 3))
-    ==
+  :: ++  edit
+  ::   !@  check-noir
+  ::     |=  [rec=source ax=@ don=source]
+  ::     ^-  source
+  ::     =*  sam  +<
+  ::     =/  a
+  ::       :: ~>  %bout
+  ::       (edit1 sam)
+  ::     ::
+  ::     =/  b
+  ::       :: ~>  %bout
+  ::       (edit2 sam)  ::  faster?
+  ::     ::
+  ::     =/  c
+  ::       :: ~>  %bout
+  ::       (edit3 sam)  :: even faster?
+  ::     ::
+  ::     ?.  (eq a b)
+  ::       ~|  sam
+  ::       ~|  [a b]
+  ::       !!
+  ::     ?.  (eq b c)
+  ::       ~|  sam
+  ::       ~|  [b c]
+  ::       !!
+  ::     a
+  ::   edit3
+  ::
+  :: ++  edit1
+  ::   |=  [rec=source ax=@ don=source]
+  ::   ^-  source
+  ::   ?:  =(ax 1)  don
+  ::   =/  rev  1
+  ::   =|  acc=(list (pair @ (list peon)))
+  ::   |-  ^-  source
+  ::   ?:  =(1 ax)  don
+  ::   =+  [n l r]=?~(rec [~ ~ ~] rec)
+  ::   =?  acc  !=(~ n)  [[rev n] acc]
+  ::   %-  cons
+  ::   ^-  [source source]
+  ::   ?-    (cap ax)
+  ::       %2
+  ::     :-  $(rec l, ax (mas ax), rev (peg rev 2))
+  ::     =.  rev  (peg rev 3)
+  ::     =+  [n-r lr-r]=?~(r [~ ~ ~] r)
+  ::     =.  n-r
+  ::       %+  roll  acc
+  ::       |:  [[ax=*@ l=*(list peon)] out=n-r]
+  ::       ^+  n-r
+  ::       =/  rel  (hub ax rev)
+  ::       %+  reel  l
+  ::       |:  [p=*peon out=out]
+  ::       [p(ax (peg ax.p rel)) out]
+  ::     ::
+  ::     ?:  =([~ ~ ~] [n-r lr-r])  ~
+  ::     [n-r lr-r]
+  ::   ::
+  ::       %3
+  ::     :_  $(rec r, ax (mas ax), rev (peg rev 3))
+  ::     =.  rev  (peg rev 2)
+  ::     =+  [n-l lr-l]=?~(l [~ ~ ~] l)
+  ::     =.  n-l
+  ::       %+  roll  acc
+  ::       |:  [[ax=*@ l=*(list peon)] out=n-l]
+  ::       ^+  n-l
+  ::       =/  rel  (hub ax rev)
+  ::       %+  reel  l
+  ::       |:  [p=*peon out=out]
+  ::       [p(ax (peg ax.p rel)) out]
+  ::     ::
+  ::     ?:  =([~ ~ ~] [n-l lr-l])  ~
+  ::     [n-l lr-l]
+  ::   ==
+  :: ::
+  :: ++  edit2
+  ::   |=  [rec=source ax=@ don=source]
+  ::   ^-  source
+  ::   ?:  =(ax 1)  don
+  ::   ::  shortcut: nothing to put, nowhere to put
+  ::   ::
+  ::   ?:  &(=(~ rec) =(~ don))  ~
+  ::   =+  [n l r]=?~(rec [~ ~ ~] rec)
+  ::   =+  l1=[n l r]=?~(l [~ ~ ~] l)
+  ::   =+  r1=[n l r]=?~(r [~ ~ ~] r)
+  ::   =.  n.l1
+  ::     %+  reel  `(list peon)`n
+  ::     |:  [p=*peon out=n.l1]
+  ::     [p(ax (peg ax.p 2)) out]
+  ::   ::
+  ::   =.  n.r1
+  ::     %+  reel  `(list peon)`n
+  ::     |:  [p=*peon out=n.r1]
+  ::     [p(ax (peg ax.p 3)) out]
+  ::   ::
+  ::   ?-    (cap ax)
+  ::       %2
+  ::     %+  cons
+  ::       $(rec ?:(=([~ ~ ~] l1) ~ l1), ax (mas ax))
+  ::     ?:(=([~ ~ ~] r1) ~ r1)
+  ::   ::
+  ::       %3
+  ::     %+  cons
+  ::       ?:(=([~ ~ ~] l1) ~ l1)
+  ::     $(rec ?:(=([~ ~ ~] r1) ~ r1), ax (mas ax))
+  ::   ==
+  :: ::
+  :: ++  edit3
+  ::   |=  [rec=source ax=@ don=source]
+  ::   ^-  source
+  ::   %-  sorted
+  ::   ?:  =(ax 1)  don
+  ::   =|  tack=(list [c=?(%2 %3) p=source])
+  ::   |-  ^-  source
+  ::   ?.  =(1 ax)
+  ::     ?-  (cap ax)
+  ::       %2  $(ax (mas ax), rec (hed rec), tack [2+(tel rec) tack])
+  ::       %3  $(ax (mas ax), rec (tel rec), tack [3+(hed rec) tack])
+  ::     ==
+  ::   |-  ^-  source
+  ::   ?~  tack  don
+  ::   ?-  c.i.tack
+  ::     %2  $(don (cons don p.i.tack), tack t.tack)
+  ::     %3  $(don (cons p.i.tack don), tack t.tack)
+  ::   ==
   ::
   ++  edit
-    !@  check-noir
-      |=  [rec=source ax=@ don=source]
-      ^-  source
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (edit1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (edit2 sam)  ::  faster?
-      ::
-      =/  c
-        :: ~>  %bout
-        (edit3 sam)  :: even faster?
-      ::
-      ?.  (eq a b)
-        ~|  sam
-        ~|  [a b]
-        !!
-      ?.  (eq b c)
-        ~|  sam
-        ~|  [b c]
-        !!
-      a
-    edit3
-  ::
-  ++  edit1
     |=  [rec=source ax=@ don=source]
     ^-  source
-    ?:  =(ax 1)  don
-    =/  rev  1
-    =|  acc=(list (pair @ (list peon)))
-    |-  ^-  source
-    ?:  =(1 ax)  don
-    =+  [n l r]=?~(rec [~ ~ ~] rec)
-    =?  acc  !=(~ n)  [[rev n] acc]
-    %-  cons
-    ^-  [source source]
-    ?-    (cap ax)
-        %2
-      :-  $(rec l, ax (mas ax), rev (peg rev 2))
-      =.  rev  (peg rev 3)
-      =+  [n-r lr-r]=?~(r [~ ~ ~] r)
-      =.  n-r
-        %+  roll  acc
-        |:  [[ax=*@ l=*(list peon)] out=n-r]
-        ^+  n-r
-        =/  rel  (hub ax rev)
-        %+  reel  l
-        |:  [p=*peon out=out]
-        [p(ax (peg ax.p rel)) out]
-      ::
-      ?:  =([~ ~ ~] [n-r lr-r])  ~
-      [n-r lr-r]
-    ::
-        %3
-      :_  $(rec r, ax (mas ax), rev (peg rev 3))
-      =.  rev  (peg rev 2)
-      =+  [n-l lr-l]=?~(l [~ ~ ~] l)
-      =.  n-l
-        %+  roll  acc
-        |:  [[ax=*@ l=*(list peon)] out=n-l]
-        ^+  n-l
-        =/  rel  (hub ax rev)
-        %+  reel  l
-        |:  [p=*peon out=out]
-        [p(ax (peg ax.p rel)) out]
-      ::
-      ?:  =([~ ~ ~] [n-l lr-l])  ~
-      [n-l lr-l]
-    ==
-  ::
-  ++  edit2
-    |=  [rec=source ax=@ don=source]
-    ^-  source
-    ?:  =(ax 1)  don
-    ::  shortcut: nothing to put, nowhere to put
-    ::
-    ?:  &(=(~ rec) =(~ don))  ~
-    =+  [n l r]=?~(rec [~ ~ ~] rec)
-    =+  l1=[n l r]=?~(l [~ ~ ~] l)
-    =+  r1=[n l r]=?~(r [~ ~ ~] r)
-    =.  n.l1
-      %+  reel  `(list peon)`n
-      |:  [p=*peon out=n.l1]
-      [p(ax (peg ax.p 2)) out]
-    ::
-    =.  n.r1
-      %+  reel  `(list peon)`n
-      |:  [p=*peon out=n.r1]
-      [p(ax (peg ax.p 3)) out]
-    ::
-    ?-    (cap ax)
-        %2
-      %+  cons
-        $(rec ?:(=([~ ~ ~] l1) ~ l1), ax (mas ax))
-      ?:(=([~ ~ ~] r1) ~ r1)
-    ::
-        %3
-      %+  cons
-        ?:(=([~ ~ ~] l1) ~ l1)
-      $(rec ?:(=([~ ~ ~] r1) ~ r1), ax (mas ax))
-    ==
-  ::
-  ++  edit3
-    |=  [rec=source ax=@ don=source]
-    ^-  source
-    %-  sorted
     ?:  =(ax 1)  don
     =|  tack=(list [c=?(%2 %3) p=source])
     |-  ^-  source
@@ -628,26 +792,102 @@
   ++  hed
     |=  src=source
     ^-  source
-    %-  sorted
-    ?~  src  ~
-    ?:  =(~ n.src)  l.src
-    =+  [n lr]=?~(l.src [~ ~ ~] l.src)
-    :_  lr
-    %+  reel  n.src
-    |:  [p=*peon out=n]
-    [p(ax (peg ax.p 2)) out]
+    ?-    -.src
+        ^
+      p.src
+    ::
+        %know
+      src(p (hed-tree p.src))
+    ::
+        %relo
+      =/  q1  (hed-spring q.src)
+      ?~  q1  !!
+      src(q q1)
+    ::
+        %uni
+      =/  p1=(list source)
+        %+  murn  `(list source)`p.src
+        |=  s=source
+        ^-  (unit source)
+        =/  piece  (hed s)
+        ?:  ?=([%know ~] piece)  ~
+        `piece
+      ::
+      ?~  p1  know+~
+      uni+p1
+    ==
   ::
   ++  tel
     |=  src=source
     ^-  source
-    %-  sorted
-    ?~  src  ~
-    ?:  =(~ n.src)  r.src
-    =+  [n lr]=?~(r.src [~ ~ ~] r.src)
+    ?-    -.src
+        ^
+      q.src
+    ::
+        %know
+      src(p (tel-tree p.src))
+    ::
+        %relo
+      =/  q1  (tel-spring q.src)
+      ?~  q1  !!
+      src(q q1)
+    ::
+        %uni
+      =/  p1=(list source)
+        %+  murn  `(list source)`p.src
+        |=  s=source
+        ^-  (unit source)
+        =/  piece  (tel s)
+        ?:  ?=([%know ~] piece)  ~
+        `piece
+      ::
+      ?~  p1  know+~
+      uni+p1
+    ==
+  ::
+  ++  hed-tree
+    |=  oak=(tree (list peon))
+    ^-  (tree (list peon))
+    ?~  oak  ~
+    ?:  =(~ n.oak)  l.oak
+    =+  [n lr]=?~(l.oak [~ ~ ~] l.oak)
     :_  lr
-    %+  reel  n.src
+    %+  reel  n.oak
+    |:  [p=*peon out=n]
+    [p(ax (peg ax.p 2)) out]
+  ::
+  ++  tel-tree
+    |=  oak=(tree (list peon))
+    ^-  (tree (list peon))
+    ?~  oak  ~
+    ?:  =(~ n.oak)  r.oak
+    =+  [n lr]=?~(r.oak [~ ~ ~] r.oak)
+    :_  lr
+    %+  reel  n.oak
     |:  [p=*peon out=n]
     [p(ax (peg ax.p 3)) out]
+  ::
+  ++  hed-spring
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  =(~ n.pin)  l.pin
+    =+  [n lr]=?~(l.pin [~ ~ ~] l.pin)
+    :_  lr
+    %+  reel  n.pin
+    |:  [a=*@axis out=n]
+    [(peg a 2) out]
+  ::
+  ++  tel-spring
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  =(~ n.pin)  r.pin
+    =+  [n lr]=?~(r.pin [~ ~ ~] r.pin)
+    :_  lr
+    %+  reel  n.pin
+    |:  [a=*@axis out=n]
+    [(peg a 3) out]
   ::  unify urges
   ::
   ++  uni-urge
@@ -658,144 +898,199 @@
     |=  [@uxsite a=cape b=cape]
     (~(uni ca a) b)
   ::
+  :: ++  urge
+  ::   !@  check-noir
+  ::     |=  [src=source cap=cape]
+  ::     ^-  ^urge
+  ::     =*  sam  +<
+  ::     =/  a
+  ::       :: ~>  %bout
+  ::       (urge1 sam)
+  ::     ::
+  ::     =/  b
+  ::       :: ~>  %bout
+  ::       (urge2 sam)
+  ::     ::
+  ::     ?>  =(a b)
+  ::     a
+  ::   urge2
+  :: ::
+  :: ++  urge1
+  ::   |=  [src=source cap=cape]
+  ::   ^-  ^urge
+  ::   ?:  |(?=(%| cap) ?=(~ src))  ~
+  ::   =/  [p=cape q=cape]  ?@(cap [& &] cap)
+  ::   ;:  uni-urge
+  ::     $(src l.src, cap p)
+  ::     $(src r.src, cap q)
+  ::   ::
+  ::     %+  roll  n.src
+  ::     |=  [peon m=^urge]
+  ::     =/  need=cape  (~(pat ca cap) ax)
+  ::     (jib m sit _need |=(c=cape (~(uni ca c) need)))
+  ::   ==
+  :: ::
+  :: ++  urge2
+  ::   |=  [src=source cap=cape]
+  ::   ^-  ^urge
+  ::   =|  tel=(list (pair source cape))
+  ::   =|  out=^urge
+  ::   |-  ^-  ^urge
+  ::   ?:  |(?=(%| cap) ?=(~ src))
+  ::     ?~  tel  out
+  ::     $(src p.i.tel, cap q.i.tel, tel t.tel)
+  ::   =/  [p=cape q=cape]  ?@(cap [& &] cap)
+  ::   %=  $
+  ::     tel  [[r.src q] tel]
+  ::     src  l.src
+  ::     cap  p
+  ::     out  %+  uni-urge  out
+  ::          %+  roll  n.src
+  ::          |=  [peon m=^urge]
+  ::          =/  need=cape  (~(pat ca cap) ax)
+  ::          (jib m sit _need |=(c=cape (~(uni ca c) need)))
+  ::   ==
   ++  urge
-    !@  check-noir
-      |=  [src=source cap=cape]
-      ^-  ^urge
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (urge1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (urge2 sam)
-      ::
-      ?>  =(a b)
-      a
-    urge2
-  ::
-  ++  urge1
     |=  [src=source cap=cape]
     ^-  ^urge
-    ?:  |(?=(%| cap) ?=(~ src))  ~
-    =/  [p=cape q=cape]  ?@(cap [& &] cap)
-    ;:  uni-urge
-      $(src l.src, cap p)
-      $(src r.src, cap q)
-    ::
-      %+  roll  n.src
-      |=  [peon m=^urge]
-      =/  need=cape  (~(pat ca cap) ax)
-      (jib m sit _need |=(c=cape (~(uni ca c) need)))
-    ==
-  ::
-  ++  urge2
-    |=  [src=source cap=cape]
-    ^-  ^urge
-    =|  tel=(list (pair source cape))
+    =/  lapsed=(tree (list peon))  (collapse src)
+    =|  tel=(list (pair _lapsed cape))
     =|  out=^urge
     |-  ^-  ^urge
-    ?:  |(?=(%| cap) ?=(~ src))
+    ?:  |(?=(%| cap) ?=(~ lapsed))
       ?~  tel  out
-      $(src p.i.tel, cap q.i.tel, tel t.tel)
+      $(lapsed p.i.tel, cap q.i.tel, tel t.tel)
     =/  [p=cape q=cape]  ?@(cap [& &] cap)
     %=  $
-      tel  [[r.src q] tel]
-      src  l.src
+      tel  [[r.lapsed q] tel]
+      lapsed  l.lapsed
       cap  p
       out  %+  uni-urge  out
-           %+  roll  n.src
+           %+  roll  n.lapsed
            |=  [peon m=^urge]
            =/  need=cape  (~(pat ca cap) ax)
            (jib m sit _need |=(c=cape (~(uni ca c) need)))
     ==
   ::
-  ++  route
-    |=  [src=source here=@uxsite]
-    ^-  spring
-    ?~  src  ~
-    =/  n  (murn n.src |=(peon ?.(=(sit here) ~ `ax)))
-    =/  l  $(src l.src)
-    =/  r  $(src r.src)
-    ?:  &(=(~ n) =(~ l) =(~ r))  ~
-    [n l r]
+  :: ++  route
+  ::   |=  [src=source here=@uxsite]
+  ::   ^-  spring
+  ::   ?~  src  ~
+  ::   =/  n  (murn n.src |=(peon ?.(=(sit here) ~ `ax)))
+  ::   =/  l  $(src l.src)
+  ::   =/  r  $(src r.src)
+  ::   ?:  &(=(~ n) =(~ l) =(~ r))  ~
+  ::   [n l r]
   ::
+  :: ++  relo
+  ::   !@  check-noir
+  ::     |=  [src=source pin=spring]
+  ::     ^-  source
+  ::     =*  sam  +<
+  ::     =/  a
+  ::       :: ~>  %bout
+  ::       (relo1 sam)
+  ::     =/  b
+  ::       :: ~>  %bout
+  ::       (relo2 sam)
+  ::     ?>  (eq a b)
+  ::     a
+  ::   relo2
+  :: ::
+  :: ++  relo1
+  ::   |=  [src=source pin=spring]
+  ::   ^-  source
+  ::   %-  sorted
+  ::   ?~  pin  ~
+  ::   =/  recur  (cons $(pin l.pin) $(pin r.pin))
+  ::   %+  reel  n.pin
+  ::   |:  [ax=*@ out=recur]
+  ::   (uni (slot src ax) out)
+  :: ::
+  :: ++  relo2
+  ::   =|  out=source
+  ::   |=  [src=source pin=spring]
+  ::   ~&  %relo
+  ::   ~>  %bout
+  ::   |-  ^-  source
+  ::   ?~  pin  out
+  ::   ?~  src  out
+  ::   =.  out
+  ::     :: ~&  %unis
+  ::     :: ~>  %bout
+  ::     ?:  =(~ n.pin)  out
+  ::     %+  reel  n.pin
+  ::     |:  [ax=*@ out=out]
+  ::     (uni (slot src ax) out)
+  ::   ::
+  ::   ?~  out  (cons $(pin l.pin) $(pin r.pin))
+  ::   =/  l  $(pin l.pin, out l.out)
+  ::   =/  r  $(pin r.pin, out r.out)
+  ::   ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
+  ::   [n.out l r]
   ++  relo
-    !@  check-noir
-      |=  [src=source pin=spring]
-      ^-  source
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (relo1 sam)
-      =/  b
-        :: ~>  %bout
-        (relo2 sam)
-      ?>  (eq a b)
-      a
-    relo2
-  ::
-  ++  relo1
-    |=  [src=source pin=spring]
+    |=  [oak=(tree (list peon)) pin=spring]
     ^-  source
-    %-  sorted
-    ?~  pin  ~
-    =/  recur  (cons $(pin l.pin) $(pin r.pin))
-    %+  reel  n.pin
-    |:  [ax=*@ out=recur]
-    (uni (slot src ax) out)
+    ?~  pin  know+~
+    [%relo oak pin]
   ::
-  ++  relo2
-    =|  out=source
-    |=  [src=source pin=spring]
-    ~&  %relo
-    ~>  %bout
-    |-  ^-  source
-    ?~  pin  out
-    ?~  src  out
-    =.  out
-      :: ~&  %unis
-      :: ~>  %bout
-      ?:  =(~ n.pin)  out
-      %+  reel  n.pin
-      |:  [ax=*@ out=out]
-      (uni (slot src ax) out)
-    ::
-    ?~  out  (cons $(pin l.pin) $(pin r.pin))
-    =/  l  $(pin l.pin, out l.out)
-    =/  r  $(pin r.pin, out r.out)
-    ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
-    [n.out l r]
+  :: ++  prune
+  ::   |=  [src=source site=@uxsite cap=cape]
+  ::   ^-  [[cape spring] source]
+  ::   ~&  %prune
+  ::   ~>  %bout
+  ::   =<  [[c p] s]
+  ::   =/  capture=cape  |
+  ::   |-  ^-  [[p=spring s=source] c=cape]
+  ::   ?~  src  [[~ ~] capture]
+  ::   ?:  ?=(%| cap)  [[~ ~] capture]
+  ::   =>
+  ::     =*  dot  .
+  ::     ^-  [n-pin=(list @) _dot]
+  ::     =|  n-pin=(list @)
+  ::     |-
+  ::     ?~  n.src  [n-pin dot]
+  ::     ?.  =(site sit.i.n.src)  [n-pin dot]
+  ::     %=  $
+  ::       n.src    t.n.src
+  ::       n-pin    [ax.i.n.src n-pin]
+  ::       capture  (~(uni ca capture) (~(pat ca cap) ax.i.n.src))
+  ::     ==
+  ::   =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
+  ::   =^  [l-pin=spring l-src=source]  capture  $(src l.src, cap l-cap)
+  ::   =^  [r-pin=spring r-src=source]  capture  $(src r.src, cap r-cap)
+  ::   :_  capture
+  ::   :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
+  ::   ?:(&(=(~ n.src) =(~ l-src) =(~ r-src)) ~ [n.src l-src r-src])
   ::
   ++  prune
     |=  [src=source site=@uxsite cap=cape]
     ^-  [[cape spring] source]
-    ~&  %prune
-    ~>  %bout
     =<  [[c p] s]
     =/  capture=cape  |
-    |-  ^-  [[p=spring s=source] c=cape]
-    ?~  src  [[~ ~] capture]
-    ?:  ?=(%| cap)  [[~ ~] capture]
-    =>
-      =*  dot  .
-      ^-  [n-pin=(list @) _dot]
-      =|  n-pin=(list @)
-      |-
-      ?~  n.src  [n-pin dot]
-      ?.  =(site sit.i.n.src)  [n-pin dot]
-      %=  $
-        n.src    t.n.src
-        n-pin    [ax.i.n.src n-pin]
-        capture  (~(uni ca capture) (~(pat ca cap) ax.i.n.src))
-      ==
-    =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
-    =^  [l-pin=spring l-src=source]  capture  $(src l.src, cap l-cap)
-    =^  [r-pin=spring r-src=source]  capture  $(src r.src, cap r-cap)
+    |^  ^-  [[p=spring s=source] c=cape]
+    ?:  ?=(%| cap)  [[~ know+~] capture]
+    ::  there is nothing to prune in %relo
+    ::
+    ?:  ?=(%relo -.src)  [[~ src] capture]
+    ?:  ?=(%know -.src)  (prune-tree p.src)
+    ?:  ?=(%uni -.src)
+      =^  out  capture  $(src i.p.src)
+      [[p.out src(i.p s.out)] capture]
+    ::  cons case
+    ::
+    =^  l  capture  $(src p.src)
+    =^  r  capture  $(src q.src)
     :_  capture
-    :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
-    ?:(&(=(~ n.src) =(~ l-src) =(~ r-src)) ~ [n.src l-src r-src])
+    :*  ?:  &(=(~ p.l) =(~ p.r))  ~  [~ p.l p.r]
+        (cons s.l s.r)
+    ==   
+    ::
+    ++  prune-tree
+      |=  oak=(tree (list peon))
+      ^-  [[spring source] cape]
+      !!
+    --
     ::
     :: =/  c-out=cape  |
     :: |=  [src=source site=@uxsite cap=cape]
