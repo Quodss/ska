@@ -85,4 +85,12 @@
     (muk 0xcafe.babe 1 42)  ::  XX 42 42 42 is a jet mismatch
   ::
   (expect-eq-nock-need cor fol)
+::
+:: ++  test-ream
+::   =/  cor  hoot
+::   =/  fol
+::     =>  cor  !=
+::     (ream '42')
+::   ::
+::   (expect-eq-nock-need cor fol)
 --

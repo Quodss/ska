@@ -292,7 +292,7 @@
     fols=(jar * (pair sock-anno @uxsite))
     ::  set: set of evalsites on the stack
     ::
-    :: set=(set @uxsite)
+    set=(set @uxsite)
     areas=(map @uxsite spot)
   ==
 ::  call info
@@ -366,7 +366,7 @@
   ::
   ::  push on the stack
   ::
-  :: =.  set.stack   (~(put in set.stack) here-site)
+  =.  set.stack   (~(put in set.stack) here-site)
   :: =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
@@ -554,18 +554,24 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
-      ::  product sock is an intersection
+      :: ::  product sock is an intersection
+      :: ::
+      :: =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
+      :: ::  any of yes/no branches' code could be used, this is why we 
+      :: ::  unionize the provenance trees
+      :: ::
+      :: =/  uni-source  (uni:source src.y-prod src.n-prod)
+      :: :+  [%6 c-code y-code n-code]
+      ::   :-  int-sock
+      ::   ::  mask unified provenance tree with intersection cape
+      ::   ::
+      ::   (trim:source uni-source cape.int-sock)
+      :: (fold-flag c-flags y-flags n-flags ~)
+      =/  int-uni=[=sock src=source]
+        (uni-int-smart:source [sock src]:y-prod [sock src]:n-prod)
       ::
-      =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
-      ::  any of yes/no branches' code could be used, this is why we 
-      ::  unionize the provenance trees
-      ::
-      =/  uni-source  (uni:source src.y-prod src.n-prod)
       :+  [%6 c-code y-code n-code]
-        :-  int-sock
-        ::  mask unified provenance tree with intersection cape
-        ::
-        (trim:source uni-source cape.int-sock)
+        int-uni
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -606,7 +612,6 @@
       q-flags
     ::
         [%11 [a=@ h=^] f=^]
-      ::
       =^  [h-code=nomm h-prod=sock-anno h-flags=flags]  gen  fol-loop(fol h.fol)
       =>  !@  verb
             =/  pot=(unit spot)
@@ -630,9 +635,8 @@
       =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
-  ?.  (check:source src.prod here-site)
+  ?.  (check:source src.prod set.stack)
     ~|  src.prod
-    ~|  here-site
     !!
   ::  reverse here-site provenance labeling, getting subject capture cape and
   ::  relocation map in the meantime; subject capture masked to cape of
@@ -666,11 +670,11 @@
     ::  so the intersection of want-site and cape.sock.sub should be exactly
     ::  equal to want-site?
     ::
-    ?.  =(want-site cape.less-code)
-      ~_  'cape.less-code < want-site'
-      ~|  cape.less-code
-      ~|  want-site
-      !!
+    :: ?.  =(want-site cape.less-code)
+    ::   ~_  'cape.less-code < want-site'
+    ::   ~|  cape.less-code
+    ::   ~|  want-site
+    ::   !!
     ::  memoize globally or save locally
     ::
     =^  =info  gen
@@ -679,11 +683,11 @@
       =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
       =/  mask=cape  (~(uni ca want-site) capture)
       =/  less-memo  (~(app ca mask) sock.sub)
-      ?.  =(mask cape.less-memo)
-        ~_  'cape.less-memo < mask'
-        ~|  cape.less-memo
-        ~|  mask
-        !!
+      :: ?.  =(mask cape.less-memo)
+      ::   ~_  'cape.less-memo < mask'
+      ::   ~|  cape.less-memo
+      ::   ~|  mask
+      ::   !!
       =/  =meme
         :^  idx  here-arm.gen  here-site
         [fol code less-memo less-code sock.prod move area.gen]
@@ -801,11 +805,11 @@
     =/  proc  (~(got by process.gen) site)
     =/  want-site=cape  (~(gut by want.gen) site |)
     =/  less-code=sock  (~(app ca want-site) sub.proc)
-    ?.  =(want-site cape.less-code)
-      ~_  'cape.less-code < want-site'
-      ~|  cape.less-code
-      ~|  want-site
-      !!
+    :: ?.  =(want-site cape.less-code)
+    ::   ~_  'cape.less-code < want-site'
+    ::   ~|  cape.less-code
+    ::   ~|  want-site
+    ::   !!
     =.  locals.gen  [[site less-code fol.proc nomm.proc] locals.gen]
     =.  process.gen  (~(del by process.gen) site)
     gen
@@ -814,22 +818,22 @@
   =^  =info  gen
     =/  want-site  (~(gut by want.gen) here-site |)
     =/  less-code=sock  (~(app ca want-site) sock.sub)
-    ?.  =(want-site cape.less-code)
-      ~_  'cape.less-code < want-site'
-      ~|  cape.less-code
-      ~|  want-site
-      !!
+    :: ?.  =(want-site cape.less-code)
+    ::   ~_  'cape.less-code < want-site'
+    ::   ~|  cape.less-code
+    ::   ~|  want-site
+    ::   !!
     ?.  direct.flags
       [~ gen(locals [[here-site less-code fol code] locals.gen])]
     =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
     =.  memo-loop-entry.gen  [[here-site idx] memo-loop-entry.gen]
     =/  memo-mask=cape  (~(uni ca want-site) capture)
     =/  memo-less  (~(app ca memo-mask) sock.sub)
-    ?.  =(memo-mask cape.memo-less)
-      ~_  'cape.less < mask'
-      ~|  cape.memo-less
-      ~|  memo-mask
-      !!
+    :: ?.  =(memo-mask cape.memo-less)
+    ::   ~_  'cape.less < mask'
+    ::   ~|  cape.memo-less
+    ::   ~|  memo-mask
+    ::   !!
     =/  meme
       :^  idx  here-arm.gen  here-site
       [fol code memo-less less-code sock.prod move area.gen]

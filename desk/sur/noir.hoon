@@ -229,13 +229,13 @@
 ::
   ++  check
     !@  check-noir
-      |=  [a=source b=@uxsite]
+      |=  [a=source s=(set @uxsite)]
       ^-  ?
-      ?:  =(~ a)  &
-      |-  ^-  ?
-      ?~  a  |
-      ?^  f=(find ~[b] (turn n.a |=(peon sit)))  &
-      |($(a l.a) $(a r.a))
+      ?~  a  &
+      ?&  (levy n.a |=(peon (~(has in s) sit)))
+          $(a l.a)
+          $(a r.a)
+      ==
     _&
   ::
   ++  sorted
@@ -265,6 +265,41 @@
     ^-  source
     ?:  &(=(~ a) =(~ b))  ~
     [~ a b]
+  ::
+  ::
+  ++  formulaic
+    |=  n=*
+    ^-  ?
+    ?=(^ ((soft nock) n))
+  ::
+  ++  uni-int-smart
+    |=  [a=[=sock src=source] b=[=sock src=source]]
+    ^-  [sock source]
+    ?:  |(?=(%| cape.sock.a) ?=(%| cape.sock.b))  [|+~ ~]
+    ?:  ?&  ?=(@ cape.sock.a)
+            ?=(@ cape.sock.b)
+            =(data.sock.a data.sock.b)
+            (formulaic data.sock.a)
+        ==
+      [sock.a (uni src.a src.b)]
+    ?:  &(?=(~ src.a) ?=(~ src.b))  [(~(purr so sock.a) sock.b) ~]
+    =/  l=[=sock src=source]
+      %=  $
+        sock.a  ~(hed so sock.a)
+        sock.b  ~(hed so sock.b)
+        src.a   (hed src.a)
+        src.b   (hed src.b)
+      ==
+    ::
+    =/  r=[=sock src=source]
+      %=  $
+        sock.a  ~(tel so sock.a)
+        sock.b  ~(tel so sock.b)
+        src.a   (tel src.a)
+        src.b   (tel src.b)
+      ==
+    ::
+    [(~(knit so sock.l) sock.r) (cons src.l src.r)]
   ::
   ++  uni
     !@  check-noir
@@ -714,9 +749,15 @@
   ++  relo2
     =|  out=source
     |=  [src=source pin=spring]
-    ^-  source
+    ~&  %relo
+    ~>  %bout
+    |-  ^-  source
     ?~  pin  out
+    ?~  src  out
     =.  out
+      :: ~&  %unis
+      :: ~>  %bout
+      ?:  =(~ n.pin)  out
       %+  reel  n.pin
       |:  [ax=*@ out=out]
       (uni (slot src ax) out)
@@ -728,30 +769,60 @@
     [n.out l r]
   ::
   ++  prune
-    =/  c-out=cape  |
     |=  [src=source site=@uxsite cap=cape]
     ^-  [[cape spring] source]
-    =<  [[cap pin] src]
-    |-  ^-  [[pin=spring src=source] cap=cape]
-    ?~  src  [[~ ~] c-out]
-    =^  [n-src=(list peon) n-pin=(list @)]  c-out
-      =|  l-out=(list @)
-      |-  ^-  [[(list peon) (list @)] cape]
-      ?~  n.src  [[~ l-out] c-out]
-      ?.  =(site sit.i.n.src)  [[n.src l-out] c-out]
+    ~&  %prune
+    ~>  %bout
+    =<  [[c p] s]
+    =/  capture=cape  |
+    |-  ^-  [[p=spring s=source] c=cape]
+    ?~  src  [[~ ~] capture]
+    ?:  ?=(%| cap)  [[~ ~] capture]
+    =>
+      =*  dot  .
+      ^-  [n-pin=(list @) _dot]
+      =|  n-pin=(list @)
+      |-
+      ?~  n.src  [n-pin dot]
+      ?.  =(site sit.i.n.src)  [n-pin dot]
       %=  $
-        n.src  t.n.src
-        l-out  [ax.i.n.src l-out]
-        c-out  ?:  ?=(%| cap)  c-out
-               (~(uni ca c-out) (~(pat ca cap) ax.i.n.src))
+        n.src    t.n.src
+        n-pin    [ax.i.n.src n-pin]
+        capture  (~(uni ca capture) (~(pat ca cap) ax.i.n.src))
       ==
-    ::
     =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
-    =^  [l-pin=spring l-src=source]  c-out  $(src l.src, cap l-cap)
-    =^  [r-pin=spring r-src=source]  c-out  $(src r.src, cap r-cap)
-    :_  c-out
+    =^  [l-pin=spring l-src=source]  capture  $(src l.src, cap l-cap)
+    =^  [r-pin=spring r-src=source]  capture  $(src r.src, cap r-cap)
+    :_  capture
     :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
-    ?:(&(=(~ n-src) =(~ l-src) =(~ r-src)) ~ [n-src l-src r-src])
+    ?:(&(=(~ n.src) =(~ l-src) =(~ r-src)) ~ [n.src l-src r-src])
+    ::
+    :: =/  c-out=cape  |
+    :: |=  [src=source site=@uxsite cap=cape]
+    :: ^-  [[cape spring] source]
+    :: ~&  %prune
+    :: ~>  %bout
+    :: =<  [[cap pin] src]
+    :: |-  ^-  [[pin=spring src=source] cap=cape]
+    :: ?~  src  [[~ ~] c-out]
+    :: =^  [n-src=(list peon) n-pin=(list @)]  c-out
+    ::   =|  l-out=(list @)
+    ::   |-  ^-  [[(list peon) (list @)] cape]
+    ::   ?~  n.src  [[~ l-out] c-out]
+    ::   ?.  =(site sit.i.n.src)  [[n.src l-out] c-out]
+    ::   %=  $
+    ::     n.src  t.n.src
+    ::     l-out  [ax.i.n.src l-out]
+    ::     c-out  ?:  ?=(%| cap)  c-out
+    ::            (~(uni ca c-out) (~(pat ca cap) ax.i.n.src))
+    ::   ==
+    :: ::
+    :: =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
+    :: =^  [l-pin=spring l-src=source]  c-out  $(src l.src, cap l-cap)
+    :: =^  [r-pin=spring r-src=source]  c-out  $(src r.src, cap r-cap)
+    :: :_  c-out
+    :: :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
+    :: ?:(&(=(~ n-src) =(~ l-src) =(~ r-src)) ~ [n-src l-src r-src])
   ::  XX use the fact that n.src is sorted?
   ::
   :: ++  contains
