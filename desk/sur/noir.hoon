@@ -336,10 +336,15 @@
       |=  [ax=@axis acc=_out]
       (uni (slot b ax) acc)
     ::
-    $(a r.a, out $(a l.a))
+    ?~  out  (cons $(a l.a) $(a r.a))
+    =/  l  $(a l.a, out l.out)
+    =/  r  $(a r.a, out r.out)
+    ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
+    [n.out l r]
   ::
   ++  urge
     =|  out=^urge
+    =/  original=?  &
     |=  [src=source cap=cape]
     ^-  ^urge
     ?:  |(?=(%| cap) ?=(~ q.i.src))  out
@@ -350,9 +355,10 @@
       (jib acc p.i.src _need |=(c=cape (~(uni ca c) need)))
     ::
     =/  [p=cape q=cape]  ?@(cap [& &] cap)
-    =.  out  $(q.i.src l.q.i.src, cap p)
-    =.  out  $(q.i.src r.q.i.src, cap q)
-    ?~  t.src  out
+    =.  out  $(q.i.src l.q.i.src, cap p, original |)
+    =.  out  $(q.i.src r.q.i.src, cap q, original |)
+    ?.  original  out
+    ?~  t.src     out
     $(t.src t.t.src, p.i.src p.i.t.src, q.i.src (compose q.i.src q.i.t.src))
   ::
   ++  prune
