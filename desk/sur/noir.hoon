@@ -334,7 +334,10 @@
     =.  out
       %+  roll  n.a
       |=  [ax=@axis acc=_out]
-      (uni (slot b ax) acc)
+      %+  uni
+        :: ~+  WTF???
+        (slot b ax)
+      acc
     ::
     ?~  out  (cons $(a l.a) $(a r.a))
     =/  l  $(a l.a, out l.out)
@@ -591,4 +594,9 @@
   --
 ::
 +$  sock-anno  [=sock src=source]
+++  depf
+  |=  n=*
+  ^-  @
+  ?@  n  0
+  +((max $(n -.n) $(n +.n)))
 --

@@ -524,10 +524,12 @@
       :_  gen(area area-stash)
       :+  code
         ?~  t.src.pro  pro(src [0x0 ~]~)
+        :: ~&  (depf q.i.src.pro)
+        :: ~&  (depf q.i.t.src.pro)
         %=  pro
           t.src    t.t.src.pro
           p.i.src  p.i.t.src.pro
-          q.i.src  (compose:source q.i.src.pro q.i.t.src.pro)
+          q.i.src  ~&  %exit  ~>  %bout  (compose:source q.i.src.pro q.i.t.src.pro)
         ==
       (fold-flag flags s-flags f-flags ~)
     ::
