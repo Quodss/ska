@@ -6,7 +6,7 @@
 =*  one  `@`1
 ::  ignorant sock-anno
 ::
-=/  dunno  [|+~ ~]
+=/  dunno  [|+~ [0x0^~ ~]]
 ::  default flags: not loopy, fully direct
 ::
 =/  deff  [| &]
@@ -292,7 +292,7 @@
     fols=(jar * (pair sock-anno @uxsite))
     ::  set: set of evalsites on the stack
     ::
-    set=(set @uxsite)
+    :: set=(set @uxsite)
     areas=(map @uxsite spot)
   ==
 ::  call info
@@ -305,7 +305,7 @@
   |=  [bus=sock fol=*]
   ^-  short
   =|  =stack  ::  lexically scoped
-  =/  sub=sock-anno  [bus ~]
+  =/  sub=sock-anno  [bus [0x0 ~]~]
   =;  res-eval-entry=short
     ::  debug asserts
     ::
@@ -360,13 +360,12 @@
   ::
   ::  record current evalsite in the subject provenance tree
   ::
-  =.  src.sub
-    ?~  src.sub  [[one here-site]~ ~ ~]
-    src.sub(n [[one here-site] n.src.sub])
+  =.  q.i.src.sub  [~[one] ~ ~]
+  =*  rest-src  t.src.sub
   ::
   ::  push on the stack
   ::
-  =.  set.stack   (~(put in set.stack) here-site)
+  :: =.  set.stack   (~(put in set.stack) here-site)
   :: =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
@@ -381,20 +380,20 @@
       :_  gen
       :+  [l-code r-code]
         :-  (~(knit so sock.l-prod) sock.r-prod)
-        (cons:source src.l-prod src.r-prod)
+        [here-site^(cons:source q.i.src.l-prod q.i.src.r-prod) rest-src]
       (fold-flag l-flags r-flags ~)
-    ::
+    
         [%0 p=@]
       ?:  =(0 p.fol)  [[fol dunno deff] gen]
       :_  gen
       :+  fol
         :-  (~(pull so sock.sub) p.fol)
-        (slot:source src.sub p.fol)
+        [here-site^(slot:source q.i.src.sub p.fol) rest-src]
       deff
     ::
         [%1 p=*]
       :_  gen
-      [fol [&+p.fol ~] deff]
+      [fol [&+p.fol 0x0^~ ~] deff]
     ::
         [%2 p=^ q=^]
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
@@ -505,7 +504,7 @@
       =/  area-stash  area.gen
       =^  [pro=sock-anno =flags =info]  gen
         %=  eval-loop
-          sub          s-prod
+          sub          s-prod(src [[there-site ~] src.s-prod])
           fol          fol-new
           here-site    there-site
           seat         ?~(trace ~ `i.trace)
@@ -524,7 +523,12 @@
       ::
       :_  gen(area area-stash)
       :+  code
-        pro
+        ?~  t.src.pro  pro(src [0x0 ~]~)
+        %=  pro
+          t.src    t.t.src.pro
+          p.i.src  p.i.t.src.pro
+          q.i.src  (compose:source q.i.src.pro q.i.t.src.pro)
+        ==
       (fold-flag flags s-flags f-flags ~)
     ::
         [%3 p=^]
@@ -554,24 +558,9 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
-      :: ::  product sock is an intersection
-      :: ::
-      :: =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
-      :: ::  any of yes/no branches' code could be used, this is why we 
-      :: ::  unionize the provenance trees
-      :: ::
-      :: =/  uni-source  (uni:source src.y-prod src.n-prod)
-      :: :+  [%6 c-code y-code n-code]
-      ::   :-  int-sock
-      ::   ::  mask unified provenance tree with intersection cape
-      ::   ::
-      ::   (trim:source uni-source cape.int-sock)
-      :: (fold-flag c-flags y-flags n-flags ~)
-      =/  int-uni=[=sock src=source]
-        (uni-int-smart:source [sock src]:y-prod [sock src]:n-prod)
-      ::
       :+  [%6 c-code y-code n-code]
-        int-uni
+        :-  (~(purr so sock.y-prod) sock.n-prod)
+        [here-site^(uni:source q.i.src.y-prod q.i.src.n-prod) rest-src]
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -601,7 +590,8 @@
       :_  gen
       :+  [%10 [a.fol don-code] rec-code]
         :-  (~(darn so sock.rec-prod) a.fol sock.don-prod)
-        (edit:source src.rec-prod a.fol src.don-prod)
+        :_  rest-src
+        [here-site (edit:source q.i.src.rec-prod a.fol q.i.src.don-prod)]
       (fold-flag rec-flags don-flags ~)
     ::
         [%11 p=@ q=^]
@@ -635,21 +625,10 @@
       =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
-  ?.  (check:source src.prod set.stack)
-    ~|  src.prod
-    !!
-  ::  reverse here-site provenance labeling, getting subject capture cape and
-  ::  relocation map in the meantime; subject capture masked to cape of
-  ::  result sock
   ::
-  :: =/  capture1  (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
-  =^  [capture=cape move=spring:source]  src.prod
-    (prune:source src.prod here-site cape.sock.prod)
+  =/  move=spring:source  q.i.src.prod
+  =/  capture=cape  (prune:source move cape.sock.prod)
   ::
-  :: ?.  =(capture1 capture)
-  ::   ~|  capture1
-  ::   ~|  capture
-  ::   !!
   =;  fin=(error [loopy=? =info gen=short])
     ?:  ?=(%| -.fin)  fin
     &+[[prod flags(loopy loopy.p.fin) info.p.fin] gen.p.fin]
@@ -920,7 +899,7 @@
     (urge:source src.sub cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
-  =/  src  (relo:source src.sub map.i)
+  =/  src  src.sub(q.i (compose:source map.i q.i.src.sub))
   `[idx.i [arm.i site.i] area.i [prod.i src] gen]
 ::
 ++  melo
@@ -944,7 +923,7 @@
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
-    =/  src  (relo:source src.sub map.i)
+    =/  src  src.sub(q.i (compose:source map.i q.i.src.sub))
     `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
   ::
   ::
