@@ -1,5 +1,6 @@
 /+  *soak
 :: =/  check-noir  ~
+=*  stub  !!
 |%
 ::  call label for Nomm 2: indirect call or entry in global
 ::  code table or arm-local callsite
@@ -266,7 +267,6 @@
     ?:  &(=(~ a) =(~ b))  ~
     [~ a b]
   ::
-  ::
   ++  formulaic
     |=  n=*
     ^-  ?
@@ -435,7 +435,7 @@
   ++  slot
     |=  [src=source ax=@]
     ^-  source
-    ~|  [src ax]
+    :: ~|  [src ax]
     %-  sorted
     ?:  =(1 ax)  src
     =/  rev  1
@@ -749,8 +749,8 @@
   ++  relo2
     =|  out=source
     |=  [src=source pin=spring]
-    ~&  %relo
-    ~>  %bout
+    :: ~&  %relo
+    :: ~>  %bout
     |-  ^-  source
     ?~  pin  out
     ?~  src  out
@@ -771,8 +771,8 @@
   ++  prune
     |=  [src=source site=@uxsite cap=cape]
     ^-  [[cape spring] source]
-    ~&  %prune
-    ~>  %bout
+    :: ~&  %prune
+    :: ~>  %bout
     =<  [[c p] s]
     =/  capture=cape  |
     |-  ^-  [[p=spring s=source] c=cape]
@@ -1048,5 +1048,183 @@
     ==
   --
 ::
-+$  sock-anno  [=sock src=source]
+++  spring
+  |^  spring
+  ::
+  +$  spring  (tree (list @axis))
+  ::
+  ++  cons
+    |=  [a=spring b=spring]
+    ^-  spring
+    ?:  &(=(~ a) =(~ b))  ~
+    [~ a b]
+  ::
+  ++  uni
+   |=  [a=spring b=spring]
+   ^-  spring
+   ?~  a  b
+   ?~  b  a
+   :_  [$(a l.a, b l.b) $(a r.a, b r.b)]
+   ~(tap in (~(gas in (~(gas in *(set @axis)) n.a)) n.b))
+  ::
+  ++  slot
+    |=  [pin=spring ax=@]
+    ^-  spring
+    ?:  =(1 ax)  pin
+    =/  rev  1
+    =|  acc=(list (pair @ (list @axis)))
+    |-  ^-  spring
+    =+  [n l r]=?@(pin [~ ~ ~] pin)
+    ?.  =(1 ax)
+      =?  acc  !=(~ n)  [[rev n] acc]
+      ?-  (cap ax)
+        %2  $(ax (mas ax), pin l, rev (peg rev 2))
+        %3  $(ax (mas ax), pin r, rev (peg rev 3))
+      ==
+    ::  rev == ax input
+    ::
+    =.  n
+      %+  roll  acc
+      |:  [[ax=*@ l=*(list @axis)] out=n]
+      ^+  n
+      =/  rel  (hub ax rev)
+      %+  reel  l
+      |:  [a=*@axis out=out]
+      [(peg a rel) out]
+    ::
+    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
+    [n l r]
+  ::
+  ++  edit
+    |=  [rec=spring ax=@ don=spring]
+    ^-  spring
+    ?:  =(ax 1)  don
+    =|  tack=(list [c=?(%2 %3) p=spring])
+    |-  ^-  spring
+    ?.  =(1 ax)
+      ?-  (cap ax)
+        %2  $(ax (mas ax), rec (hed rec), tack [2+(tel rec) tack])
+        %3  $(ax (mas ax), rec (tel rec), tack [3+(hed rec) tack])
+      ==
+    |-  ^-  spring
+    ?~  tack  don
+    ?-  c.i.tack
+      %2  $(don (cons don p.i.tack), tack t.tack)
+      %3  $(don (cons p.i.tack don), tack t.tack)
+    ==
+  ::
+  ++  hed
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  =(~ n.pin)  l.pin
+    =+  [n lr]=?~(l.pin [~ ~ ~] l.pin)
+    :_  lr
+    %+  reel  n.pin
+    |:  [a=*@axis out=n]
+    [(peg a 2) out]
+  ::
+  ++  tel
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  =(~ n.pin)  r.pin
+    =+  [n lr]=?~(r.pin [~ ~ ~] r.pin)
+    :_  lr
+    %+  reel  n.pin
+    |:  [a=*@axis out=n]
+    [(peg a 3) out]
+  ::
+  ++  compose
+    =|  out=spring
+    |=  [a=spring b=spring]
+    ?~  a  out
+    ?~  b  out
+    =.  out
+      ?:  =(~ n.a)  out
+      %+  reel  n.a
+      |:  [ax=*@ out=out]
+      (uni (slot b ax) out)
+    ::
+    ?~  out  (cons $(a l.a) $(a r.a))
+    =/  l  $(a l.a, out l.out)
+    =/  r  $(a r.a, out r.out)
+    ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
+    [n.out l r]
+  --
+::
+++  source-complete
+  |^  source-complete
+  ::  union of eager provenance {p} and lazily relocated provenance from
+  ::  memo/melo hits {q}, as well as provenance from current evalsite {r}
+  ::  ({p} already includes {r}, which is needed for faster +prune)
+  ::
+  +$  lazy  [from=source-complete map=spring:source]
+  +$  source-complete
+    $~  [~ ~ ~]
+    (trel source (list lazy) spring)
+  ::
+  ++  cons
+    |=  [a=source-complete b=source-complete]
+    ^-  source-complete
+    :-  (cons:source p.a p.b)
+    :_  (cons:spring r.a r.b)
+    =.  q.b
+      %+  turn  q.b
+      |=  [source-complete map=spring:source]
+      +<(map (cons:spring ~ map))
+    ::
+    %+  roll  q.a
+    |:  [*[source-complete map=spring:source] acc=q.b]
+    [+<-(map (cons:spring map ~)) acc]
+  ::
+  ++  uni
+    |=  [a=source-complete b=source-complete]
+    ^-  source-complete
+    :+  (uni:source p.a p.b)
+      (weld q.a q.b)
+    (uni:spring r.a r.b)
+  ::
+  ++  slot
+    |=  [src=source-complete ax=@]
+    ^-  source-complete
+    :-  (slot:source p.src ax)
+    :_  (slot:spring r.src ax)
+    %+  murn  q.src
+    |=  [source-complete map=spring:source]
+    =*  sam  +<
+    ?~  s=(slot:spring map ax)  ~
+    `sam(map s)
+  ::
+  ++  edit
+    |=  [rec=source-complete ax=@ don=source-complete]
+    ^-  source-complete
+    :-  (edit:source p.rec ax p.don)
+    :_  (edit:spring r.rec ax r.don)
+    ::  erase provenance at {ax} of {q.rec}, take a union with {q.don} pushed
+    ::  to {ax}
+    ::
+    =.  q.rec
+      %+  murn  q.rec
+      |=  [source-complete map=spring:source]
+      =*  sam  +<
+      ?~  e=(edit:spring map ax ~)  ~
+      `sam(map e)
+    ::
+    %+  roll  q.don
+    |:  [*[source-complete map=spring:source] acc=q.rec]
+    =*  sam2  +<-
+    ?~  e=(edit:spring ~ ax map)  acc
+    [sam2(map e) acc]
+  ::
+  ++  urge
+    |=  [src=source-complete cap=cape]
+    ^-  ^urge
+    =/  out=^urge  (urge:source p.src cap)
+    %+  roll  q.src
+    |:  [*[p=source-complete q=spring:source] acc=out]
+    stub
+  --
+::
++$  sock-anno  [=sock src=source-complete]
 --
