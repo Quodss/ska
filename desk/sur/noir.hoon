@@ -253,10 +253,13 @@
     ^-  spring
     ?:  =(1 ax)  src
     =/  rev  1
+    =/  ax-1  ax
     =|  acc=(list (pair @ (list @axis)))
     |-  ^-  spring
     =+  [n l r]=?@(src [~ ~ ~] src)
     ?.  =(1 ax)
+      ?~  src  $(ax 1, rev ax-1)
+      =+  [n l r]=src
       =?  acc  !=(~ n)  [[rev n] acc]
       ?-  (cap ax)
         %2  $(ax (mas ax), src l, rev (peg rev 2))
@@ -264,6 +267,7 @@
       ==
     ::  rev == ax input
     ::
+    =+  [n l r]=?@(src [~ ~ ~] src)
     =.  n
       %+  roll  acc
       |:  [[ax=*@ l=*(list @axis)] out=n]
@@ -332,10 +336,14 @@
     ?~  a  out
     ?:  =(~ b)  out
     =.  out
+      ?:  =(~ n.a)  out
       %+  roll  n.a
       |=  [ax=@axis acc=_out]
+      =>  [b=b ax=ax acc=acc ..compose]
+      ~+
       %+  uni
-        :: ~+  WTF???
+        =>  [b=b ax=ax ..slot]
+        ~+
         (slot b ax)
       acc
     ::
