@@ -325,6 +325,21 @@
     |=  [@uxsite a=cape b=cape]
     (~(uni ca a) b)
   ::
+  ++  roll1
+    |*  [a=(list) b=_=>(~ |=([* *] +<+))]
+    ^+  ,.+<+.b
+    =/  pro  +<+.b
+    |-  ^+  pro
+    ?~  a  pro
+    $(a t.a, pro (b i.a pro))
+  ::
+  ++  roll2
+    |*  [a=(list) b=_=>(~ |=([* *] +<+))]
+    |-  ^+  ,.+<+.b
+    ?~  a
+      +<+.b
+    $(a t.a, b b(+<+ (b i.a +<+.b)))
+  ::
   ++  compose
     =|  out=spring
     |=  [a=spring b=spring]
@@ -332,10 +347,23 @@
     ?~  a  out
     ?:  =(~ b)  out
     =.  out
+      =+  (add:rq)  =>  +
+      =;  res  +:[(sub:rq) res]
       %+  roll  n.a
       |=  [ax=@axis acc=_out]
+      =*  batt  -
+      =*  payload  +
+      ~?  .?(ax)  %cell
       %+  uni
-        :: ~+  WTF???
+        =>  [ax=ax b=b ..$ batt payload n=a=n.a]
+        ~+  ::  WTF???
+        ~|  ^-  *
+            =/  size  (met 3 (jam ax))
+            ?:  (gth size 50)  [1 size]
+            ax
+        ~|  .?(ax)
+        ~|  `(list *)`n.a
+        ~|  out
         (slot b ax)
       acc
     ::
