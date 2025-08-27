@@ -349,12 +349,17 @@
     =.  out
       =+  (add:rq)  =>  +
       =;  res  +:[(sub:rq) res]
+      =<  q
       %+  roll  n.a
-      |=  [ax=@axis acc=_out]
+      |=  [ax=@axis acc=(pair $~(| ?) _out)]
       =*  batt  -
       =*  payload  +
       ~?  .?(ax)  %cell
+      :-  &
       %+  uni
+        ?.  p.acc
+          =>  [ax=ax b=b ..$ batt payload n=a=n.a]
+          (slot b ax)
         =>  [ax=ax b=b ..$ batt payload n=a=n.a]
         ~+  ::  WTF???
         ~|  ^-  *
@@ -365,7 +370,7 @@
         ~|  `(list *)`n.a
         ~|  out
         (slot b ax)
-      acc
+      q.acc
     ::
     ?~  out  (cons $(a l.a) $(a r.a))
     =/  l  $(a l.a, out l.out)
