@@ -638,12 +638,12 @@
   ::  result sock
   ::
   :: =/  capture1  (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
-  =^  pruned=(unit [capture=cape move=spring:source])  src.prod
+  =^  [capture=cape move=(unit spring:source)]  src.prod
     =/  out=(unit [[c=cape m=spring:source] s=source])
       (prune:source src.prod here-site cape.sock.prod)
     ::
-    ?~  out  [~ src.prod]
-    [`[c.u.out m.u.out] s.u.out]
+    ?~  out  [[& ~] src.prod]
+    [[c.u.out `m.u.out] s.u.out]
   ::
   :: ?.  =(capture1 capture)
   ::   ~|  capture1
@@ -677,10 +677,10 @@
     ::  memoize globally or save locally
     ::
     =^  =info  gen
-      ?:  |(!direct.flags ?=(~ pruned))
+      ?.  direct.flags
         [~ gen(locals [[here-site less-code fol code] locals.gen])]
       =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
-      =/  mask=cape  (~(uni ca want-site) capture.u.pruned)
+      =/  mask=cape  (~(uni ca want-site) capture)
       =/  less-memo  (~(app ca mask) sock.sub)
       :: ?.  =(mask cape.less-memo)
       ::   ~_  'cape.less-memo < mask'
@@ -689,7 +689,7 @@
       ::   !!
       =/  =meme
         :^  idx  here-arm.gen  here-site
-        [fol code less-memo less-code sock.prod move.u.pruned area.gen]
+        [fol code less-memo less-code sock.prod move area.gen]
       ::
       =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
       =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -713,14 +713,14 @@
     =>  !@(verb .(bars.gen (ciao:p here-site seat area.gen bars.gen)) .)
     =.  set.i.cycles.gen      (dive set.i.cycles.gen here-site)
     =.  process.i.cycles.gen  (dive process.i.cycles.gen here-site)
-    =?  melo.i.cycles.gen  ?=(^ pruned)
+    =.  melo.i.cycles.gen
       %+  ~(add ja melo.i.cycles.gen)  fol
       :*  here-site
           code
-          capture.u.pruned
+          capture
           sub
           sock.prod
-          move.u.pruned
+          move
           area.gen
       ==
     ::
@@ -822,11 +822,11 @@
     ::   ~|  cape.less-code
     ::   ~|  want-site
     ::   !!
-    ?:  |(!direct.flags ?=(~ pruned))
+    ?.  direct.flags
       [~ gen(locals [[here-site less-code fol code] locals.gen])]
     =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
     =.  memo-loop-entry.gen  [[here-site idx] memo-loop-entry.gen]
-    =/  memo-mask=cape  (~(uni ca want-site) capture.u.pruned)
+    =/  memo-mask=cape  (~(uni ca want-site) capture)
     =/  memo-less  (~(app ca memo-mask) sock.sub)
     :: ?.  =(memo-mask cape.memo-less)
     ::   ~_  'cape.less < mask'
@@ -835,7 +835,7 @@
     ::   !!
     =/  meme
       :^  idx  here-arm.gen  here-site
-      [fol code memo-less less-code sock.prod move.u.pruned area.gen]
+      [fol code memo-less less-code sock.prod move area.gen]
     ::
     =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
     =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -919,8 +919,11 @@
     (urge:source src.sub cape.less-code.i)
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
-  =/  src  (relo:source src.sub map.i)
-  `[idx.i [arm.i site.i] area.i [prod.i src] gen]
+  =/  pro=sock-anno
+    ?~  map.i  [|+~ ~]
+    [prod.i (relo:source src.sub u.map.i)]
+  ::
+  `[idx.i [arm.i site.i] area.i pro gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
@@ -943,8 +946,11 @@
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
-    =/  src  (relo:source src.sub map.i)
-    `[[site.i area.i [prod.i src] gen] [site sub q.i.mele] p.i.mele]
+    =/  pro=sock-anno
+      ?~  map.i  [|+~ ~]
+      [prod.i (relo:source src.sub u.map.i)]
+    ::
+    `[[site.i area.i pro gen] [site sub q.i.mele] p.i.mele]
   ::
   ::
   ?~  res  ~

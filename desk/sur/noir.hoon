@@ -81,7 +81,7 @@
       less-memo=sock
       less-code=sock
       prod=sock
-      map=spring:source
+      map=(unit spring:source)
       area=(unit spot)
   ==
 ::  meloization table entry
@@ -92,7 +92,7 @@
       capture=cape
       sub=sock-anno
       prod=sock
-      map=spring:source
+      map=(unit spring:source)
       area=(unit spot)
   ==
 ::  cross-arm analysis global state
