@@ -12,7 +12,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-=/  verb  ~
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -1199,7 +1199,8 @@
     ?~  site.n
       ~&  %indirect
       :: !!
-      (run-nomm u.s1 u.f1)
+      :: (run-nomm u.s1 u.f1)
+      (mole |.(.*(u.s1 u.f1)))
     =;  new=nomm
       ?^  res=(jet u.s1 u.f1)  u.res
       $(s u.s1, n new)
