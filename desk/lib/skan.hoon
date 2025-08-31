@@ -638,12 +638,19 @@
   ::  result sock
   ::
   :: =/  capture1  (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
-  =^  [capture=cape move=(unit spring:source)]  src.prod
+  :: =^  [capture=cape move=(unit spring:source)]  src.prod
+  ::   =/  out=(unit [[c=cape m=spring:source] s=source])
+  ::     (prune:source src.prod here-site cape.sock.prod)
+  ::   ::
+  ::   ?~  out  [[& ~] src.prod]
+  ::   [[c.u.out `m.u.out] s.u.out]
+  ::
+  =^  pruned=(unit [capture=cape move=spring:source])  src.prod
     =/  out=(unit [[c=cape m=spring:source] s=source])
       (prune:source src.prod here-site cape.sock.prod)
     ::
-    ?~  out  [[& ~] src.prod]
-    [[c.u.out `m.u.out] s.u.out]
+    ?~  out  [~ src.prod]
+    [`[c.u.out m.u.out] s.u.out]
   ::
   :: ?.  =(capture1 capture)
   ::   ~|  capture1
@@ -677,10 +684,10 @@
     ::  memoize globally or save locally
     ::
     =^  =info  gen
-      ?.  direct.flags
+      ?:  |(!direct.flags ?=(~ pruned))
         [~ gen(locals [[here-site less-code fol code] locals.gen])]
       =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
-      =/  mask=cape  (~(uni ca want-site) capture)
+      =/  mask=cape  (~(uni ca want-site) capture.u.pruned)
       =/  less-memo  (~(app ca mask) sock.sub)
       :: ?.  =(mask cape.less-memo)
       ::   ~_  'cape.less-memo < mask'
@@ -689,7 +696,7 @@
       ::   !!
       =/  =meme
         :^  idx  here-arm.gen  here-site
-        [fol code less-memo less-code sock.prod move area.gen]
+        [fol code less-memo less-code sock.prod move.u.pruned area.gen]
       ::
       =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
       =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -713,14 +720,14 @@
     =>  !@(verb .(bars.gen (ciao:p here-site seat area.gen bars.gen)) .)
     =.  set.i.cycles.gen      (dive set.i.cycles.gen here-site)
     =.  process.i.cycles.gen  (dive process.i.cycles.gen here-site)
-    =.  melo.i.cycles.gen
+    =?  melo.i.cycles.gen  ?=(^ pruned)
       %+  ~(add ja melo.i.cycles.gen)  fol
       :*  here-site
           code
-          capture
+          capture.u.pruned
           sub
           sock.prod
-          move
+          move.u.pruned
           area.gen
       ==
     ::
@@ -822,11 +829,11 @@
     ::   ~|  cape.less-code
     ::   ~|  want-site
     ::   !!
-    ?.  direct.flags
+    ?:  |(!direct.flags ?=(~ pruned))
       [~ gen(locals [[here-site less-code fol code] locals.gen])]
     =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
     =.  memo-loop-entry.gen  [[here-site idx] memo-loop-entry.gen]
-    =/  memo-mask=cape  (~(uni ca want-site) capture)
+    =/  memo-mask=cape  (~(uni ca want-site) capture.u.pruned)
     =/  memo-less  (~(app ca memo-mask) sock.sub)
     :: ?.  =(memo-mask cape.memo-less)
     ::   ~_  'cape.less < mask'
@@ -835,7 +842,7 @@
     ::   !!
     =/  meme
       :^  idx  here-arm.gen  here-site
-      [fol code memo-less less-code sock.prod move area.gen]
+      [fol code memo-less less-code sock.prod move.u.pruned area.gen]
     ::
     =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
     =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -920,8 +927,9 @@
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =/  pro=sock-anno
-    ?~  map.i  [|+~ ~]
-    [prod.i (relo:source src.sub u.map.i)]
+    :: ?~  map.i  [|+~ ~]
+    :: [prod.i (relo:source src.sub u.map.i)]
+    [prod.i (relo:source src.sub map.i)]
   ::
   `[idx.i [arm.i site.i] area.i pro gen]
 ::
@@ -947,8 +955,9 @@
     =/  less  (~(app ca mask) sock.sub.i)
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
     =/  pro=sock-anno
-      ?~  map.i  [|+~ ~]
-      [prod.i (relo:source src.sub u.map.i)]
+      :: ?~  map.i  [|+~ ~]
+      :: [prod.i (relo:source src.sub u.map.i)]
+      [prod.i (relo:source src.sub map.i)]
     ::
     `[[site.i area.i pro gen] [site sub q.i.mele] p.i.mele]
   ::
@@ -1197,7 +1206,8 @@
     ?~  site.n
       ~&  %indirect
       :: !!
-      (run-nomm u.s1 u.f1)
+      :: (run-nomm u.s1 u.f1)
+      (mole |.(.*(u.s1 u.f1)))
     =;  new=nomm
       ?^  res=(jet u.s1 u.f1)  u.res
       $(s u.s1, n new)
