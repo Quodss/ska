@@ -200,7 +200,7 @@
       want=urge
       bars=@ud
       block-loop=blocklist
-      block-melo=blocklist
+      block-melo=(set @uxsite)  ::  set of entries of cycles where we don't meloize
       area=(unit spot)
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
@@ -210,9 +210,7 @@
       $:  sub=sock
           fol=*
           =nomm
-          capture=cape
           prod=sock
-          map=spring:source
           area=(unit spot)
   ==  ==
 ::  urge: evalsite subject requirements
@@ -749,8 +747,6 @@
   ++  relo2
     =|  out=source
     |=  [src=source pin=spring]
-    ~&  %relo
-    ~>  %bout
     |-  ^-  source
     ?~  pin  out
     ?~  src  out
@@ -770,31 +766,39 @@
   ::
   ++  prune
     |=  [src=source site=@uxsite cap=cape]
-    ^-  [[cape spring] source]
-    ~&  %prune
-    ~>  %bout
-    =<  [[c p] s]
-    =/  capture=cape  |
-    |-  ^-  [[p=spring s=source] c=cape]
-    ?~  src  [[~ ~] capture]
-    ?:  ?=(%| cap)  [[~ ~] capture]
-    =>
+    ^-  (unit [[cape spring] source])
+    =-  ?~(- ~&(>> %bail-gas ~) `[[c.acc p] s]:u)
+    =/  acc=[c=cape g=@]  [| 1.000]
+    |-  ^-  (unit [[p=spring s=source] acc=[c=cape g=@]])
+    ?:  =(0 g.acc)  ~
+    ?~  src  `[[~ ~] acc]
+    ?:  ?=(%| cap)  `[[~ ~] acc]
+    =>  ^-  [n-pin=(unit (list @)) _.]
       =*  dot  .
-      ^-  [n-pin=(list @) _dot]
+      ^-  [n-pin=(unit (list @)) _dot]
       =|  n-pin=(list @)
       |-
-      ?~  n.src  [n-pin dot]
-      ?.  =(site sit.i.n.src)  [n-pin dot]
+      ?:  =(0 g.acc)  [~ dot]
+      ?~  n.src  [`n-pin dot]
+      ?.  =(site sit.i.n.src)  [`n-pin dot]
       %=  $
         n.src    t.n.src
         n-pin    [ax.i.n.src n-pin]
-        capture  (~(uni ca capture) (~(pat ca cap) ax.i.n.src))
+        c.acc  (~(uni ca c.acc) (~(pat ca cap) ax.i.n.src))
+        g.acc  (dec g.acc)
       ==
-    =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
-    =^  [l-pin=spring l-src=source]  capture  $(src l.src, cap l-cap)
-    =^  [r-pin=spring r-src=source]  capture  $(src r.src, cap r-cap)
-    :_  capture
-    :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
+    ::
+    ?~  n-pin  ~
+    =/  [l-cap=cape r-cap=cape]  ?@(cap [& &] cap)
+    =/  l-out  $(src l.src, cap l-cap, g.acc (dec g.acc))
+    ?~  l-out  ~
+    =^  [l-pin=spring l-src=source]  acc  u.l-out
+    =/  r-out  $(src r.src, cap r-cap, g.acc (dec g.acc))
+    ?~  r-out  ~
+    =^  [r-pin=spring r-src=source]  acc  u.r-out
+    :-  ~
+    :_  acc
+    :-  ?:(&(=(~ u.n-pin) =(~ l-pin) =(~ r-pin)) ~ [u.n-pin l-pin r-pin])
     ?:(&(=(~ n.src) =(~ l-src) =(~ r-src)) ~ [n.src l-src r-src])
     ::
     :: =/  c-out=cape  |

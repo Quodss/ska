@@ -237,7 +237,10 @@
 ::
 ++  error
   |$  [m]
-  (each m (trel ?(%loop %melo) @uxsite @uxsite))
+  %+  each  m
+  $%  [%loop p=@uxsite q=@uxsite]  ::  parent-kid
+      [%melo p=@uxsite]            ::  entry of a cycle with wrong melo hit
+  ==
 ::
 +$  err-state  (error short)
 ::
@@ -310,9 +313,9 @@
     ::  debug asserts
     ::
     ?>  =(~ cycles.res-eval-entry)
-    ?.  =(~ want.res-eval-entry)
-      ~|  ~(key by want.res-eval-entry)
-      !!
+    :: ?.  =(~ want.res-eval-entry)
+    ::   ~|  ~(key by want.res-eval-entry)
+    ::   !!
     ?>  =(~ process.res-eval-entry)
     res-eval-entry
   =^  here-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
@@ -347,12 +350,12 @@
     ?-  -.res
       %&  p.res
       %|  =>  !@(verb ~&(>>> [%redo res] .) .)
-          ?-    p.p.res
+          ?-    -.p.res
               %loop
-            redo-loop(block-loop.gen (~(put ju block-loop.gen) q.p.res r.p.res))
+            redo-loop(block-loop.gen (~(put ju block-loop.gen) p.p.res q.p.res))
           ::
               %melo
-            redo-loop(block-melo.gen (~(put ju block-melo.gen) q.p.res r.p.res))
+            redo-loop(block-melo.gen (~(put in block-melo.gen) p.p.res))
           ::
     ==    ==
   ^-  (error [[sock-anno flags info] short])
@@ -554,24 +557,16 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
-      :: ::  product sock is an intersection
-      :: ::
-      :: =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
-      :: ::  any of yes/no branches' code could be used, this is why we 
-      :: ::  unionize the provenance trees
-      :: ::
-      :: =/  uni-source  (uni:source src.y-prod src.n-prod)
-      :: :+  [%6 c-code y-code n-code]
-      ::   :-  int-sock
-      ::   ::  mask unified provenance tree with intersection cape
-      ::   ::
-      ::   (trim:source uni-source cape.int-sock)
-      :: (fold-flag c-flags y-flags n-flags ~)
-      =/  int-uni=[=sock src=source]
-        (uni-int-smart:source [sock src]:y-prod [sock src]:n-prod)
+      ::  product sock is an intersection
       ::
+      =/  int-sock  (~(purr so sock.y-prod) sock.n-prod)
+      ::  any of yes/no branches' code could be used, this is why we 
+      ::  unionize the provenance trees
+      ::
+      =/  uni-source  (uni:source src.y-prod src.n-prod)
       :+  [%6 c-code y-code n-code]
-        int-uni
+        :-  int-sock
+        uni-source
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -643,8 +638,12 @@
   ::  result sock
   ::
   :: =/  capture1  (~(gut by (urge:source src.prod cape.sock.prod)) here-site |)
-  =^  [capture=cape move=spring:source]  src.prod
-    (prune:source src.prod here-site cape.sock.prod)
+  =^  pruned=(unit [capture=cape move=spring:source])  src.prod
+    =/  out=(unit [[c=cape m=spring:source] s=source])
+      (prune:source src.prod here-site cape.sock.prod)
+    ::
+    ?~  out  [~ src.prod]
+    [`[c.u.out m.u.out] s.u.out]
   ::
   :: ?.  =(capture1 capture)
   ::   ~|  capture1
@@ -678,10 +677,10 @@
     ::  memoize globally or save locally
     ::
     =^  =info  gen
-      ?.  direct.flags
+      ?:  |(!direct.flags ?=(~ pruned))
         [~ gen(locals [[here-site less-code fol code] locals.gen])]
       =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
-      =/  mask=cape  (~(uni ca want-site) capture)
+      =/  mask=cape  (~(uni ca want-site) capture.u.pruned)
       =/  less-memo  (~(app ca mask) sock.sub)
       :: ?.  =(mask cape.less-memo)
       ::   ~_  'cape.less-memo < mask'
@@ -690,14 +689,14 @@
       ::   !!
       =/  =meme
         :^  idx  here-arm.gen  here-site
-        [fol code less-memo less-code sock.prod move area.gen]
+        [fol code less-memo less-code sock.prod move.u.pruned area.gen]
       ::
       =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
       =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
       =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
       [`idx gen]
     ::
-    =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
+    :: =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
     [info gen]
   ?~  cycles.gen  !!
   ?.  =(here-site entry.i.cycles.gen)
@@ -714,20 +713,20 @@
     =>  !@(verb .(bars.gen (ciao:p here-site seat area.gen bars.gen)) .)
     =.  set.i.cycles.gen      (dive set.i.cycles.gen here-site)
     =.  process.i.cycles.gen  (dive process.i.cycles.gen here-site)
-    =.  melo.i.cycles.gen
+    =?  melo.i.cycles.gen  ?=(^ pruned)
       %+  ~(add ja melo.i.cycles.gen)  fol
       :*  here-site
           code
-          capture
+          capture.u.pruned
           sub
           sock.prod
-          move
+          move.u.pruned
           area.gen
       ==
     ::
     =.  process.gen
       %+  ~(put by process.gen)  here-site
-      [sock.sub fol code capture sock.prod move area.gen]
+      [sock.sub fol code sock.prod area.gen]
     ::
     gen
   ::  cycle entry not loopy if finalized
@@ -788,7 +787,7 @@
     =/  old-want  (~(gut by want.gen) old |)
     =.  want.gen  (uni-urge:source want.gen (urge:source src.new-sub old-want))
     =/  old-less  (~(app ca old-want) sock.old-sub)
-    ?.  (~(huge so old-less) sock.new-sub)  |+[%melo old new]
+    ?.  (~(huge so old-less) sock.new-sub)  |+[%melo entry.pop]
     &+gen
   ::
   ?:  ?=(%| -.err-gen)  err-gen
@@ -823,11 +822,11 @@
     ::   ~|  cape.less-code
     ::   ~|  want-site
     ::   !!
-    ?.  direct.flags
+    ?:  |(!direct.flags ?=(~ pruned))
       [~ gen(locals [[here-site less-code fol code] locals.gen])]
     =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
     =.  memo-loop-entry.gen  [[here-site idx] memo-loop-entry.gen]
-    =/  memo-mask=cape  (~(uni ca want-site) capture)
+    =/  memo-mask=cape  (~(uni ca want-site) capture.u.pruned)
     =/  memo-less  (~(app ca memo-mask) sock.sub)
     :: ?.  =(memo-mask cape.memo-less)
     ::   ~_  'cape.less < mask'
@@ -836,7 +835,7 @@
     ::   !!
     =/  meme
       :^  idx  here-arm.gen  here-site
-      [fol code memo-less less-code sock.prod move area.gen]
+      [fol code memo-less less-code sock.prod move.u.pruned area.gen]
     ::
     =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
     =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
@@ -844,11 +843,11 @@
     [`idx gen]
   ::
   =.  set.pop  (dive set.pop here-site)
-  =.  gen
-    %+  roll-deep  set.pop
-    |:  [v=*@uxsite gen=gen]
-    =.  want.gen  (~(del by want.gen) v)
-    gen
+  :: =.  gen
+  ::   %+  roll-deep  set.pop
+  ::   |:  [v=*@uxsite gen=gen]
+  ::   =.  want.gen  (~(del by want.gen) v)
+  ::   gen
   ::
   &+[info gen]
 ::  given that b > a, for each axis that used to be %.n in a and became not that
@@ -939,7 +938,7 @@
     |-  ^-  res
     ?~  mele  ~
     =*  i  q.i.mele
-    ?:  (~(has ju block-melo.gen) site.i site)  $(mele t.mele)
+    :: ?:  (~(has ju block-melo.gen) site.i site)  $(mele t.mele)
     =/  want-site=cape  (~(gut by want.gen) site.i |)
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
@@ -954,6 +953,7 @@
   ?:  =(0 depth.u.res)
     ?~  cycles.gen.out.u.res  !!
     =*  i   i.cycles.gen.out.u.res
+    ?:  (~(has in block-melo.gen) entry.i)  ~
     =.  hits.i     (dive hits.i hit.u.res)
     =.  set.i      (dive set.i site)
     =.  latch.i    site
@@ -964,6 +964,7 @@
   =/  rest  ,.+.cycles.gen
   |-
   ?:  =(0 depth)
+    ?:  (~(has in block-melo.gen) entry.new-cycle)  ~
     =.  hits.new-cycle     (dive hits.new-cycle hit.u.res)
     =.  set.new-cycle      (dive set.new-cycle site)
     =.  latch.new-cycle    site
@@ -1189,7 +1190,8 @@
     ?~  f1  ~
     ?~  site.n
       ~&  %indirect
-      !!
+      :: !!
+      (run-nomm u.s1 u.f1)
     =;  new=nomm
       ?^  res=(jet u.s1 u.f1)  u.res
       $(s u.s1, n new)
