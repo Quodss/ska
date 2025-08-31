@@ -86,6 +86,31 @@
 ::   ::
 ::   (expect-eq-nock-need cor fol)
 ::
+:: ++  test-y-comb
+::   =/  sub
+::     =>  ..add:hoot
+::     |%
+::     ++  y
+::       |*  [m1=mold m2=mold]
+::       |=  f=$-($-(m1 m2) $-(m1 m2))
+::       |=  x=m1
+::       ^-  m2
+::       ((f .) x)
+::     ::
+::     ++  fac-f
+::       |=  cont=$-(@ @)
+::       |=  x=@
+::       ^-  @
+::       ?:  =(x 0)  1
+::       (mul x (cont (dec x)))
+::     --
+::   ::
+::   =/  fol
+::     =>  sub  !=
+::     (((y @ @) fac-f) 5)
+::   ::
+::   (expect-eq-nock-need sub fol)
+::
 ++  test-ream
   =/  cor  hoot
   =/  fol
