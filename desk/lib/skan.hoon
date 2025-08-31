@@ -1072,6 +1072,7 @@
         lte  lth  max  min  cap  mas  peg  bex  can
         cat  cut  end  fil  hew  lsh  met  rap  rep
         rev  rig  rip  rsh  run  rut  sew  swp  xeb
+        mug  mor  gor  aor
     ==
   |=  [s=* f=*]
   ^-  (unit (unit))
@@ -1085,7 +1086,8 @@
     =>  playpen
     :~  dec  add  sub  mul  div  mod  dvr  gte  gth
         lte  lth  bex  can  cat  cut  end  fil  lsh
-        met  rap  rep  rev  rip  rsh  swp  xeb
+        met  rap  rep  rev  rip  rsh  swp  xeb  mug
+        mor  gor
     ==
   |=  [s=* f=*]
   ^-  (unit (unit))
