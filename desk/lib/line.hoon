@@ -1,4 +1,6 @@
 /-  *gene
+/+  playpen
+::
 =/  print-big-literals  |
 ::
 |%
@@ -77,54 +79,27 @@
         slow+out
       =.  out  $(n p.n)
       =/  idx=glob-atom  (en-glob site.n)
-      =;  jet=(unit bell)
-        =/  options  [f=flag j=jet]
-        :_  out
-        ?-  options
-          [%tel ~]  jump+idx
-          [%tel ^]  jumf+[idx u.j.options]
-          [* ~]     call+idx
-          [* ^]     calf+[idx u.j.options]
-        ==
-      ::
-      =/  less=sock
+      =/  boot=(pair sock *)
         ?-    -.site.n
             %memo
           =/  =meme  (~(got by idxs.memo.lon) p.site.n)
-          less-code.meme
+          [less-code fol]:meme
         ::
             %site
           =/  site  (~(got by sites.arms.lon) p.site.n)
-          less.site
+          [less fol]:site
         ==
       ::
-      ~?  =(0xa6 idx)  n
-      ~?  =(0xa6 idx)  less
-      ?.  ?=([%0 @] q.n)
-        ~?  =(0xa6 idx)  %weird-fol
-        ~
-      =/  ax=@  p.q.n
-      =/  batt  (~(pull so less) 2)
-      ?.  =(& cape.batt)
-        ~?  =(0xa6 idx)  %unknown-batt
-        ~
-      ?@  data.batt
-        ~?  =(0xa6 idx)  %atom-batt
-        ~
-      :: =/  dec-batt  [11 [1.835.100.275 1 6.514.020] 11 [1.851.876.717 [1 [1 1.717.658.988] 7 [0 1] 8 [1 1 100 101 99 114 101 109 101 110 116 45 117 110 100 101 114 102 108 111 119 0] 9 2 0 1] 0 1] 6 [5 [1 0] 0 6] [0 0] 8 [1 0] 8 [1 6 [5 [0 30] 4 0 6] [0 6] 9 2 10 [6 4 0 6] 0 1] 9 2 0 1]
-      ~?  =(0xa6 idx)  data.batt
-      ::  XX call.cole.lon instead
-      ::
-      =/  paths=(list path)  ~(tap in (~(get ju batt.jets.lon) data.batt))
-      |-  ^-  (unit bell)
-      =*  path-loop  $
-      ?~  paths  ~
-      =/  socks  ~(tap in (~(get ju core.jets.lon) i.paths))
-      |-  ^-  (unit bell)
-      =*  sock-loop  $
-      ?~  socks  path-loop(paths t.paths)
-      ?.  (~(huge so less) i.socks)  sock-loop(socks t.socks)
-      `[i.paths ax]
+      =/  jet=(unit bell)  (~(get by call.cole.jets.lon) boot)
+      =/  options  [f=flag j=jet]
+      :_  out
+      :: =-  ~?  =(q.boot -:add:playpen)  -  -
+      ?-  options
+        [%tel ~]  jump+idx
+        [%tel ^]  jumf+[idx u.j.options]
+        [* ~]     call+idx
+        [* ^]     calf+[idx u.j.options]
+      ==
     ::
         %3
       =.  out  $(n p.n)

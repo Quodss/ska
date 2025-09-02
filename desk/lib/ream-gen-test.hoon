@@ -1,13 +1,13 @@
 /+  *skan
 ::
-=/  cor  hoot
+=/  sub  ['42' hoot]
 =/  fol
-  =>  cor  !=
-  (ream '42')
+  =>  sub  !=
+  (ream:+ -)
 ::
 =/  gen
   ~>  %bout
-  (scan &+cor fol)
+  (scan &+sub fol)
 ::
 =/  map-locals=(map @uxsite [less=sock fol=* =nomm])  (malt locals.gen)
 =/  edit  (rewrite-memo (malt memo-loop-entry.gen))

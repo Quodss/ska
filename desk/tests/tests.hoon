@@ -111,11 +111,11 @@
   ::
   (expect-eq-nock-need sub fol)
 ::
-++  test-ream
-  =/  cor  hoot
-  =/  fol
-    =>  cor  !=
-    (ream '42')
-  ::
-  (expect-eq-nock-need cor fol)
+:: ++  test-ream
+::   =/  cor  hoot
+::   =/  fol
+::     =>  cor  !=
+::     (ream '42')
+::   ::
+::   (expect-eq-nock-need cor fol)
 --

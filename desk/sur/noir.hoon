@@ -769,7 +769,7 @@
     ^-  (unit [[cape spring] source])
     :: =-  ?~(- ~&(>> %bail-gas ~) `[[c.acc p] s]:u)
     =<  ?~  .  ~  =>  u  `[[c.acc p] s]
-    =/  acc=[c=cape g=@]  [| 10.000]
+    =/  acc=[c=cape g=@]  [| 100.000]
     |-  ^-  (unit [[p=spring s=source] acc=[c=cape g=@]])
     ?:  =(0 g.acc)  ~
     ?~  src  `[[~ ~] acc]

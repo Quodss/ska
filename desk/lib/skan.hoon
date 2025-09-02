@@ -1065,6 +1065,7 @@
       batt.jets  (~(put ju batt.jets.gen) data.batt pax)
     ==
   ==
+::
 ++  jet-simple-gate-hoot
   =/  l=(list)
     =>  hoot
