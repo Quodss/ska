@@ -1273,6 +1273,132 @@
       [%12 *]
     ~|  %no-scry  !!
   ==
+::
+++  match-sock
+  |=  [a=sock lit=(list [less=sock code=nomm-1])]
+  ^-  (unit nomm-1)
+  =|  acc=(unit [less=sock out=nomm-1])
+  |-  ^-  (unit nomm-1)
+  ?~  lit
+    ?~  acc  ~
+    `out.u.acc
+  =?  acc  (~(huge so less.i.lit) a)
+    ?~  acc  `i.lit
+    ::  found better match
+    ::
+    ?:  (~(huge so less.u.acc) less.i.lit)  `i.lit
+    acc
+  ::
+  $(lit t.lit)
+::
+++  run-nomm-1
+  |=  [s=* f=*]
+  ^-  (unit *)
+  =/  cor  ka
+  =.  cor  (rout:cor s f)  ::  XX properly stateful analysis
+  =/  bol=boil  (cook lon.cor)
+  =/  matches=(list [less=sock code=nomm-1])  (~(get ja fols.bol) f)
+  =/  match  (match-sock &+s matches)
+  ?~  match  !!
+  =/  n=nomm-1  u.match
+  =|  trace=(list spot)
+  ::  exec loop
+  ::
+  |-  ^-  (unit)
+  ?-    n
+      [p=^ q=*]
+    =/  l  $(n p.n)
+    ?~  l  ~
+    =/  r  $(n q.n)
+    ?~  r  ~
+    `[u.l u.r]
+  ::
+      [%0 p=@]
+    ?:  =(0 p.n)
+      ~&  '[%0 0]'
+      ~&  trace
+      ~
+    ?:  =(1 p.n)  `s
+    =-  ~?  ?=(~ -)  '%0 crash'  -
+    (mole |.(.*(s [0 p.n])))
+  ::
+      [%1 p=*]
+    `p.n
+  ::
+      [%2 *]
+    =/  s1  $(n p.n)
+    ?~  s1  ~
+    =/  f1  $(n q.n)
+    ?~  f1  ~
+    ?~  info.n
+      ~&  %indirect
+      :: !!
+      :: (run-nomm-1 u.s1 u.f1)
+      (mole |.(.*(u.s1 u.f1)))
+    =/  new=nomm-1  (~(got by code.bol) u.info.n)
+    ?^  res=(jet u.s1 u.f1)  u.res
+    $(s u.s1, n new)
+  ::
+      [%3 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    `.?(u.p)
+  ::
+      [%4 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    ?^  u.p  ~&  '%4 cell'  ~
+    `+(u.p)
+  ::
+      [%5 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    =/  q  $(n q.n)
+    ?~  q  ~
+    `=(u.p u.q)
+  ::
+      [%6 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    ?+  u.p  ~&('%6 non-loobean' ~)
+      %&  $(n q.n)
+      %|  $(n r.n)
+    ==
+  ::
+      [%7 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    $(s u.p, n q.n)
+  ::
+      [%10 *]
+    ?:  =(0 p.p.n)  ~&  '%10 0'  ~
+    =/  don  $(n q.p.n)
+    ?~  don  ~
+    =/  rec  $(n q.n)
+    ?~  rec  ~
+    =-  ~?  ?=(~ -)  '%10 crash'  -
+    (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
+  ::
+      [%11 @ *]
+    $(n q.n)
+  ::
+      [%11 [@ *] *]
+    =?  trace  =(p.p.n %spot)
+      =/  pot=(unit spot)  ((soft spot) +.q.p.n)
+      ?~  pot  trace
+      [u.pot trace]
+    ::
+    =/  h  $(n q.p.n)
+    ?~  h  ~
+    $(n q.n)
+  ::
+      [%11 *]  !!
+  ::
+      [%12 *]
+    ~|  %no-scry  !!
+  ==
+
+
 ::  unit of work: subject, formula, if comes from jetted core dissasembly:
 ::    cons frame? jet registration coordinate
 ::
@@ -1465,4 +1591,56 @@
   %~  uni  in
   ?.  (~(has in s) p.n.a)  ~
   [n.a ~ ~]
+::
+++  cook
+  |=  lon=long
+  ^-  boil
+  =/  code=(map [sock *] nomm-1)
+    %-  ~(rep by idxs.memo.lon)
+    |=  [[k=* v=meme] acc=(map [sock *] nomm-1)]
+    (~(put by acc) [less-code.v fol.v] (rewrite code.v lon))
+  ::
+  =.  code
+    %-  ~(rep by doors.arms.lon)
+    |=  [[k=* v=[less=sock fol=* =nomm]] acc=_code]
+    (~(put by acc) [less.v fol.v] (rewrite nomm.v lon))
+  ::
+  =.  code
+    %-  ~(rep by sites.arms.lon)
+    |=  [[k=* v=[less=sock fol=* =nomm]] acc=_code]
+    (~(put by acc) [less.v fol.v] (rewrite nomm.v lon))
+  ::
+  =/  fols=(jar * [less=sock code=nomm-1])
+    %-  ~(rep by code)
+    |=  [[k=[less=sock fol=*] v=nomm-1] acc=(jar * [less=sock code=nomm-1])]
+    (~(add ja acc) fol.k less.k v)
+  ::
+  [call.cole.jets.lon code fols]
+::
+++  rewrite
+  |=  [n=nomm lon=long]
+  ^-  nomm-1
+  ?-    -.n
+      ^         [$(n -.n) $(n +.n)]
+      ?(%0 %1)  n
+      %3        [%3 $(n p.n)]
+      %4        [%4 $(n p.n)]
+      %5        [%5 $(n p.n) $(n q.n)]
+      %7        [%7 $(n p.n) $(n q.n)]
+      %12       [%12 $(n p.n) $(n q.n)]
+      %s11      [%11 p.n $(n q.n)]
+      %6        [%6 $(n p.n) $(n q.n) $(n r.n)]
+      %10       [%10 [p.p.n $(n q.p.n)] $(n q.n)]
+      %d11      [%11 [p.p.n $(n q.p.n)] $(n q.n)]
+  ::
+      %2
+    :^  %2  $(n p.n)  $(n q.n)
+    ^-  (unit [sock *])
+    ?~  site.n  ~
+    :-  ~
+    ?-  -.site.n
+      %memo  [less-code fol]:(~(got by idxs.memo.lon) p.site.n)
+      %site  [less fol]:(~(got by sites.arms.lon) p.site.n)
+    ==
+  ==
 --

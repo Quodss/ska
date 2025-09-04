@@ -5,7 +5,8 @@
   ^-  tang
   ?~  mol=(mole |.(.*(sub fol)))
     ~[leaf+"bad test"]
-  (expect-eq !>(mol) !>((run-nomm sub fol)))
+  :: (expect-eq !>(mol) !>((run-nomm sub fol)))
+  (expect-eq !>(mol) !>((run-nomm-1 sub fol)))
 ::
 |%
 ++  test-once-dabl

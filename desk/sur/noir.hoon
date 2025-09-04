@@ -67,6 +67,20 @@
       [%0 p=@]                                ::  Nock 0
   ==
 ::
++$  nomm-1
+  $^  [nomm-1 nomm-1]
+  $%  [%1 p=*]
+      [%2 p=nomm-1 q=nomm-1 info=(unit [less=sock fol=*])]
+      [%3 p=nomm-1]
+      [%4 p=nomm-1]
+      [%5 p=nomm-1 q=nomm-1]
+      [%6 p=nomm-1 q=nomm-1 r=nomm-1]
+      [%7 p=nomm-1 q=nomm-1]
+      [%10 p=[p=@ q=nomm-1] q=nomm-1]
+      [%11 p=$@(@ [p=@ q=nomm-1]) q=nomm-1]
+      [%12 p=nomm-1 q=nomm-1]
+      [%0 p=@]
+  ==
 ::  formula registration coordinate: path + axis in the core
 ::
 +$  bell  (pair path @)
@@ -115,7 +129,7 @@
         ::  [sub fol]  <--> bell bidirectional mapping
         ::
         $=  cole
-        $:  call=(map [sock *] bell) 
+        $:  call=(map [sock *] bell)
             back=(jug bell [sub=sock fol=*])
     ==  ==
   ::::  global code table for memoized entries
@@ -135,6 +149,12 @@
         doors=(map @uvarm [less=sock fol=* =nomm])
         sites=(map [@uvarm @uxsite] [less=sock fol=* =nomm])
     ==
+  ==
+::
++$  boil
+  $:  cole=(map [sock *] bell)
+      code=(map [sock *] nomm-1)
+      fols=(jar * [less=sock code=nomm-1])
   ==
 ::
 +$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno])
