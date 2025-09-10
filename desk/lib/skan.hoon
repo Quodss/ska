@@ -369,7 +369,7 @@
   ::
   ::  push on the stack
   ::
-  =.  set.stack   (~(put in set.stack) here-site)
+  :: =.  set.stack   (~(put in set.stack) here-site)
   :: =.  list.stack  [[sock.sub fol here-site] list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
@@ -630,9 +630,9 @@
       =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
       [[[%12 p-code q-code] dunno (fold-flag p-flags q-flags ~)] gen]
     ==
-  ?.  (check:source src.prod set.stack)
-    ~|  src.prod
-    !!
+  :: ?.  (check:source src.prod set.stack)
+  ::   ~|  src.prod
+  ::   !!
   ::  reverse here-site provenance labeling, getting subject capture cape and
   ::  relocation map in the meantime; subject capture masked to cape of
   ::  result sock
