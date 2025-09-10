@@ -33,6 +33,7 @@
   ++  int
     |=  two=cape
     ^-  cape
+    ?:  =(one two)  one
     ?-  one
         %|  %|
         %&  two
@@ -52,17 +53,18 @@
   ++  app
     |=  know=sock
     ^-  sock
+    ?:  =(one cape.know)  know
     ?:  |(?=(%| one) ?=(%| cape.know))  lost:so
-    ?.  |(?=(^ one) ?=(^ cape.know))
-      know
-    %-  ~(knit so $(know ~(hed so know), one ?@(one one -.one)))
-    $(know ~(tel so know), one ?@(one one +.one))
+    ?:  ?=(%& one)  know
+    %-  ~(knit so $(know ~(hed so know), one -.one))
+    $(know ~(tel so know), one +.one)
   ::    union two capes
   ::
   ::  
   ++  uni
     |=  two=cape
     ^-  cape
+    ?:  =(one two)  one
     ?-  one
         %&  &
         %|  two
@@ -293,6 +295,7 @@
   ++  purr
     |=  two=sock
     |-  ^-  sock
+    ?:  =(one two)  one
     ?:  |(?=(%| cape.one) ?=(%| cape.two))  lost
     ?:  |(?=(^ cape.one) ?=(^ cape.two))
       %-  %~  knit  so
@@ -300,7 +303,7 @@
       $(one tel, two tel(one two))
     |-  ^-  sock
     ?:  =(data.one data.two)  one
-    ?.  &(?=(^ data.one) ?=(^ data.two))  lost
+    ?:  |(?=(@ data.one) ?=(@ data.two))  lost
     %-  %~  knit  so
         $(data.one -.data.one, data.two -.data.two)
     $(data.one +.data.one, data.two +.data.two)
@@ -311,10 +314,11 @@
   ++  pack
     |=  two=sock
     |-  ^-  sock
+    ?:  =(one two)  one
     ?:  ?=(%| cape.one)  two
     ?:  ?=(%| cape.two)  one
-    ?:  ?=(%& cape.one)  ?>(=(one two) one)
-    ?:  ?=(%& cape.two)  ?>(=(one two) two)
+    ?:  ?=(%& cape.one)  !!  ::  ?>(=(one two) one)
+    ?:  ?=(%& cape.two)  !!  ::  ?>(=(one two) two)
     ?>  ?=(^ data.one)
     ?>  ?=(^ data.two)
     %-  %~  knit  so

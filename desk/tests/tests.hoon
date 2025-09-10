@@ -37,7 +37,7 @@
 ::   ::
 ::   =/  fol  [9 2 0 1]
 ::   (expect-eq-nock-need cor fol)
-:: ::
+:: :: ::
 :: ++  test-scow-playpen
 ::   =/  cor  ..scow:playpen
 ::   =/  fol
@@ -53,31 +53,31 @@
 ::     (scow %ud 5)
 ::   ::
 ::   (expect-eq-nock-need cor fol)
-::
-++  test-parser
-  =/  cor
-    =>  ..ride:hoot
-    |%
-    ++  test  (expr-parse "33+3+4\\\0a/1+1+2")
-    ++  expr-parse
-      |=  math=tape
-      (scan math expr)
-      ::
-    ++  expr
-      %+  knee  *@ud
-      |.  ~+
-      ;~  pose
-        ((slug add) lus ;~(pose dem expr))
-        dem
-      ==
-    --
-  ::
-  =/  fol
-    =>  cor  !=
-    test
-  ::
-  (expect-eq-nock-need cor fol)
-::
+:: ::
+:: ++  test-parser
+::   =/  cor
+::     =>  ..ride:hoot
+::     |%
+::     ++  test  (expr-parse "33+3+4\\\0a/1+1+2")
+::     ++  expr-parse
+::       |=  math=tape
+::       (scan math expr)
+::       ::
+::     ++  expr
+::       %+  knee  *@ud
+::       |.  ~+
+::       ;~  pose
+::         ((slug add) lus ;~(pose dem expr))
+::         dem
+::       ==
+::     --
+::   ::
+::   =/  fol
+::     =>  cor  !=
+::     test
+::   ::
+::   (expect-eq-nock-need cor fol)
+:: ::
 :: ++  test-muk
 ::   =/  cor  playpen
 ::   =/  fol
@@ -86,11 +86,11 @@
 ::   ::
 ::   (expect-eq-nock-need cor fol)
 ::
-:: ++  test-ream
-::   =/  cor  hoot
-::   =/  fol
-::     =>  cor  !=
-::     (ream '42')
-::   ::
-::   (expect-eq-nock-need cor fol)
+++  test-ream
+  =/  cor  hoot
+  =/  fol
+    =>  cor  !=
+    (ream '42')
+  ::
+  (expect-eq-nock-need cor fol)
 --

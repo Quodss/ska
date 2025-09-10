@@ -81,7 +81,7 @@
       less-memo=sock
       less-code=sock
       prod=sock
-      map=spring:source
+      map=(lest spring:source)
       area=(unit spot)
   ==
 ::  meloization table entry
@@ -92,7 +92,7 @@
       capture=cape
       sub=sock-anno
       prod=sock
-      map=spring:source
+      map=(lest spring:source)
       area=(unit spot)
   ==
 ::  cross-arm analysis global state
@@ -137,7 +137,15 @@
     ==
   ==
 ::
-+$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno])
++$  frond
+  %-  deep
+  $:  par=@uxsite
+      kid=@uxsite
+      par-sub=sock
+      kid-sub=sock-anno
+      kid-tak=(lest @uxsite)
+  ==
+::
 +$  cycle
   $:  entry=@uxsite
       latch=@uxsite
@@ -145,7 +153,7 @@
       set=(deep @uxsite)
       process=(deep @uxsite)
       melo=(jar * meal)
-      hits=(deep [new=@uxsite new-sub=sock-anno =meal])
+      hits=(deep [new-tak=(lest @uxsite) new=@uxsite new-sub=sock-anno =meal])
   ==
 ::
 +$  blocklist  (jug @uxsite @uxsite)
@@ -200,7 +208,7 @@
       want=urge
       bars=@ud
       block-loop=blocklist
-      block-melo=blocklist
+      block-melo=(set @uxsite)  ::  set of entries of cycles where we don't meloize
       area=(unit spot)
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
@@ -212,7 +220,7 @@
           =nomm
           capture=cape
           prod=sock
-          map=spring:source
+          map=(lest spring:source)
           area=(unit spot)
   ==  ==
 ::  urge: evalsite subject requirements
@@ -222,68 +230,131 @@
 ::
 ++  source
   |^  source
-  ::  spring: subject transformation
-  ::  source: tranformation of the subject of the current call + a stack
-  ::  of transformations of predecessor subjects at callsites + label of
-  ::  the current call
+  ::  spring: unit of subject transformation
+  ::    ~ : fresh noun
+  ::    @ : comes from axis
+  ::    ^ : cons
+  ::    normalization: [~ ~] -> ~
+  ::    doesn't normalize [2n 2n+1]
   ::
-  ::  to get the actual provenance from a given predecessor fold springs
-  ::  with +compose
+  ::  source: full provenance info
+  ::    p: call stack
+  ::    q: all possible unique transformations from the subject of a call to
+  ::    a use site of the noun (next call site for all but last, current
+  ::    use site in the formula by last), per call.
   ::
-  +$  spring  (tree (list @axis))
-  +$  source  (lest (pair @uxsite spring))
+  :: +$  spring  *
+  +$  spring
+    $~  [%null ~]
+    $%  [%null ~]
+        [%axis p=@]
+        [%cons p=spring q=spring]
+    ==
+  ::
+  +$  source  (lest (lest spring))
+  ::
+  ++  compat
+    |=  [a=spring b=spring]
+    !.
+    :: =+  (mug a b)  =>  +
+    |-  ^-  ?
+    ?:  =(a b)         &
+    ?:  ?=(%null -.a)  &
+    ?:  ?=(%null -.b)  &
+    ?:  ?=(%axis -.a)
+      ?:  ?=(%axis -.b)  |
+      ?|  (compat a(p (peg p.a 2)) p.b)
+          (compat a(p (peg p.a 3)) q.b)
+      ==
+    ?:  ?=(%axis -.b)
+      ?|  (compat b(p (peg p.b 2)) p.a)
+          (compat b(p (peg p.b 3)) q.a)
+      ==
+    ?&  (compat p.a p.b)
+        (compat q.a q.b)
+    ==
+  ::
+  ++  mul-springs
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring)]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a, b `(list spring)`b)
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    %+  roll  b
+    |=  [pin-b=spring acc=_acc]
+    =/  pin-c  (g pin-a pin-b)
+    ?:  (lien acc |=(spring (compat +< pin-c)))  acc
+    [pin-c acc]
+  ::
+  ++  turn-spring
+    |=  [a=(lest spring) g=$-(spring spring)]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a)
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    =/  pin-b  (g pin-a)
+    ?:  (lien acc |=(spring (compat +< pin-b)))  acc
+    [pin-b acc]
+  ::
+  ++  cons-spring
+    |=  [a=spring b=spring]
+    ^-  spring
+    :: ?:  &(?=(~ a) ?=(~ b))  ~
+    :: [a b]
+    ?:  &(?=(%null -.a) ?=(%null -.b))  null+~
+    [%cons a b]
   ::
   ++  cons
-    |=  [a=spring b=spring]
-    ^-  spring
-    ?:  &(=(~ a) =(~ b))  ~
-    [~ a b]
+    |=  [a=source b=source]
+    ^-  source
+    :_  t.a
+    :: ~&  [(lent i.a) (lent i.b)]
+    :: ~<  %slog.[0 %cons-done]
+    (mul-springs i.a i.b cons-spring)
   ::
   ++  uni
-    |=  [a=spring b=spring]
+    |=  [a=source b=source]
+    ^-  source
+    :_  t.a
+    =-  ?~(- !! -)
+    %+  roll  `(list spring)`i.a
+    |=  [pin=spring acc=_`(list spring)`i.b]
+    ?:  (lien acc |=(spring (compat +< pin)))  acc
+    [pin acc]
+  ::
+  ++  slot-spring
+    |=  ax=@
+    |=  pin=spring
     ^-  spring
-    ?~  a  b
-    ?~  b  a
-    :_  [$(a l.a, b l.b) $(a r.a, b r.b)]
-    %~  tap  in
-    (~(gas in (~(gas in *(set @axis)) n.a)) n.b)
+    ?:  =(ax 1)  pin
+    :: ?~  pin  ~
+    :: ?@  pin  (peg pin ax)
+    :: ?-  (cap ax)
+    ::   %2  $(pin -.pin, ax (mas ax))
+    ::   %3  $(pin +.pin, ax (mas ax))
+    :: ==
+    ?:  ?=(%null -.pin)  null+~
+    ?:  ?=(%axis -.pin)  pin(p (peg p.pin ax))
+    ?-  (cap ax)
+      %2  $(pin p.pin, ax (mas ax))
+      %3  $(pin q.pin, ax (mas ax))
+    ==
   ::
   ++  slot
-    |=  [src=spring ax=@]
-    ^-  spring
-    ?:  =(1 ax)  src
-    =/  rev  1
-    =/  ax-1  ax
-    =|  acc=(list (pair @ (list @axis)))
-    |-  ^-  spring
-    =+  [n l r]=?@(src [~ ~ ~] src)
-    ?.  =(1 ax)
-      ?~  src  $(ax 1, rev ax-1)
-      =+  [n l r]=src
-      =?  acc  !=(~ n)  [[rev n] acc]
-      ?-  (cap ax)
-        %2  $(ax (mas ax), src l, rev (peg rev 2))
-        %3  $(ax (mas ax), src r, rev (peg rev 3))
-      ==
-    ::  rev == ax input
-    ::
-    =+  [n l r]=?@(src [~ ~ ~] src)
-    =.  n
-      %+  roll  acc
-      |:  [[ax=*@ l=*(list @axis)] out=n]
-      ^+  n
-      =/  rel  (hub ax rev)
-      %+  roll  l
-      |:  [a=*@axis out=out]
-      [(peg a rel) out]
-    ::
-    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
-    [n l r]
+    |=  [src=source ax=@]
+    ^-  source
+    :_  t.src
+    (turn-spring i.src (slot-spring ax))
   ::
-  ++  edit
-    |=  [rec=spring ax=@ don=spring]
+  ++  edit-spring
+    |=  ax=@
+    |=  [rec=spring don=spring]
     ^-  spring
     ?:  =(ax 1)  don
+    :: ?:  &(?=(~ rec) ?=(~ don))  ~
+    ?:  &(?=(%null -.rec) ?=(%null -.don))  null+~
     =|  tack=(list [c=?(%2 %3) p=spring])
     |-  ^-  spring
     ?.  =(1 ax)
@@ -294,31 +365,35 @@
     |-  ^-  spring
     ?~  tack  don
     ?-  c.i.tack
-      %2  $(don (cons don p.i.tack), tack t.tack)
-      %3  $(don (cons p.i.tack don), tack t.tack)
+      %2  $(don (cons-spring don p.i.tack), tack t.tack)
+      %3  $(don (cons-spring p.i.tack don), tack t.tack)
     ==
   ::
+  ++  edit
+    |=  [rec=source ax=@ don=source]
+    ^-  source
+    :_  t.rec
+    (mul-springs i.rec i.don (edit-spring ax))
+  ::
   ++  hed
-    |=  src=spring
+    |=  pin=spring
     ^-  spring
-    ?~  src  ~
-    ?:  =(~ n.src)  l.src
-    =+  [n lr]=?~(l.src [~ ~ ~] l.src)
-    :_  lr
-    %+  roll  n.src
-    |:  [a=*@axis out=n]
-    [(peg a 2) out]
+    :: ?~  pin  ~
+    :: ?@  pin  (peg pin 2)
+    :: -.pin
+    ?:  ?=(%null -.pin)  null+~
+    ?:  ?=(%axis -.pin)  pin(p (peg p.pin 2))
+    p.pin
   ::
   ++  tel
-    |=  src=spring
+    |=  pin=spring
     ^-  spring
-    ?~  src  ~
-    ?:  =(~ n.src)  r.src
-    =+  [n lr]=?~(r.src [~ ~ ~] r.src)
-    :_  lr
-    %+  reel  n.src
-    |:  [a=*@axis out=n]
-    [(peg a 3) out]
+    :: ?~  pin  ~
+    :: ?@  pin  (peg pin 3)
+    :: +.pin
+    ?:  ?=(%null -.pin)  null+~
+    ?:  ?=(%axis -.pin)  pin(p (peg p.pin 3))
+    q.pin
   ::  unify urges
   ::
   ++  uni-urge
@@ -329,62 +404,116 @@
     |=  [@uxsite a=cape b=cape]
     (~(uni ca a) b)
   ::
-  ++  compose
-    =|  out=spring
+  ++  compose-spring
     |=  [a=spring b=spring]
     ^-  spring
-    ?~  a  out
-    ?:  =(~ b)  out
-    =.  out
-      ?:  =(~ n.a)  out
-      %+  roll  n.a
-      |=  [ax=@axis acc=_out]
-      =>  [b=b ax=ax acc=acc ..compose]
-      ~+
-      %+  uni
-        =>  [b=b ax=ax ..slot]
-        ~+
-        (slot b ax)
-      acc
-    ::
-    ?~  out  (cons $(a l.a) $(a r.a))
-    =/  l  $(a l.a, out l.out)
-    =/  r  $(a r.a, out r.out)
-    ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
-    [n.out l r]
+    :: ?~  b  ~
+    ?:  ?=(%null -.b)  null+~
+    |-  ^-  spring
+    :: ?~  a  ~
+    ?:  ?=(%null -.a)  null+~
+    ~+
+    :: ?@  a  ((slot-spring a) b)
+    ?:  ?=(%axis -.a)  ((slot-spring p.a) b)
+    :: (cons-spring $(a -.a) $(a +.a))
+    (cons-spring $(a p.a) $(a q.a))
+  ::
+  ++  compose
+    |=  [a=(lest spring) b=(lest spring)]
+    ^-  (lest spring)
+    :: ~&  %comp
+    :: =/  len-a  (lent a)
+    :: ~&  [len-a (lent b)]
+    :: =>  ?.  =(1.736 len-a)  .
+    ::     =+  (turn t.a (curr spring-diff i.a))
+    ::     +
+    :: ~>  %bout
+    :: =;  l
+    ::   =/  len  (lent l)
+    ::   ~&  len
+    ::   ?>  =(len ~(wyt in (silt l)))
+    ::   l
+    :: %-  road  |.
+    (mul-springs a b compose-spring)
+  ::
+  ++  spring-diff
+    |=  [a=spring b=spring]
+    ^-  ~
+    =/  rev  1
+    |-  ^-  ~
+    ?:  =(a b)  ~
+    ?:  |(?=(%null -.a) ?=(%null -.b))
+      ~&  [rev a b]
+      ~
+    ?:  |(&(?=(%axis -.a) ?=(%cons -.b)) &(?=(%axis -.b) ?=(%cons -.a)))
+      ~&  [rev a b]
+      ~
+    ?:  |(?=(%axis -.a) ?=(%axis -.b))
+      ~&  [rev a b]
+      ~
+    ?>  ?=(%cons -.a)
+    ?>  ?=(%cons -.b)
+    ?:  =(p.a p.b)  $(a q.a, b q.b, rev (peg rev 3))
+    $(a p.a, b p.b, rev (peg rev 2))
   ::
   ++  urge
     =|  out=^urge
-    =/  original=?  &
-    |=  [src=source cap=cape]
-    ^-  ^urge
-    ?:  |(?=(%| cap) ?=(~ q.i.src))  out
+    |=  [src=source cap=cape tak=(lest @uxsite)]
+    :: ~<  %slog.[0 %urge-done]
+    :: ~>  %bout
+    |-  ^-  ^urge
+    :: ?:  |(?=(%| cap) ?=([~ ~] i.src))  out
+    ?:  |(?=(%| cap) ?=([[%null ~] ~] i.src))  out
     =.  out
-      %+  roll  n.q.i.src
-      |=  [ax=@axis acc=_out]
-      =/  need=cape  (~(pat ca cap) ax)
-      (jib acc p.i.src _need |=(c=cape (~(uni ca c) need)))
+      =;  need=cape  (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
+      %+  roll  `(list spring)`i.src
+      |=  [pin=spring acc=cape]
+      :: ?~  pin  acc
+      ?:  ?=(%null -.pin)  acc
+      %-  ~(uni ca acc)
+      =>  [pin=`spring`pin cap=`cape`cap ..ca]
+      :: %-  road
+      |-  ^-  cape
+      :: ?~  pin  |
+      ?:  ?=(%null -.pin)  |
+      ?:  ?=(%| cap)  |
+      ~+
+      :: ?@  pin  (~(pat ca cap) pin)
+      ?:  ?=(%axis -.pin)  (~(pat ca cap) p.pin)
+      =/  [p=cape q=cape]  ?@(cap [& &] cap)
+      :: =/  l  $(pin -.pin, cap p)
+      :: =/  r  $(pin +.pin, cap q)
+      =/  l  $(pin p.pin, cap p)
+      =/  r  $(pin q.pin, cap q)
+      (~(uni ca l) r)
     ::
-    =/  [p=cape q=cape]  ?@(cap [& &] cap)
-    =.  out  $(q.i.src l.q.i.src, cap p, original |)
-    =.  out  $(q.i.src r.q.i.src, cap q, original |)
-    ?.  original  out
-    ?~  t.src     out
-    $(t.src t.t.src, p.i.src p.i.t.src, q.i.src (compose q.i.src q.i.t.src))
+    ?~  t.src  out
+    ?~  t.tak  !!
+    $(t.src t.t.src, tak t.tak, i.src (compose i.src i.t.src))
   ::
-  ++  prune
-    =/  capture=cape  |
+  ++  prune-spring
     |=  [pin=spring cap=cape]
     ^-  cape
-    ?:  |(?=(%| cap) ?=(~ pin))  capture
-    =.  capture
-      %+  roll  n.pin
-      |=  [ax=@axis acc=_capture]
-      (~(uni ca capture) (~(pat ca cap) ax))
-    ::
+    ?:  ?=(%| cap)  |
+    :: ?~  pin  |
+    ?:  ?=(%null -.pin)  |
+    ~+
+    :: ?@  pin  (~(pat ca cap) pin)
+    ?:  ?=(%axis -.pin)  (~(pat ca cap) p.pin)
     =/  [p=cape q=cape]  ?@(cap [& &] cap)
-    =.  capture  $(pin l.pin, cap p)
-    $(pin r.pin, cap q)
+    :: =/  l  $(pin -.pin, cap p)
+    :: =/  r  $(pin +.pin, cap q)
+    =/  l  $(pin p.pin, cap p)
+    =/  r  $(pin q.pin, cap q)
+    (~(uni ca l) r)
+  ::
+  ++  prune
+    |=  [src=(list spring) cap=cape]
+    ^-  cape
+    :: %-  road  |.
+    %+  roll  src
+    |=  [pin=spring acc=_`cape`|]
+    (~(uni ca acc) (prune-spring pin cap))
   ::
   --
 ::
