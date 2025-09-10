@@ -27,8 +27,8 @@
 ++  dunno
   |=  sub=sock-anno
   ^-  sock-anno
-  :: [|+~ [~[~] t.src.sub]]
-  [|+~ [~[null+~] t.src.sub]]
+  [|+~ [~[~] t.src.sub]]
+  :: [|+~ [~[null+~] t.src.sub]]
 ::
 ++  safe
   |=  fol=*
@@ -318,8 +318,8 @@
   ::  provenance is updated by the caller
   ::  length of the provenance list must match stack depth during analysis
   ::
-  :: =/  sub=sock-anno  [bus ~[~[1]]]
-  =/  sub=sock-anno  [bus ~[~[axis+1]]]
+  =/  sub=sock-anno  [bus ~[~[1]]]
+  :: =/  sub=sock-anno  [bus ~[~[axis+1]]]
   =;  res-eval-entry=short
     ::  debug asserts
     ::
@@ -402,8 +402,8 @@
     ::
         [%1 p=*]
       :_  gen
-      :: [fol [&+p.fol [~[~] t.src.sub]] deff]
-      [fol [&+p.fol [~[null+~] t.src.sub]] deff]
+      [fol [&+p.fol [~[~] t.src.sub]] deff]
+      :: [fol [&+p.fol [~[null+~] t.src.sub]] deff]
     ::
         [%2 p=^ q=^]
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
@@ -521,8 +521,8 @@
       =/  area-stash  area.gen
       =^  [pro=sock-anno =flags =info]  gen
         %=  eval-loop
-          :: sub          s-prod(src [~[1] src.s-prod])
-          sub          s-prod(src [~[axis+1] src.s-prod])
+          sub          s-prod(src [~[1] src.s-prod])
+          :: sub          s-prod(src [~[axis+1] src.s-prod])
           fol          fol-new
           here-site    there-site
           seat         ?~(trace ~ `i.trace)
