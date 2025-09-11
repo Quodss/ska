@@ -577,9 +577,10 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       :_  gen
+      =/  int=sock  (~(purr so sock.y-prod) sock.n-prod)
       :+  [%6 c-code y-code n-code]
-        :-  (~(purr so sock.y-prod) sock.n-prod)
-        (uni:source src.y-prod src.n-prod)
+        :-  int
+        (uni:source (mask:source src.y-prod cape.int) (mask:source src.n-prod cape.int))
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -1134,7 +1135,7 @@
 ++  run-nomm
   |=  [s=* f=*]
   ^-  (unit)
-  !.
+  :: !.
   =/  gen
     ~>  %bout
     (scan &+s f)
@@ -1207,7 +1208,10 @@
     ?-    -.site.n
         %memo
       =/  m  ~|  p.site.n  (~(got by idxs.memo.gen) p.site.n)
-      ?>  =(u.f1 fol.m)  
+      ?.  =(u.f1 fol.m)
+        ~|  u.f1
+        ~|  fol.m
+        !!
       code.m
     ::
         %site

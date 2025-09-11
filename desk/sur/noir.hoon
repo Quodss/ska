@@ -254,38 +254,92 @@
   +$  source  (lest (lest spring))
   ::
   ++  compat
-    |=  [a=spring b=spring]
+    |=  [old=spring new=spring]
     !.
-    :: =+  (mug a b)  =>  +
-    |-  ^-  ?
-    ?:  =(a b)         &
-    :: ?:  ?=(%null -.a)  &
-    ?~  a  &
-    :: ?:  ?=(%null -.b)  &
-    ?~  b  &
-    :: ?:  ?=(%axis -.a)
-    ?@  a
-      :: ?:  ?=(%axis -.b)  |
-      ?@  b  |
-      :: ?|  (compat a(p (peg p.a 2)) p.b)
-      ::     (compat a(p (peg p.a 3)) q.b)
-      :: ==
-      ?|  (compat (peg a 2) -.b)
-          (compat (peg a 3) +.b)
-      ==
-    :: ?:  ?=(%axis -.b)
-    ?@  b
-      :: ?|  (compat b(p (peg p.b 2)) p.a)
-      ::     (compat b(p (peg p.b 3)) q.a)
-      :: ==
-      ?|  (compat (peg b 2) -.a)
-          (compat (peg b 3) +.a)
-      ==
-    :: ?&  (compat p.a p.b)
-    ::     (compat q.a q.b)
-    :: ==
-    ?&  (compat -.a -.b)
-        (compat +.a +.b)
+    ::  %2  -  don't put, new knows less than old
+    ::  %1  -  replace old, new knows more
+    ::  %0  -  different knowledge, put new and keep old
+    ::
+    |-  ^-  @
+    ?~  new  %2
+    ?:  =(old new)  %2
+    ?~  old  %1
+    ~+
+    ?@  old
+      ?@  new  %0
+      =/  l  $(old (peg old 2), new -.new)
+      ?:  =(0 l)  0
+      =/  r  $(old (peg old 3), new +.new)
+      ?:  !=(l r)
+        ::  either r is 0 or head and tail have different nesting, keep both
+        ::  springs
+        ::
+        0
+      ::  same knowledge nesting direction for head and tail
+      ::
+      l
+    ?@  new
+      =/  l  $(old -.old, new (peg new 2))
+      ?:  =(0 l)  0
+      =/  r  $(old +.old, new (peg new 3))
+      ?:(!=(l r) 0 l)
+    =/  l  $(old -.old, new -.new)
+    ?:  =(0 l)  0
+    =/  r  $(old +.old, new +.new)
+    ?:(!=(l r) 0 l)
+  ::
+  ++  add-spring
+    |=  [new=spring lit=(list spring)]
+    ^-  (lest spring)
+    :: ~>  %bout
+    :: ~<  %slog.[0 %add-spring]
+    ?~  lit  [new ~]
+    :: =>  ?.  (gte (lent lit) 2.000)  .
+    ::     =+  (turn t.lit (curr spring-diff i.lit))
+    ::     +
+    =|  rem=(list spring)
+    =/  old  lit
+    =>  .(lit `(list spring)`lit)
+    !.
+    |-  ^-  (lest spring)
+    ?~  lit  [new old]
+    =/  c
+      :: ~>  %bout
+      :: ~<  %slog.[0 %compat]
+      (compat i.lit new)
+    ::
+    ?-  c
+      %0  $(lit t.lit, rem [i.lit rem])
+      %1  [new (weld rem t.lit)]
+      %2  old
+      @   !!
+    ==
+  ::
+  ++  add-spring-1
+    |=  [new=spring lit=(list spring)]
+    ^-  (lest spring)
+    :: ~>  %bout
+    :: ~<  %slog.[0 %add-spring]
+    ?~  lit  [new ~]
+    :: =>  ?.  (gte (lent lit) 2.000)  .
+    ::     =+  (turn t.lit (curr spring-diff i.lit))
+    ::     +
+    =|  rem=(list spring)
+    =/  old  lit
+    =>  .(lit `(list spring)`lit)
+    !.
+    |-  ^-  (lest spring)
+    ?~  lit  [new old]
+    =/  c
+      :: ~>  %bout
+      :: ~<  %slog.[0 %compat]
+      (compat i.lit new)
+    ::
+    ?-  c
+      %0  $(lit t.lit, rem [i.lit rem])
+      %1  [new (weld rem t.lit)]
+      %2  old
+      @   !!
     ==
   ::
   ++  mul-springs
@@ -298,8 +352,71 @@
     %+  roll  b
     |=  [pin-b=spring acc=_acc]
     =/  pin-c  (g pin-a pin-b)
-    ?:  (lien acc |=(spring (compat +< pin-c)))  acc
+    (add-spring pin-c acc)
+  ::
+  ++  mul-springs-1
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring)]
+    ^-  (lest spring)
+    :: ~&  [(lent a) (lent b)]
+    =>  .(a `(list spring)`a, b `(list spring)`b)
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    %+  roll  b
+    |=  [pin-b=spring acc=_acc]
+    =/  pin-c  (g pin-a pin-b)
+    (add-spring-1 pin-c acc)
+  ::
+  ++  mul-springs-bloat
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring)]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a, b `(list spring)`b)
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    %+  roll  b
+    |=  [pin-b=spring acc=_acc]
+    =/  pin-c  (g pin-a pin-b)
     [pin-c acc]
+  ::
+  ++  weld-springs
+    |=  [a=(list spring) b=(list spring)]
+    ^-  (lest spring)
+    =-  ?~(- ~[~] -)
+    =/  b1  b
+    |-  ^-  (list spring)
+    ?~  a  b
+    =/  b2  (add-spring i.a b1)
+    =?  b  !=(b1 b2)  [i.a b]
+    $(a t.a)
+    :: ~|  [a b]
+    :: =-  ?~(- ~[~] -)
+    :: =|  acc=(tree (list @))
+    :: |^  ^-  (list spring)
+    :: ?~  a  b
+    :: =/  acc1  !.  (insert i.a acc)
+    :: ?:  =(acc acc1)  $(a t.a)
+    :: $(a t.a, b [i.a b], acc acc1)
+    :: ::
+    :: ++  insert
+    ::   |=  [a=spring acc=(tree (list @))]
+    ::   ^+  acc
+    ::   !.
+    ::   |-
+    ::   ?~  a  acc
+    ::   ?~  acc  (grow a)
+    ::   ?@  a  acc(n [a n.acc])
+    ::   ~+
+    ::   acc(l $(acc l.acc, a -.a), r $(acc r.acc, a +.a))
+    :: ::
+    :: ++  grow
+    ::   |=  a=spring
+    ::   ^-  (tree (list @))
+    ::   ?~  a  ~
+    ::   ?@  a  [~[a] ~ ~]
+    ::   ~+
+    ::   [~ $(a -.a) $(a +.a)]
+    :: --
   ::
   ++  turn-spring
     |=  [a=(lest spring) g=$-(spring spring)]
@@ -309,8 +426,7 @@
     %+  roll  a
     |=  [pin-a=spring acc=(list spring)]
     =/  pin-b  (g pin-a)
-    ?:  (lien acc |=(spring (compat +< pin-b)))  acc
-    [pin-b acc]
+    (add-spring pin-b acc)
   ::
   ++  cons-spring
     |=  [a=spring b=spring]
@@ -324,19 +440,84 @@
     |=  [a=source b=source]
     ^-  source
     :_  t.a
-    :: ~&  [(lent i.a) (lent i.b)]
-    :: ~<  %slog.[0 %cons-done]
-    (mul-springs i.a i.b cons-spring)
+    (mul-springs-bloat i.a i.b cons-spring)
+  ::
+  ++  mask-spring
+    |=  cap=cape
+    |=  pin=spring
+    ^-  spring
+    ?:  ?=(%| cap)  ~
+    ?:  ?=(%& cap)  pin
+    ?~  pin  ~
+    ~+
+    %+  cons-spring  $(cap -.cap, pin ?@(pin (peg pin 2) -.pin))
+    $(cap +.cap, pin ?@(pin (peg pin 3) +.pin))
+  ::
+  ++  mask
+    |=  [src=source cap=cape]
+    ^-  source
+    :_  t.src
+    (turn-spring i.src (mask-spring cap))
+  ::
+  ++  hole-spring
+    |=  ax=@
+    |=  pin=spring
+    ^-  spring
+    ?:  =(ax 1)  ~
+    ?~  pin  ~
+    =|  tack=(list [c=?(%2 %3) p=spring])
+    =>  .(pin `spring`pin)
+    |-  ^-  spring
+    ?.  =(1 ax)
+      ?-  (cap ax)
+        %2  $(ax (mas ax), pin (hed pin), tack [2+(tel pin) tack])
+        %3  $(ax (mas ax), pin (tel pin), tack [3+(hed pin) tack])
+      ==
+    =/  out=spring  ~
+    |-  ^-  spring
+    ?~  tack  out
+    ?-  c.i.tack
+      %2  $(out (cons-spring out p.i.tack), tack t.tack)
+      %3  $(out (cons-spring p.i.tack out), tack t.tack)
+    ==
+  ::
+  ++  hole
+    |=  [src=source ax=@]
+    ^-  source
+    :_  t.src
+    (turn-spring i.src (hole-spring ax))
+  ::
+  ++  push-spring
+    |=  ax=@
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  =(ax 1)  pin
+    |-  ^-  spring
+    ?:  =(ax 1)  pin
+    ?-  (cap ax)
+      %2  [$(ax (mas ax)) ~]
+      %3  [~ $(ax (mas ax))]
+    ==
+  ::
+  ++  push
+    |=  [src=source ax=@]
+    ^-  source
+    :_  t.src
+    =-  ?~(- !! -)
+    (turn i.src (push-spring ax))
   ::
   ++  uni
     |=  [a=source b=source]
     ^-  source
     :_  t.a
     =-  ?~(- !! -)
-    %+  roll  `(list spring)`i.a
-    |=  [pin=spring acc=_`(list spring)`i.b]
-    ?:  (lien acc |=(spring (compat +< pin)))  acc
-    [pin acc]
+    :: %+  roll  `(list spring)`i.a
+    :: |=  [pin=spring acc=_`(list spring)`i.b]
+    :: :: ?:  (lien acc |=(spring (compat +< pin)))  acc
+    :: :: [pin acc]
+    :: (add-spring pin acc)
+    (weld-springs i.a i.b)
   ::
   ++  slot-spring
     |=  ax=@
@@ -365,6 +546,8 @@
   ++  edit-spring
     |=  ax=@
     |=  [rec=spring don=spring]
+    :: ~&  [rec=rec ax=ax don=don]
+    :: =-  ~&(- -)
     ^-  spring
     ?:  =(ax 1)  don
     ?:  &(?=(~ rec) ?=(~ don))  ~
@@ -384,6 +567,90 @@
     ==
   ::
   ++  edit
+    edit1
+    :: |=  [rec=source ax=@ don=source]
+    :: ^-  source
+    :: =*  sam  +<
+    :: |^  ^-  source
+    :: =/  one  (edit1 sam)
+    :: =/  two  (edit2 sam)
+    :: ?.  (equivalent i.one i.two)
+    ::   ~|  i.one
+    ::   ~|  i.two
+    ::   ~|  [rec=i.rec ax=ax don=i.don]
+    ::   !!
+    :: one
+    :: ::
+    :: ++  equivalent
+    ::   |=  [a=(list spring) b=(list spring)]
+    ::   ^-  ?
+    ::   =/  acc-a=(tree (set @))
+    ::     =|  acc=(tree (set @))
+    ::     |-  ^-  (tree (set @))
+    ::     ?~  a  acc
+    ::     $(a t.a, acc (insert1 i.a acc))
+    ::   ::
+    ::   =/  acc-b=(tree (set @))
+    ::     =|  acc=(tree (set @))
+    ::     |-  ^-  (tree (set @))
+    ::     ?~  b  acc
+    ::     $(b t.b, acc (insert1 i.b acc))
+    ::   ::
+    ::   :: ?.  =(acc-a acc-b)
+    ::   ::   ~&  (print-tree acc-a)
+    ::   ::   ~&  (print-tree acc-b)
+    ::   ::   !!
+    ::   :: &
+    ::   =(acc-a acc-b)
+    :: ::
+    :: ++  print-tree
+    ::   |=  t=(tree (set @))
+    ::   ^-  ~
+    ::   ?~  t  ~
+    ::   ~&  [%n n.t]
+    ::   ~&  %l
+    ::   =+  $(t l.t)
+    ::   ~&  %r
+    ::   =+  $(t r.t)
+    ::   ~
+    :: ::
+    :: ++  insert1
+    ::   |=  [a=spring acc=(tree (set @))]
+    ::   ^+  acc
+    ::   ?~  a  acc
+    ::   ?~  acc  (grow1 a)
+    ::   ?@  a  acc(n (~(put in n.acc) a))
+    ::   ~+
+    ::   acc(l $(acc l.acc, a -.a), r $(acc r.acc, a +.a))
+    :: ::
+    :: ++  grow1
+    ::   |=  a=spring
+    ::   ^-  (tree (set @))
+    ::   ?~  a  ~
+    ::   ?@  a  [[a ~ ~] ~ ~]
+    ::   ~+
+    ::   [~ $(a -.a) $(a +.a)]
+    :: --
+  ::
+  ++  edit1
+    |=  [rec=source ax=@ don=source]
+    ^-  source
+    :: ~>  %bout
+    :: ~&  %edit-start
+    :: ~&  [(lent i.rec) ax (lent i.don)]
+    :: ~<  %slog.[0 %edit-done]
+    :: :_  t.rec
+    :: (mul-springs-1 i.rec i.don (edit-spring ax))
+    ::
+    ::  mask out edit site, unify with `don` pushed to `ax`
+    ::
+    =.  rec  (hole rec ax)
+    =.  don  (push don ax)
+    :_  t.rec
+    =-  ?~(- !! -)
+    (weld i.rec i.don)
+  ::
+  ++  edit2
     |=  [rec=source ax=@ don=source]
     ^-  source
     :_  t.rec
@@ -435,27 +702,36 @@
   ++  compose
     |=  [a=(lest spring) b=(lest spring)]
     ^-  (lest spring)
-    (mul-springs a b compose-spring)
+    (mul-springs-1 a b compose-spring)
   ::
-  :: ++  spring-diff
-  ::   |=  [a=spring b=spring]
-  ::   ^-  ~
-  ::   =/  rev  1
-  ::   |-  ^-  ~
-  ::   ?:  =(a b)  ~
-  ::   ?:  |(?=(%null -.a) ?=(%null -.b))
-  ::     ~&  [rev a b]
-  ::     ~
-  ::   ?:  |(&(?=(%axis -.a) ?=(%cons -.b)) &(?=(%axis -.b) ?=(%cons -.a)))
-  ::     ~&  [rev a b]
-  ::     ~
-  ::   ?:  |(?=(%axis -.a) ?=(%axis -.b))
-  ::     ~&  [rev a b]
-  ::     ~
-  ::   ?>  ?=(%cons -.a)
-  ::   ?>  ?=(%cons -.b)
-  ::   ?:  =(p.a p.b)  $(a q.a, b q.b, rev (peg rev 3))
-  ::   $(a p.a, b p.b, rev (peg rev 2))
+  ++  spring-diff
+    |=  [a=spring b=spring]
+    ^-  ~
+    =/  answer  (compat a b)
+    =-  ~>  %slog.[3 (crip "done diff {<`@ux`(mug a)>} {<`@ux`(mug b)>}")]  -
+    =/  rev  1
+    |-  ^-  ~
+    ?:  =(a b)  ~
+    :: ?:  |(?=(%null -.a) ?=(%null -.b))
+    ?:  |(?=(~ a) ?=(~ b))
+      ~&  [answer=answer where=rev a=a b=b]
+      ~
+    :: ?:  |(&(?=(%axis -.a) ?=(%cons -.b)) &(?=(%axis -.b) ?=(%cons -.a)))
+    ?:  |(&(?=(@ a) ?=(^ b)) &(?=(@ b) ?=(^ a)))
+      ~&  [answer=answer where=rev a=a b=b]
+      ~
+    :: ?:  |(?=(%axis -.a) ?=(%axis -.b))
+    ?:  |(?=(@ a) ?=(@ b))
+      ~&  [answer=answer where=rev a=a b=b]
+      ~
+    :: ?>  ?=(%cons -.a)
+    :: ?>  ?=(%cons -.b)
+
+    :: ?:  =(p.a p.b)  $(a q.a, b q.b, rev (peg rev 3))
+    ?:  =(-.a -.b)  $(a +.a, b +.b, rev (peg rev 3))
+    =+  $(a -.a, b -.b, rev (peg rev 2))
+    ?:  =(+.a +.b)  ~
+    $(a +.a, b +.b, rev (peg rev 3))
   ::
   ++  urge
     =|  out=^urge
