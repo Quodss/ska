@@ -254,42 +254,35 @@
   +$  source  (lest (lest spring))
   ::
   ++  compat
-    |=  [a=spring b=spring]
+    =/  max-depf  10
+    |=  [old=spring new=spring]
     !.
-    :: =+  (mug a b)  =>  +
+    ::  old contains new? yes is a guarantee, no is a guess
+    ::
+    =/  depf  0
     |-  ^-  ?
-    ?:  =(a b)         &
-    :: ?:  ?=(%null -.a)  &
-    ?~  a  &
-    :: ?:  ?=(%null -.b)  &
-    ?~  b  &
-    :: ?:  ?=(%axis -.a)
-    ?@  a
-      :: ?:  ?=(%axis -.b)  |
-      ?@  b  |
-      :: ?|  (compat a(p (peg p.a 2)) p.b)
-      ::     (compat a(p (peg p.a 3)) q.b)
-      :: ==
-      ?|  (compat (peg a 2) -.b)
-          (compat (peg a 3) +.b)
+    ?:  =(old new)  &
+    ?~  old  |
+    ?~  new  &
+    ?:  =(max-depf depf)
+      :: ~&   >>>  %depf-exceeded
+      |
+    =.  depf  +(depf)
+    ?@  old
+      ?@  new  |
+      ?&  $(old (peg old 2), new -.new)
+          $(old (peg old 3), new +.new)
       ==
-    :: ?:  ?=(%axis -.b)
-    ?@  b
-      :: ?|  (compat b(p (peg p.b 2)) p.a)
-      ::     (compat b(p (peg p.b 3)) q.a)
-      :: ==
-      ?|  (compat (peg b 2) -.a)
-          (compat (peg b 3) +.a)
+    ?@  new
+      ?&  $(old -.old, new (peg new 2))
+          $(old +.old, new (peg new 3))
       ==
-    :: ?&  (compat p.a p.b)
-    ::     (compat q.a q.b)
-    :: ==
-    ?&  (compat -.a -.b)
-        (compat +.a +.b)
+    ?&  $(old -.old, new -.new)
+        $(old +.old, new +.new)
     ==
   ::
   ++  mul-springs
-    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring)]
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring) check=?]
     ^-  (lest spring)
     =>  .(a `(list spring)`a, b `(list spring)`b)
     =-  ?~(- !! -)
@@ -298,7 +291,27 @@
     %+  roll  b
     |=  [pin-b=spring acc=_acc]
     =/  pin-c  (g pin-a pin-b)
-    ?:  (lien acc |=(spring (compat +< pin-c)))  acc
+    ?:  &(check (lien (scag 10 acc) |=(spring (compat +< pin-c))))  acc
+    [pin-c acc]
+  ::
+  ++  mul-springs-1
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring) check=?]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a, b `(list spring)`b)
+    ~&  mul-springs+[(lent a) (lent b)]
+    =-  ~&  out+(lent -)  -
+    =-  ~?  =((lent -) 1)  out+-  -
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    %+  roll  b
+    |=  [pin-b=spring acc=_acc]
+    =/  pin-c
+      :: ~>  %bout.[0 %mul-springs-cb]
+      (g pin-a pin-b)
+    ::
+    :: ~>  %bout.[0 %mul-springs-append]
+    ?:  &(check (lien (scag 10 acc) |=(spring (compat +< pin-c))))  acc
     [pin-c acc]
   ::
   ++  turn-spring
@@ -312,6 +325,24 @@
     ?:  (lien acc |=(spring (compat +< pin-b)))  acc
     [pin-b acc]
   ::
+  ++  mask-spring
+    |=  cap=cape
+    |=  pin=spring
+    ^-  spring
+    |-  ^-  spring
+    ?~  pin  ~
+    ?:  ?=(%| cap)  ~
+    ?:  ?=(%& cap)  pin
+    ~+
+    %+  cons-spring  $(cap -.cap, pin ?@(pin (peg pin 2) -.pin))
+    $(cap +.cap, pin ?@(pin (peg pin 3) +.pin))
+  ::
+  ++  mask
+    |=  [src=source cap=cape]
+    ^-  source
+    :_  t.src
+    (turn-spring i.src (mask-spring cap))
+  ::
   ++  cons-spring
     |=  [a=spring b=spring]
     ^-  spring
@@ -324,9 +355,8 @@
     |=  [a=source b=source]
     ^-  source
     :_  t.a
-    :: ~&  [(lent i.a) (lent i.b)]
     :: ~<  %slog.[0 %cons-done]
-    (mul-springs i.a i.b cons-spring)
+    (mul-springs i.a i.b cons-spring |)
   ::
   ++  uni
     |=  [a=source b=source]
@@ -335,7 +365,7 @@
     =-  ?~(- !! -)
     %+  roll  `(list spring)`i.a
     |=  [pin=spring acc=_`(list spring)`i.b]
-    ?:  (lien acc |=(spring (compat +< pin)))  acc
+    ?:  (lien `(list spring)`i.b |=(spring (compat +< pin)))  acc
     [pin acc]
   ::
   ++  slot-spring
@@ -368,7 +398,6 @@
     ^-  spring
     ?:  =(ax 1)  don
     ?:  &(?=(~ rec) ?=(~ don))  ~
-    :: ?:  &(?=(%null -.rec) ?=(%null -.don))  null+~
     =|  tack=(list [c=?(%2 %3) p=spring])
     |-  ^-  spring
     ?.  =(1 ax)
@@ -386,8 +415,14 @@
   ++  edit
     |=  [rec=source ax=@ don=source]
     ^-  source
+    :: ~&  [(lent i.rec) (lent i.don) ax=ax]
+    :: ~?  =(55.296 (lent i.don))  [i.rec ax]
+    :: ~?  =(55.296 (lent i.don))  (spring-diff &1.i.don &3.i.don)
+    :: ~?  =(55.296 (lent i.don))  (spring-diff &2.i.don &3.i.don)
+    :: ~>  %bout.[0 %edit]
     :_  t.rec
-    (mul-springs i.rec i.don (edit-spring ax))
+    =/  check=?  (lth (mul (lent rec) (lent don)) 100)
+    (mul-springs i.rec i.don (edit-spring ax) check)
   ::
   ++  hed
     |=  pin=spring
@@ -422,51 +457,58 @@
     |=  [a=spring b=spring]
     ^-  spring
     ?~  b  ~
-    :: ?:  ?=(%null -.b)  null+~
     |-  ^-  spring
     ?~  a  ~
-    :: ?:  ?=(%null -.a)  null+~
     ~+
     ?@  a  ((slot-spring a) b)
-    :: ?:  ?=(%axis -.a)  ((slot-spring p.a) b)
     (cons-spring $(a -.a) $(a +.a))
-    :: (cons-spring $(a p.a) $(a q.a))
   ::
   ++  compose
     |=  [a=(lest spring) b=(lest spring)]
     ^-  (lest spring)
-    (mul-springs a b compose-spring)
+    ~+
+    :: ~&  compose+[(lent a) (lent b)]
+    :: =-  ~&  res-compose+(lent -)  -
+    :: ~?  &(=(102 (lent a)) =(95 (lent b)))  ~:(turn t.a (curr spring-diff i.a))
+    :: ~>  %bout.[0 %compose]
+    ~|  i.a
+    ~|  i.b
+    :: ?:  =(55.296 (lent b))  (mul-springs-1 a b compose-spring &)
+    :: ?:  =(55.296 (lent a))  (mul-springs-1 a b compose-spring &)
+    (mul-springs a b compose-spring &)
   ::
-  :: ++  spring-diff
-  ::   |=  [a=spring b=spring]
-  ::   ^-  ~
-  ::   =/  rev  1
-  ::   |-  ^-  ~
-  ::   ?:  =(a b)  ~
-  ::   ?:  |(?=(%null -.a) ?=(%null -.b))
-  ::     ~&  [rev a b]
-  ::     ~
-  ::   ?:  |(&(?=(%axis -.a) ?=(%cons -.b)) &(?=(%axis -.b) ?=(%cons -.a)))
-  ::     ~&  [rev a b]
-  ::     ~
-  ::   ?:  |(?=(%axis -.a) ?=(%axis -.b))
-  ::     ~&  [rev a b]
-  ::     ~
-  ::   ?>  ?=(%cons -.a)
-  ::   ?>  ?=(%cons -.b)
-  ::   ?:  =(p.a p.b)  $(a q.a, b q.b, rev (peg rev 3))
-  ::   $(a p.a, b p.b, rev (peg rev 2))
+  ++  spring-diff
+    |=  [a=spring b=spring]
+    ^-  ~
+    =/  rev  1
+    =-  ~&  >>>  "diff done a: {<`@ux`(mug a)>}, b: {<`@ux`(mug b)>}"  -
+    |-  ^-  ~
+    ?:  =(a b)  ~
+    ?:  |(?=(~ a) ?=(~ b))
+      ~&  [where=rev a=a b=b]
+      ~
+    ?:  |(&(?=(@ a) ?=(^ b)) &(?=(@ b) ?=(^ a)))
+      ~&  [where=rev a=a b=b]
+      ~
+    ?:  |(?=(@ a) ?=(@ b))
+      ~&  [where=rev a=a b=b]
+      ~
+    =+  $(a -.a, b -.b, rev (peg rev 2))
+    $(a +.a, b +.b, rev (peg rev 3))
   ::
   ++  urge
     =|  out=^urge
     |=  [src=source cap=cape tak=(lest @uxsite)]
     :: ~<  %slog.[0 %urge-done]
-    :: ~>  %bout
+    :: ~>  %bout.[0 %urge]
     |-  ^-  ^urge
     ?:  |(?=(%| cap) ?=([~ ~] i.src))  out
     :: ?:  |(?=(%| cap) ?=([[%null ~] ~] i.src))  out
     =.  out
+      :: ~>  %bout.[0 %urge-i-src]
       =;  need=cape  (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
+      =>  [src=src cap=cap ..urge]
+      ~+
       %+  roll  `(list spring)`i.src
       |=  [pin=spring acc=cape]
       ?~  pin  acc
@@ -489,6 +531,7 @@
     ::
     ?~  t.src  out
     ?~  t.tak  !!
+    :: $(t.src t.t.src, tak t.tak, i.src ~>(%bout.[0 %urge-compose] (compose i.src i.t.src)))
     $(t.src t.t.src, tak t.tak, i.src (compose i.src i.t.src))
   ::
   ++  prune-spring

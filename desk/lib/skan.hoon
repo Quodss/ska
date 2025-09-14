@@ -9,7 +9,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-=/  verb  ~
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -394,6 +394,7 @@
     
         [%0 p=@]
       ?:  =(0 p.fol)  [[fol (dunno sub) deff] gen]
+      ?:  =(1 p.fol)  [[fol sub deff] gen]
       :_  gen
       :+  fol
         :-  (~(pull so sock.sub) p.fol)
@@ -576,10 +577,13 @@
       =^  [c-code=nomm * c-flags=flags]                 gen  fol-loop(fol c.fol)
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
+      =/  int=sock  (~(purr so sock.y-prod) sock.n-prod)
       :_  gen
       :+  [%6 c-code y-code n-code]
-        :-  (~(purr so sock.y-prod) sock.n-prod)
-        (uni:source src.y-prod src.n-prod)
+        :-  int
+        =,  source
+        (uni (mask src.y-prod cape.int) (mask src.n-prod cape.int))
+        :: (uni src.y-prod src.n-prod)
       (fold-flag c-flags y-flags n-flags ~)
     ::
         [%7 p=^ q=^]
@@ -1207,7 +1211,7 @@
     ?-    -.site.n
         %memo
       =/  m  ~|  p.site.n  (~(got by idxs.memo.gen) p.site.n)
-      ?>  =(u.f1 fol.m)  
+      ?>  =(u.f1 fol.m)
       code.m
     ::
         %site
