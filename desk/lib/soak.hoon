@@ -358,7 +358,7 @@
     ?:  &(?=(%| cape.one) ?=(%| cape.two))  lost
     =|  acc=(list (pair ?(%2 %3) sock))
     |-  ^-  sock
-    ?.  =(1 axe)
+    ?.  |(=(1 axe) &(=(| cape.one) =(| cape.two)))
       ?-  (cap axe)
           %2  $(one hed, acc [[%2 tel] acc], axe (mas axe))
           %3  $(one tel, acc [[%3 hed] acc], axe (mas axe))
