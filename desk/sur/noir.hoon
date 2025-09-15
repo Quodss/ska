@@ -337,6 +337,18 @@
     %+  cons-spring  $(cap -.cap, pin ?@(pin (peg pin 2) -.pin))
     $(cap +.cap, pin ?@(pin (peg pin 3) +.pin))
   ::
+  ++  mask-spring-cut
+    |=  cap=cape
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  ?=(%| cap)  ~
+    ?:  ?=(%& cap)  pin
+    ?@  pin  pin
+    ~+
+    %+  cons-spring  $(cap -.cap, pin -.pin)
+    $(cap +.cap, pin +.pin)
+  ::
   ++  mask
     |=  [src=source cap=cape]
     ^-  source
@@ -531,7 +543,7 @@
       =/  tel  t.src
       |-  ^-  [(lest (lest spring)) (lest @uxsite)]
       ?~  tel  [~[hed] tak]
-      =.  hed  (turn-spring hed (mask-spring cap))
+      =.  hed  (turn-spring hed (mask-spring-cut cap))
       ?:  ?=([~ ~] hed)  [~[hed] ~[i.tak]]
       =/  site  i.tak
       =^  r=(list (lest spring))  tak

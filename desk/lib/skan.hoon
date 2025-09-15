@@ -609,8 +609,7 @@
       :_  gen
       :+  [%6 c-code y-code n-code]
         :-  int
-        =,  source
-        (uni (mask src.y-prod cape.int) (mask src.n-prod cape.int))
+        uni-src
         :: (uni src.y-prod src.n-prod)
       (fold-flag c-flags y-flags n-flags ~)
     ::
