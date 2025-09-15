@@ -56,6 +56,7 @@
     ?:  =(one cape.know)  know
     ?:  |(?=(%| one) ?=(%| cape.know))  lost:so
     ?:  ?=(%& one)  know
+    ~+
     %-  ~(knit so $(know ~(hed so know), one -.one))
     $(know ~(tel so know), one +.one)
   ::    union two capes

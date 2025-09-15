@@ -9,7 +9,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  ~
+=/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -382,6 +382,15 @@
     =>  !@(verb .(bars.gen (step:p here-site seat bars.gen)) .)
     |-  ^-  [[nomm sock-anno flags] short]
     =*  fol-loop  $
+    :: =/  l  (lent i.src.sub)
+    :: ~?  >>>  (gth l 1.000)  lent-sub-fol+[here-site l]
+    :: =>  +
+    :: =-
+    ::   =/  l  (lent i.src.pro)
+    ::   ~?  >>>  =(l 55.296)  lent-pro-fol+[here-site l (strip-hints fol)]
+    ::   =>  +
+    ::   -
+    ^-  [[nomm pro=sock-anno flags] short]
     ?+    fol  [[[%0 0] (dunno sub) deff] gen]
         [p=^ q=^]
       =^  [l-code=nomm l-prod=sock-anno l-flags=flags]  gen  fol-loop(fol p.fol)
@@ -407,8 +416,16 @@
       :: [fol [&+p.fol [~[null+~] t.src.sub]] deff]
     ::
         [%2 p=^ q=^]
+      :: ~?  =(0xbd here-site)  (lent src.sub)
+      :: ~?  =(0xbd here-site)  (turn src.sub lent)
+      :: ~?  =(0xbd here-site)  q.fol
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
       =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol q.fol)
+      :: =/  max-len  (roll (turn src.f-prod lent) max)
+      :: ~?  (gth max-len 50.000)  weird-fol+(strip-hints q.fol)
+      :: ~?  (gth max-len 50.000)  weird-fol+data.sock.f-prod
+      :: ~?  (gth max-len 50.000)  weird-fol+(turn src.f-prod lent)
+      :: ~?  (gth max-len 50.000)  weird-fol+i.src.f-prod
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
@@ -545,6 +562,10 @@
         ?~  t.src.pro  !!
         :: ~&  (depf q.i.src.pro)
         :: ~&  (depf q.i.t.src.pro)
+        :: =-  =/  l  (lent i.src.pro)
+        ::     ~?  >>>  (gth l 1.000)  compose+l
+        ::     =>  +
+        ::     -
         %=  pro
           t.src  t.t.src.pro
           i.src  (compose:source i.src.pro i.t.src.pro)
@@ -578,6 +599,13 @@
       =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
       =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
       =/  int=sock  (~(purr so sock.y-prod) sock.n-prod)
+      =/  uni-src=source
+        =,  source
+        (uni (mask src.y-prod cape.int) (mask src.n-prod cape.int))
+      ::
+      :: =/  l  (lent i.uni-src)
+      :: ~?  >>>  (gth l 1.000)  uni-src+l
+      :: =>  +
       :_  gen
       :+  [%6 c-code y-code n-code]
         :-  int
@@ -648,6 +676,9 @@
       [[[%12 p-code q-code] (dunno sub) (fold-flag p-flags q-flags ~)] gen]
     ==
   ::
+  :: =/  l  (lent i.src.sub)
+  :: ~?  >>>  (gth l 1.000)  lent-prod+l
+  :: =>  +
   =/  move=(lest spring:source)  i.src.prod
   =/  capture=cape  (prune:source move cape.sock.prod)
   ::
@@ -1468,4 +1499,23 @@
   %~  uni  in
   ?.  (~(has in s) p.n.a)  ~
   [n.a ~ ~]
+::
+++  strip-hints
+  |=  fol=*
+  ^-  *
+  ?+  fol  !!
+    [^ *]                [$(fol -.fol) $(fol +.fol)]
+    [%0 *]               fol
+    [%1 *]               fol
+    [%2 p=* q=*]         [%2 $(fol p.fol) $(fol q.fol)]
+    [%3 p=*]             [%3 $(fol p.fol)]
+    [%4 p=*]             [%4 $(fol p.fol)]
+    [%5 p=* q=*]         [%5 $(fol p.fol) $(fol q.fol)]
+    [%6 p=* q=* r=*]     [%6 $(fol p.fol) $(fol q.fol) $(fol r.fol)]
+    [%7 p=* q=*]         [%7 $(fol p.fol) $(fol q.fol)]
+    [%8 p=* q=*]         [%8 $(fol p.fol) $(fol q.fol)]
+    [%9 p=@ q=*]         [%9 p.fol $(fol q.fol)]
+    [%10 [p=@ q=*] r=*]  [%10 [p.fol $(fol q.fol)] $(fol r.fol)]
+    [%11 * p=*]          $(fol p.fol)
+  ==
 --

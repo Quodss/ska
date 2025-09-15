@@ -375,16 +375,27 @@
     ?:  =(ax 1)  pin
     ?~  pin  ~
     ?@  pin  (peg pin ax)
+    ?.  (gth ax 100)
+      =>  .(pin `spring`pin)
+      |-  ^-  spring
+      ?:  =(ax 1)  pin
+      ?~  pin  ~
+      ?@  pin  (peg pin ax)
+      ?-  (cap ax)
+        %2  $(pin -.pin, ax (mas ax))
+        %3  $(pin +.pin, ax (mas ax))
+      ==
+    ~+
+    =>  .(pin `spring`pin)
+    ?^  res=(mole |.(.*(pin [%0 ax])))  u.res
+    |-  ^-  spring
+    ?:  =(ax 1)  pin
+    ?~  pin  ~
+    ?@  pin  (peg pin ax)
     ?-  (cap ax)
       %2  $(pin -.pin, ax (mas ax))
       %3  $(pin +.pin, ax (mas ax))
     ==
-    :: ?:  ?=(%null -.pin)  null+~
-    :: ?:  ?=(%axis -.pin)  pin(p (peg p.pin ax))
-    :: ?-  (cap ax)
-    ::   %2  $(pin p.pin, ax (mas ax))
-    ::   %3  $(pin q.pin, ax (mas ax))
-    :: ==
   ::
   ++  slot
     |=  [src=source ax=@]
@@ -463,19 +474,33 @@
     ?@  a  ((slot-spring a) b)
     (cons-spring $(a -.a) $(a +.a))
   ::
+  ++  compose-mask-spring
+    |=  cap=cape
+    |=  [a=spring b=spring]
+    ^-  spring
+    ?~  b  ~
+    |-  ^-  spring
+    ?~  a  ~
+    ?:  ?=(%| cap)  ~
+    ~+
+    ?:  ?=(%& cap)
+      ?@  a  ((slot-spring a) b)
+      (cons-spring $(a -.a) $(a +.a))
+    %+  cons-spring
+      $(cap -.cap, a ?@(a (peg a 2) -.a))
+    $(cap +.cap, a ?@(a (peg a 3) +.a))
+  ::
   ++  compose
     |=  [a=(lest spring) b=(lest spring)]
     ^-  (lest spring)
     ~+
-    :: ~&  compose+[(lent a) (lent b)]
-    :: =-  ~&  res-compose+(lent -)  -
-    :: ~?  &(=(102 (lent a)) =(95 (lent b)))  ~:(turn t.a (curr spring-diff i.a))
-    :: ~>  %bout.[0 %compose]
-    ~|  i.a
-    ~|  i.b
-    :: ?:  =(55.296 (lent b))  (mul-springs-1 a b compose-spring &)
-    :: ?:  =(55.296 (lent a))  (mul-springs-1 a b compose-spring &)
     (mul-springs a b compose-spring &)
+  ::
+  ++  compose-mask
+    |=  [a=(lest spring) b=(lest spring) cap=cape]
+    ^-  (lest spring)
+    ~+
+    (mul-springs a b (compose-mask-spring cap) &)
   ::
   ++  spring-diff
     |=  [a=spring b=spring]
@@ -497,42 +522,52 @@
     $(a +.a, b +.b, rev (peg rev 3))
   ::
   ++  urge
-    =|  out=^urge
     |=  [src=source cap=cape tak=(lest @uxsite)]
-    :: ~<  %slog.[0 %urge-done]
-    :: ~>  %bout.[0 %urge]
+    ^-  ^urge
+    ~|  cap
+    ?:  =([~ ~] i.src)  ~
+    =^  comps=(lest (lest spring))  tak
+      =/  hed  i.src
+      =/  tel  t.src
+      |-  ^-  [(lest (lest spring)) (lest @uxsite)]
+      ?~  tel  [~[hed] tak]
+      =.  hed  (turn-spring hed (mask-spring cap))
+      ?:  ?=([~ ~] hed)  [~[hed] ~[i.tak]]
+      =/  site  i.tak
+      =^  r=(list (lest spring))  tak
+        =/  comp  (compose hed i.tel)
+        $(hed comp, tel t.tel, tak ?~(t.tak !! t.tak))
+      ::
+      [[hed r] [site tak]]
+    ::
+    =|  out=^urge
     |-  ^-  ^urge
-    ?:  |(?=(%| cap) ?=([~ ~] i.src))  out
-    :: ?:  |(?=(%| cap) ?=([[%null ~] ~] i.src))  out
-    =.  out
-      :: ~>  %bout.[0 %urge-i-src]
-      =;  need=cape  (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
-      =>  [src=src cap=cap ..urge]
+    ?:  |(?=(%| cap) ?=([~ ~] i.comps))  out
+    =/  need=cape
+      =>  [comps=comps cap=cap ..urge]
       ~+
-      %+  roll  `(list spring)`i.src
+      %+  roll  `(list spring)`i.comps
       |=  [pin=spring acc=cape]
       ?~  pin  acc
-      :: ?:  ?=(%null -.pin)  acc
       %-  ~(uni ca acc)
       =>  [pin=`spring`pin cap=`cape`cap ..ca]
       |-  ^-  cape
       ?~  pin  |
-      :: ?:  ?=(%null -.pin)  |
       ?:  ?=(%| cap)  |
       ~+
       ?@  pin  (~(pat ca cap) pin)
-      :: ?:  ?=(%axis -.pin)  (~(pat ca cap) p.pin)
       =/  [p=cape q=cape]  ?@(cap [& &] cap)
       =/  l  $(pin -.pin, cap p)
       =/  r  $(pin +.pin, cap q)
-      :: =/  l  $(pin p.pin, cap p)
-      :: =/  r  $(pin q.pin, cap q)
       (~(uni ca l) r)
     ::
-    ?~  t.src  out
+    ?~  t.comps  out
     ?~  t.tak  !!
-    :: $(t.src t.t.src, tak t.tak, i.src ~>(%bout.[0 %urge-compose] (compose i.src i.t.src)))
-    $(t.src t.t.src, tak t.tak, i.src (compose i.src i.t.src))
+    %=  $
+      tak    t.tak
+      out    (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
+      comps  t.comps
+    ==
   ::
   ++  prune-spring
     |=  [pin=spring cap=cape]
@@ -548,6 +583,8 @@
     =/  r  $(pin +.pin, cap q)
     :: =/  l  $(pin p.pin, cap p)
     :: =/  r  $(pin q.pin, cap q)
+    =>  [l=l r=r ..ca]
+    ~+
     (~(uni ca l) r)
   ::
   ++  prune
@@ -587,18 +624,24 @@
 ++  jib
   |*  [m=(map) k=* v=(trap *) g=$-(* *)]
   ^+  m
-  =-  ?^(- u (~(put by m) k $:v))
-  |-  ^-  (unit _m)
-  ?~  m  ~
-  ?:  =(k p.n.m)
-    `m(q.n (g q.n.m))
-  ?:  (gor k p.n.m)
-    =/  l  $(m l.m)
-    ?~  l  ~
-    `m(l u.l)
-  =/  r  $(m r.m)
-  ?~  r  ~
-  `m(r u.r)
+  ?~  v-old=(~(get by m) k)
+    (~(put by m) k $:v)
+  (~(put by m) k (g u.v-old))
+  ::
+  :: |*  [m=(map) k=* v=(trap *) g=$-(* *)]
+  :: ^+  m
+  :: =-  ?^(- u (~(put by m) k $:v))
+  :: |-  ^-  (unit _m)
+  :: ?~  m  ~
+  :: ?:  =(k p.n.m)
+  ::   `m(q.n (g q.n.m))
+  :: ?:  (gor k p.n.m)
+  ::   =/  l  $(m l.m)
+  ::   ?~  l  ~
+  ::   `m(l u.l)
+  :: =/  r  $(m r.m)
+  :: ?~  r  ~
+  :: `m(r u.r)
 ::
 ::  lazily concatenated list
 ::
@@ -777,5 +820,15 @@
   |=  n=*
   ^-  @
   ?@  n  0
+  ~+
   +((max $(n -.n) $(n +.n)))
+::
+++  count-leaves
+  |=  n=*
+  ^-  @
+  =-  ~(wyt in -)
+  |-  ^-  (set @)
+  ?@  n  [n ~ ~]
+  ~+
+  (~(uni in $(n -.n)) $(n +.n))
 --
