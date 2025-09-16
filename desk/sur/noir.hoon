@@ -387,16 +387,16 @@
     ?:  =(ax 1)  pin
     ?~  pin  ~
     ?@  pin  (peg pin ax)
-    ?.  (gth ax 100)
-      =>  .(pin `spring`pin)
-      |-  ^-  spring
-      ?:  =(ax 1)  pin
-      ?~  pin  ~
-      ?@  pin  (peg pin ax)
-      ?-  (cap ax)
-        %2  $(pin -.pin, ax (mas ax))
-        %3  $(pin +.pin, ax (mas ax))
-      ==
+    :: ?.  (gth ax 100)
+    ::   =>  .(pin `spring`pin)
+    ::   |-  ^-  spring
+    ::   ?:  =(ax 1)  pin
+    ::   ?~  pin  ~
+    ::   ?@  pin  (peg pin ax)
+    ::   ?-  (cap ax)
+    ::     %2  $(pin -.pin, ax (mas ax))
+    ::     %3  $(pin +.pin, ax (mas ax))
+    ::   ==
     ~+
     =>  .(pin `spring`pin)
     ?^  res=(mole |.(.*(pin [%0 ax])))  u.res
