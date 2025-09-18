@@ -33,6 +33,7 @@
   ++  int
     |=  two=cape
     ^-  cape
+    ?:  =(one two)  one
     ?-  one
         %|  %|
         %&  two
@@ -52,6 +53,7 @@
   ++  app
     |=  know=sock
     ^-  sock
+    ?:  =(one cape.know)  know
     ?:  |(?=(%| one) ?=(%| cape.know))  lost:so
     ?:  ?=(%& one)  know
     %-  ~(knit so $(know ~(hed so know), one -.one))
@@ -62,6 +64,7 @@
   ++  uni
     |=  two=cape
     ^-  cape
+    ?:  =(one two)  one
     ?-  one
         %&  &
         %|  two
@@ -106,6 +109,7 @@
   ++  pat
     |=  axe=@
     ?<  =(0 axe)
+    ?:  ?=(%| one)  |
     |-  ^-  cape
     ?:  =(1 axe)  one
     ?-  (cap axe)
@@ -228,7 +232,10 @@
           ?.  ?=(@ cape.one)  ~|  badone+one  !!
           ?.  cape.one  &
           ?&(?=(@ cape.two) cape.two =(data.one data.two))
-        ?@  data.two  ?>(?=(@ cape.two) |)
+        ?@  data.two
+          ?>  ?=(@ cape.two)
+          ?<  ?=(%| cape.one)
+          |
         =/  [lope=cape rope=cape]
           ?:(?=(^ cape.one) cape.one [cape.one cape.one])
         ::
@@ -292,6 +299,7 @@
   ++  purr
     |=  two=sock
     |-  ^-  sock
+    ?:  =(one two)  one
     ?:  |(?=(%| cape.one) ?=(%| cape.two))  lost
     ?:  |(?=(^ cape.one) ?=(^ cape.two))
       %-  %~  knit  so
@@ -309,16 +317,18 @@
   ::  axis
   ++  pack
     |=  two=sock
+    ^-  sock
+    !.
     |-  ^-  sock
+    ?:  =(one two)  one
     ?:  ?=(%| cape.one)  two
     ?:  ?=(%| cape.two)  one
-    ?:  ?=(%& cape.one)  ?>(=(one two) one)
-    ?:  ?=(%& cape.two)  ?>(=(one two) two)
-    ?>  ?=(^ data.one)
-    ?>  ?=(^ data.two)
+    ::  unequal known data
+    ::
+    ?:  &(?=(%& cape.one) ?=(%& cape.two))  !!
     %-  %~  knit  so
-        (pack(one [-.cape.one -.data.one]) [-.cape.two -.data.two]) 
-    (pack(one [+.cape.one +.data.one]) [+.cape.two +.data.two])
+        (pack(one hed) hed(one two)) 
+    (pack(one tel) tel(one two))
   ::    edit
   ::
   ::  update mask and data at an axis into a sock
