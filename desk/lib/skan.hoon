@@ -1398,8 +1398,6 @@
       [%12 *]
     ~|  %no-scry  !!
   ==
-
-
 ::  unit of work: subject, formula, if comes from jetted core dissasembly:
 ::    cons frame? jet registration coordinate
 ::
@@ -1641,7 +1639,9 @@
     :-  ~
     ?-  -.site.n
       %memo  [less-code fol]:(~(got by idxs.memo.lon) p.site.n)
-      %site  [less fol]:(~(got by sites.arms.lon) p.site.n)
+      %site  ?:  =(0x0 q.p.site.n)
+               [less fol]:(~(got by doors.arms.lon) p.p.site.n)
+             [less fol]:(~(got by sites.arms.lon) p.site.n)
     ==
   ==
 --

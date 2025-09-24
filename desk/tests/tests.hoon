@@ -112,6 +112,20 @@
   ::
   (expect-eq-nock-need sub fol)
 ::
+++  test-ack
+  =/  cor
+    =>  ..dec:hoot
+    |=  [m=@ n=@]
+    ^-  @
+    ?:  =(0 m)  +(n)
+    ?:  =(0 n)  $(m (dec m), n 1)
+    $(m (dec m), n $(n (dec n)))
+  ::
+  =/  fol
+    =>  cor  !=
+    (. 3 4)
+  ::
+  (expect-eq-nock-need cor fol)
 :: ++  test-ream
 ::   =/  cor  hoot
 ::   =/  fol
