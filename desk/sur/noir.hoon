@@ -315,13 +315,19 @@
     [pin-c acc]
   ::
   ++  turn-spring
-    |=  [a=(lest spring) g=$-(spring spring)]
+    |=  [a=(lest spring) g=$-(spring spring) who=@tas]
     ^-  (lest spring)
     =>  .(a `(list spring)`a)
     =-  ?~(- !! -)
     %+  roll  a
     |=  [pin-a=spring acc=(list spring)]
     =/  pin-b  (g pin-a)
+    :: =-  ?:  =(%slot who)
+    ::       ~>  %bout.[0 %add-turn-slot]
+    ::       ~&  pin-b
+    ::       $
+    ::     $
+    :: |.
     ?:  (lien acc |=(spring (compat +< pin-b)))  acc
     [pin-b acc]
   ::
@@ -353,7 +359,7 @@
     |=  [src=source cap=cape]
     ^-  source
     :_  t.src
-    (turn-spring i.src (mask-spring cap))
+    (turn-spring i.src (mask-spring cap) %mask)
   ::
   ++  cons-spring
     |=  [a=spring b=spring]
@@ -363,12 +369,71 @@
     :: ?:  &(?=(%null -.a) ?=(%null -.b))  null+~
     :: [%cons a b]
   ::
+  ++  push-spring
+    |=  axe=@
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    |-  ^-  spring
+    ?:  =(1 axe)  pin
+    ?-  (cap axe)
+      %2  [$(axe (mas axe)) ~]
+      %3  [~ $(axe (mas axe))]
+    ==
+  ::
+  ++  push-spring-hed
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    [pin ~]
+  ::
+  ++  push-spring-tel
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    [~ pin]
+  ::
+  ++  hole-spring
+    |=  ax=@
+    |=  pin=spring
+    ^-  spring
+    ?:  =(1 ax)  ~
+    ?:  =(~ pin)  ~
+    =|  acc=(list (pair ?(%2 %3) spring))
+    |-  ^-  spring
+    ?.  |(=(1 ax) =(~ pin))
+      ?-  (cap ax)
+        %2  $(pin (hed pin), acc [2+(tel pin) acc], ax (mas ax))
+        %3  $(pin (tel pin), acc [3+(hed pin) acc], ax (mas ax))
+      ==
+    =/  out=spring  ~
+    |-  ^-  spring
+    ?~  acc  out
+    ?-  p.i.acc
+      %2  $(out (cons-spring out q.i.acc), acc t.acc)
+      %3  $(out (cons-spring q.i.acc out), acc t.acc)
+    ==
+  ::
   ++  cons
     |=  [a=source b=source]
     ^-  source
     :_  t.a
     :: ~<  %slog.[0 %cons-done]
-    (mul-springs i.a i.b cons-spring |)
+    =/  len-a  (lent i.a)
+    =/  len-b  (lent i.b)
+    =/  out=(lest spring)  (mul-springs i.a i.b cons-spring |)
+    =/  len-out  (lent out)
+    ?:  (lte len-out (add len-a len-b))  out
+    ?:  (lte len-out 9)  out
+    =-  ?~(- ~[~] -)
+    ?:  =(~[~] i.a)
+      ?:  =(~[~] i.b)  ~
+      (turn i.b push-spring-tel)
+    ?:  =(~[~] i.b)
+      (turn i.a push-spring-hed)
+    %+  weld
+      (turn i.a push-spring-hed)
+    (turn i.b push-spring-tel)
   ::
   ++  uni
     |=  [a=source b=source]
@@ -397,7 +462,7 @@
     ::     %2  $(pin -.pin, ax (mas ax))
     ::     %3  $(pin +.pin, ax (mas ax))
     ::   ==
-    ~+
+    :: ~+
     =>  .(pin `spring`pin)
     ?^  res=(mole |.(.*(pin [%0 ax])))  u.res
     |-  ^-  spring
@@ -413,7 +478,7 @@
     |=  [src=source ax=@]
     ^-  source
     :_  t.src
-    (turn-spring i.src (slot-spring ax))
+    (turn-spring i.src (slot-spring ax) %slot)
   ::
   ++  edit-spring
     |=  ax=@
@@ -543,7 +608,7 @@
       =/  tel  t.src
       |-  ^-  [(lest (lest spring)) (lest @uxsite)]
       ?~  tel  [~[hed] tak]
-      =.  hed  (turn-spring hed (mask-spring-cut cap))
+      =.  hed  (turn-spring hed (mask-spring-cut cap) %urge)
       ?:  ?=([~ ~] hed)  [~[hed] ~[i.tak]]
       =/  site  i.tak
       =^  r=(list (lest spring))  tak
