@@ -244,7 +244,7 @@
   |$  [m]
   %+  each  m
   $%  [%loop p=@uxsite q=@uxsite]  ::  parent-kid
-      [%melo p=@uxsite]            ::  entry of a cycle with wrong melo hit
+      [%melo p=@uxsite q=@uxsite]  ::  old-new  XX excessive backtracking in +mint, alternative approach?
   ==
 ::
 +$  err-state  (error short)
@@ -366,7 +366,7 @@
             redo-loop(block-loop.gen (~(put ju block-loop.gen) p.p.res q.p.res))
           ::
               %melo
-            redo-loop(block-melo.gen (~(put in block-melo.gen) p.p.res))
+            redo-loop(block-melo.gen (~(put ju block-melo.gen) p.p.res q.p.res))
           ::
     ==    ==
   ^-  (error [[sock-anno flags info] short])
@@ -416,16 +416,8 @@
       :: [fol [&+p.fol [~[null+~] t.src.sub]] deff]
     ::
         [%2 p=^ q=^]
-      :: ~?  =(0xbd here-site)  (lent src.sub)
-      :: ~?  =(0xbd here-site)  (turn src.sub lent)
-      :: ~?  =(0xbd here-site)  q.fol
       =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
       =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol q.fol)
-      :: =/  max-len  (roll (turn src.f-prod lent) max)
-      :: ~?  (gth max-len 50.000)  weird-fol+(strip-hints q.fol)
-      :: ~?  (gth max-len 50.000)  weird-fol+data.sock.f-prod
-      :: ~?  (gth max-len 50.000)  weird-fol+(turn src.f-prod lent)
-      :: ~?  (gth max-len 50.000)  weird-fol+i.src.f-prod
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
@@ -451,7 +443,7 @@
               ==
             .
         :_  gen.u.m
-        :+  [%2 s-code f-code memo+idx.u.m]
+        :+  [%2 s-code f-code ?:(dire.u.m memo+idx.u.m site+from.u.m)]
           pro.u.m
         (fold-flag s-flags f-flags ~)
       ::  fallible checks or analyse through: allocate new evalsite
@@ -540,7 +532,6 @@
       =^  [pro=sock-anno =flags =info]  gen
         %=  eval-loop
           sub          s-prod(src [~[1] src.s-prod])
-          :: sub          s-prod(src [~[axis+1] src.s-prod])
           fol          fol-new
           here-site    there-site
           seat         ?~(trace ~ `i.trace)
@@ -709,8 +700,7 @@
     ::  memoize globally or save locally
     ::
     =^  =info  gen
-      ?.  direct.flags
-        [~ gen(locals [[here-site less-code fol code] locals.gen])]
+      =?  locals.gen  !direct.flags  [[here-site less-code fol code] locals.gen]
       =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
       =/  mask=cape  (~(uni ca want-site) capture)
       =/  less-memo  (~(app ca mask) sock.sub)
@@ -721,12 +711,12 @@
       ::   !!
       =/  =meme
         :^  idx  here-arm.gen  here-site
-        [fol code less-memo less-code sock.prod move area.gen]
+        [fol code less-memo less-code sock.prod move area.gen direct.flags]
       ::
       =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
       =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
       =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
-      [`idx gen]
+      [?.(direct.flags ~ `idx) gen]
     ::
     =?  want.gen  ?=(^ mayb-site)  (~(del by want.gen) here-site)
     [info gen]
@@ -828,7 +818,7 @@
       (uni-urge:source want.gen (urge:source src.new-sub old-want new-tak))
     ::
     =/  old-less  (~(app ca old-want) sock.old-sub)
-    ?.  (~(huge so old-less) sock.new-sub)  |+[%melo entry.pop]
+    ?.  (~(huge so old-less) sock.new-sub)  |+[%melo old new]
     &+gen
   ::
   ?:  ?=(%| -.err-gen)  err-gen
@@ -863,10 +853,9 @@
     ::   ~|  cape.less-code
     ::   ~|  want-site
     ::   !!
-    ?.  direct.flags
-      [~ gen(locals [[here-site less-code fol code] locals.gen])]
+    =?  locals.gen  !direct.flags  [[here-site less-code fol code] locals.gen]
     =^  idx  memo-gen.gen  [memo-gen.gen +(memo-gen.gen)]
-    =.  memo-loop-entry.gen  [[here-site idx] memo-loop-entry.gen]
+    =?  memo-loop-entry.gen  direct.flags  [[here-site idx] memo-loop-entry.gen]
     =/  memo-mask=cape  (~(uni ca want-site) capture)
     =/  memo-less  (~(app ca memo-mask) sock.sub)
     :: ?.  =(memo-mask cape.memo-less)
@@ -876,12 +865,12 @@
     ::   !!
     =/  meme
       :^  idx  here-arm.gen  here-site
-      [fol code memo-less less-code sock.prod move area.gen]
+      [fol code memo-less less-code sock.prod move area.gen direct.flags]
     ::
     =.  fols.memo.gen  (~(add ja fols.memo.gen) fol meme)
     =.  idxs.memo.gen  (~(put by idxs.memo.gen) idx meme)
     =.  sits.memo.gen  (~(put by sits.memo.gen) [here-arm.gen here-site] meme)
-    [`idx gen]
+    [?.(direct.flags ~ `idx) gen]
   ::
   =.  set.pop  (dive set.pop here-site)
   =.  gen
@@ -947,6 +936,7 @@
           from=[@uvarm @uxsite]
           area=(unit spot)
           pro=sock-anno
+          dire=?
           gen=short
       ==
   =/  meme  (~(get ja fols.memo.gen) fol)
@@ -961,7 +951,7 @@
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =/  src  src.sub(i (compose:source map.i i.src.sub))
-  `[idx.i [arm.i site.i] area.i [prod.i src] gen]
+  `[idx.i [arm.i site.i] area.i [prod.i src] dire.i gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
@@ -980,7 +970,7 @@
     |-  ^-  res
     ?~  mele  ~
     =*  i  q.i.mele
-    :: ?:  (~(has ju block-melo.gen) site.i site)  $(mele t.mele)
+    ?:  (~(has ju block-melo.gen) site.i site)  $(mele t.mele)
     =/  want-site=cape  (~(gut by want.gen) site.i |)
     =/  mask=cape  (~(uni ca want-site) capture.i)
     =/  less  (~(app ca mask) sock.sub.i)
@@ -996,7 +986,6 @@
   ?:  =(0 depth.u.res)
     ?~  cycles.gen.out.u.res  !!
     =*  i   i.cycles.gen.out.u.res
-    ?:  (~(has in block-melo.gen) entry.i)  ~
     =.  hits.i     (dive hits.i hit.u.res)
     =.  set.i      (dive set.i site)
     =.  latch.i    site
@@ -1007,7 +996,6 @@
   =/  rest  ,.+.cycles.gen
   |-
   ?:  =(0 depth)
-    ?:  (~(has in block-melo.gen) entry.new-cycle)  ~
     =.  hits.new-cycle     (dive hits.new-cycle hit.u.res)
     =.  set.new-cycle      (dive set.new-cycle site)
     =.  latch.new-cycle    site
@@ -1233,6 +1221,7 @@
     ?~  f1  ~
     ?~  site.n
       ~&  %indirect
+      ~>  %bout.[0 %indirect]
       :: !!
       (mole |.(.*(u.s1 u.f1)))
     =;  new=nomm
@@ -1379,6 +1368,24 @@
     ~?  >  ?=(~ break.i.queu)  [%enter here-arm]
     =/  gen=short  (can [sub fol]:i.queu)
     ~&  >  [%done here-arm]
+    =.  fols.memo.gen
+      %-  ~(rep by fols.memo.gen)
+      |=  [[k=* v=(list meme)] acc=_`_fols.memo.gen`~]
+      =/  l  (skim v |=(meme dire))
+      ?:  =(~ l)  acc
+      (~(put by acc) k l)
+    ::
+    =.  idxs.memo.gen
+      %-  ~(rep by idxs.memo.gen)
+      |=  [[k=@uxmemo v=meme] acc=_`_idxs.memo.gen`~]
+      ?.  dire.v  acc
+      (~(put by acc) k v)
+    ::
+    =.  sits.memo.gen
+      %-  ~(rep by sits.memo.gen)
+      |=  [[k=[@uvarm @uxsite] v=meme] acc=_`_sits.memo.gen`~]
+      ?.  dire.v  acc
+      (~(put by acc) k v)
     ::  propagate updates
     ::
     =/  new  ((dif-ju core.jets.gen) core.jets.lon)

@@ -234,7 +234,10 @@
           ?.  ?=(@ cape.one)  ~|  badone+one  !!
           ?.  cape.one  &
           ?&(?=(@ cape.two) cape.two =(data.one data.two))
-        ?@  data.two  ?>(?=(@ cape.two) |)
+        ?@  data.two
+          ?>  ?=(@ cape.two)
+          ?<  ?=(%| cape.one)
+          |
         =/  [lope=cape rope=cape]
           ?:(?=(^ cape.one) cape.one [cape.one cape.one])
         ::
@@ -316,17 +319,18 @@
   ::  axis
   ++  pack
     |=  two=sock
+    ^-  sock
+    !.
     |-  ^-  sock
     ?:  =(one two)  one
     ?:  ?=(%| cape.one)  two
     ?:  ?=(%| cape.two)  one
-    ?:  ?=(%& cape.one)  !!  ::  ?>(=(one two) one)
-    ?:  ?=(%& cape.two)  !!  ::  ?>(=(one two) two)
-    ?>  ?=(^ data.one)
-    ?>  ?=(^ data.two)
+    ::  unequal known data
+    ::
+    ?:  &(?=(%& cape.one) ?=(%& cape.two))  !!
     %-  %~  knit  so
-        (pack(one [-.cape.one -.data.one]) [-.cape.two -.data.two]) 
-    (pack(one [+.cape.one +.data.one]) [+.cape.two +.data.two])
+        (pack(one hed) hed(one two)) 
+    (pack(one tel) tel(one two))
   ::    edit
   ::
   ::  update mask and data at an axis into a sock

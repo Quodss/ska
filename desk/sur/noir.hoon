@@ -83,6 +83,7 @@
       prod=sock
       map=(lest spring:source)
       area=(unit spot)
+      dire=?  ::  always yes in long
   ==
 ::  meloization table entry
 ::
@@ -208,7 +209,7 @@
       want=urge
       bars=@ud
       block-loop=blocklist
-      block-melo=(set @uxsite)  ::  set of entries of cycles where we don't meloize
+      block-melo=blocklist
       area=(unit spot)
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)

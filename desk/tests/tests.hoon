@@ -9,7 +9,7 @@
 ::
 |%
 ++  test-once-dabl
-  =/  cor
+  =/  sub
     =>  ~
     !:
     |.
@@ -19,10 +19,10 @@
     [((slam once) 1) ((slam dabl) 1)]
   ::
   =/  fol  [9 2 0 1]
-  (expect-eq-nock-need cor fol)
+  (expect-eq-nock-need sub fol)
 ::
 ++  test-dec
-  =/  cor
+  =/  sub
     !:
     =>  ~
     |.
@@ -36,26 +36,26 @@
     $(c +(c))
   ::
   =/  fol  [9 2 0 1]
-  (expect-eq-nock-need cor fol)
+  (expect-eq-nock-need sub fol)
 :: ::
 ++  test-scow-playpen
-  =/  cor  ..scow:playpen
+  =/  sub  ..scow:playpen
   =/  fol
-    =>  cor  !=
+    =>  sub  !=
     (scow %ud 5)
   ::
-  (expect-eq-nock-need cor fol)
+  (expect-eq-nock-need sub fol)
 ::
 ++  test-scow-hoot
-  =/  cor  ..scow:hoot
+  =/  sub  ..scow:hoot
   =/  fol
-    =>  cor  !=
+    =>  sub  !=
     (scow %ud 5)
   ::
-  (expect-eq-nock-need cor fol)
+  (expect-eq-nock-need sub fol)
 :: ::
 ++  test-parser
-  =/  cor
+  =/  sub
     =>  ..ride:hoot
     |%
     ++  test  (expr-parse "33+3+4\\\0a/1+1+2")
@@ -73,25 +73,33 @@
     --
   ::
   =/  fol
-    =>  cor  !=
+    =>  sub  !=
     test
   ::
-  (expect-eq-nock-need cor fol)
+  (expect-eq-nock-need sub fol)
 ::
 ++  test-muk
-  =/  cor  playpen
+  =/  sub  playpen
   =/  fol
-    =>  cor  !=
+    =>  sub  !=
     (muk 0xcafe.babe 1 42)  ::  XX 42 42 42 is a jet mismatch
   ::
-  (expect-eq-nock-need cor fol)
-::  XX ~150 seconds to analyze, ~1000 s to run Nomm
+  (expect-eq-nock-need sub fol)
+::  XX ~60 seconds to analyze, ~1000 s to run Nomm
 ::
 :: ++  test-ream
-::   =/  cor  hoot
+::   =/  sub  hoot
 ::   =/  fol
-::     =>  cor  !=
+::     =>  sub  !=
 ::     (ream '|=(* +<)')
 ::   ::
-::   (expect-eq-nock-need cor fol)
+::   (expect-eq-nock-need sub fol)
+::
+++  test-mint
+  =/  sub  hoot
+  =/  fol
+    =>  sub  !=
+    (~(mint ut [%atom %$ ~]) %noun [%dtls $+1])
+  ::
+  (expect-eq-nock-need sub fol)
 --
