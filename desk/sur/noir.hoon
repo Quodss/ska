@@ -83,7 +83,6 @@
       prod=sock
       map=(lest spring:source)
       area=(unit spot)
-      dire=?  ::  always yes in long
   ==
 ::  meloization table entry
 ::
@@ -147,6 +146,15 @@
       kid-tak=(lest @uxsite)
   ==
 ::
++$  hit
+  $:  new-tak=(lest @uxsite)
+      new=@uxsite
+      new-sub=sock-anno
+      fol-block=*
+      less-block=sock
+      =meal
+  ==
+::
 +$  cycle
   $:  entry=@uxsite
       latch=@uxsite
@@ -154,7 +162,7 @@
       set=(deep @uxsite)
       process=(deep @uxsite)
       melo=(jar * meal)
-      hits=(deep [new-tak=(lest @uxsite) new=@uxsite new-sub=sock-anno =meal])
+      hits=(deep hit)
   ==
 ::
 +$  blocklist  (jug @uxsite @uxsite)
@@ -209,7 +217,8 @@
       want=urge
       bars=@ud
       block-loop=blocklist
-      block-melo=blocklist
+      :: block-melo=blocklist
+      nope-melo=(jar * sock)
       area=(unit spot)
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
