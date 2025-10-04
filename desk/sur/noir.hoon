@@ -95,7 +95,7 @@
       less-memo=sock
       less-code=sock
       prod=sock
-      map=(unit spring:source)
+      map=(lest spring:source)
       area=(unit spot)
   ==
 ::  meloization table entry
@@ -106,7 +106,7 @@
       capture=cape
       sub=sock-anno
       prod=sock
-      map=(unit spring:source)
+      map=(lest spring:source)
       area=(unit spot)
   ==
 ::  cross-arm analysis global state
@@ -157,7 +157,24 @@
       fols=(jar * [less=sock code=nomm-1])
   ==
 ::
-+$  frond  (deep [par=@uxsite kid=@uxsite par-sub=sock kid-sub=sock-anno])
++$  frond
+  %-  deep
+  $:  par=@uxsite
+      kid=@uxsite
+      par-sub=sock
+      kid-sub=sock-anno
+      kid-tak=(lest @uxsite)
+  ==
+::
++$  hit
+  $:  new-tak=(lest @uxsite)
+      new=@uxsite
+      new-sub=sock-anno
+      fol-block=*
+      less-block=sock
+      =meal
+  ==
+::
 +$  cycle
   $:  entry=@uxsite
       latch=@uxsite
@@ -165,7 +182,7 @@
       set=(deep @uxsite)
       process=(deep @uxsite)
       melo=(jar * meal)
-      hits=(deep [new=@uxsite new-sub=sock-anno =meal])
+      hits=(deep hit)
   ==
 ::
 +$  blocklist  (jug @uxsite @uxsite)
@@ -220,7 +237,7 @@
       want=urge
       bars=@ud
       block-loop=blocklist
-      block-melo=(set @uxsite)  ::  set of entries of cycles where we don't meloize
+      nope-melo=(jar * sock)
       area=(unit spot)
       locals=(list [site=@uxsite less=sock fol=* =nomm])
       memo-entry=(unit @uxmemo)
@@ -240,432 +257,307 @@
 ::
 ++  source
   |^  source
+  ::  spring: unit of subject transformation
+  ::    ~ : fresh noun
+  ::    @ : comes from axis
+  ::    ^ : cons
+  ::    normalization: [~ ~] -> ~
+  ::    doesn't normalize [2n 2n+1]
   ::
-  +$  source  (tree (list peon))
-  +$  spring  (tree (list @axis))
-  +$  peon    [ax=@axis sit=@uxsite]
-::
-  ++  check
-    !@  check-noir
-      |=  [a=source s=(set @uxsite)]
-      ^-  ?
-      ?~  a  &
-      ?&  (levy n.a |=(peon (~(has in s) sit)))
-          $(a l.a)
-          $(a r.a)
+  ::  source: full provenance info
+  ::    p: call stack
+  ::    q: all possible unique transformations from the subject of a call to
+  ::    a use site of the noun (next call site for all but last, current
+  ::    use site in the formula by last), per call.
+  ::
+  +$  spring  *
+  :: +$  spring
+  ::   $~  [%null ~]
+  ::   $%  [%null ~]
+  ::       [%axis p=@]
+  ::       [%cons p=spring q=spring]
+  ::   ==
+  ::
+  +$  source  (lest (lest spring))
+  ::
+  ++  compat
+    =/  max-depf  10
+    |=  [old=spring new=spring]
+    !.
+    ::  old contains new? yes is a guarantee, no is a guess
+    ::
+    =/  depf  0
+    |-  ^-  ?
+    ?:  =(old new)  &
+    ?~  old  |
+    ?~  new  &
+    ?:  =(max-depf depf)
+      :: ~&   >>>  %depf-exceeded
+      |
+    =.  depf  +(depf)
+    ?@  old
+      ?@  new  |
+      ?&  $(old (peg old 2), new -.new)
+          $(old (peg old 3), new +.new)
       ==
-    _&
+    ?@  new
+      ?&  $(old -.old, new (peg new 2))
+          $(old +.old, new (peg new 3))
+      ==
+    ?&  $(old -.old, new -.new)
+        $(old +.old, new +.new)
+    ==
   ::
-  ++  sorted
-    !@  check-noir
-      |=  src=source
-      ^-  source
-      ?~  src  ~
-      ?.  =(n.src (sort n.src |=([a=peon b=peon] (gth sit.a sit.b))))
-        ~|  n.src
-        !!
-      :+  n.src
-        $(src l.src)
-      $(src r.src)
-    same
+  ++  mul-springs
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring) check=?]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a, b `(list spring)`b)
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    %+  roll  b
+    |=  [pin-b=spring acc=_acc]
+    =/  pin-c  (g pin-a pin-b)
+    ?:  &(check (lien (scag 10 acc) |=(spring (compat +< pin-c))))  acc
+    [pin-c acc]
   ::
-  ++  norm
-    |=  a=source
+  ++  mul-springs-1
+    |=  [a=(lest spring) b=(lest spring) g=$-([spring spring] spring) check=?]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a, b `(list spring)`b)
+    ~&  mul-springs+[(lent a) (lent b)]
+    =-  ~&  out+(lent -)  -
+    =-  ~?  =((lent -) 1)  out+-  -
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    %+  roll  b
+    |=  [pin-b=spring acc=_acc]
+    =/  pin-c
+      :: ~>  %bout.[0 %mul-springs-cb]
+      (g pin-a pin-b)
+    ::
+    :: ~>  %bout.[0 %mul-springs-append]
+    ?:  &(check (lien (scag 10 acc) |=(spring (compat +< pin-c))))  acc
+    [pin-c acc]
+  ::
+  ++  turn-spring
+    |=  [a=(lest spring) g=$-(spring spring) who=@tas]
+    ^-  (lest spring)
+    =>  .(a `(list spring)`a)
+    =-  ?~(- !! -)
+    %+  roll  a
+    |=  [pin-a=spring acc=(list spring)]
+    =/  pin-b  (g pin-a)
+    :: =-  ?:  =(%slot who)
+    ::       ~>  %bout.[0 %add-turn-slot]
+    ::       ~&  pin-b
+    ::       $
+    ::     $
+    :: |.
+    ?:  (lien acc |=(spring (compat +< pin-b)))  acc
+    [pin-b acc]
+  ::
+  ++  mask-spring
+    |=  cap=cape
+    |=  pin=spring
+    ^-  spring
+    |-  ^-  spring
+    ?~  pin  ~
+    ?:  ?=(%| cap)  ~
+    ?:  ?=(%& cap)  pin
+    ~+
+    %+  cons-spring  $(cap -.cap, pin ?@(pin (peg pin 2) -.pin))
+    $(cap +.cap, pin ?@(pin (peg pin 3) +.pin))
+  ::
+  ++  mask-spring-cut
+    |=  cap=cape
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?:  ?=(%| cap)  ~
+    ?:  ?=(%& cap)  pin
+    ?@  pin  pin
+    ~+
+    %+  cons-spring  $(cap -.cap, pin -.pin)
+    $(cap +.cap, pin +.pin)
+  ::
+  ++  mask
+    |=  [src=source cap=cape]
     ^-  source
-    ?~  a  ~
-    =.  l.a  ~=(l.a $(a l.a))
-    =.  r.a  ~=(r.a $(a r.a))
-    ?:  =([~ ~ ~] a)  ~
-    a
+    :_  t.src
+    (turn-spring i.src (mask-spring cap) %mask)
+  ::
+  ++  cons-spring
+    |=  [a=spring b=spring]
+    ^-  spring
+    ?:  &(?=(~ a) ?=(~ b))  ~
+    [a b]
+    :: ?:  &(?=(%null -.a) ?=(%null -.b))  null+~
+    :: [%cons a b]
+  ::
+  ++  push-spring
+    |=  axe=@
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    |-  ^-  spring
+    ?:  =(1 axe)  pin
+    ?-  (cap axe)
+      %2  [$(axe (mas axe)) ~]
+      %3  [~ $(axe (mas axe))]
+    ==
+  ::
+  ++  push-spring-hed
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    [pin ~]
+  ::
+  ++  push-spring-tel
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    [~ pin]
+  ::
+  ++  hole-spring
+    |=  ax=@
+    |=  pin=spring
+    ^-  spring
+    ?:  =(1 ax)  ~
+    ?:  =(~ pin)  ~
+    =|  acc=(list (pair ?(%2 %3) spring))
+    |-  ^-  spring
+    ?.  |(=(1 ax) =(~ pin))
+      ?-  (cap ax)
+        %2  $(pin (hed pin), acc [2+(tel pin) acc], ax (mas ax))
+        %3  $(pin (tel pin), acc [3+(hed pin) acc], ax (mas ax))
+      ==
+    =/  out=spring  ~
+    |-  ^-  spring
+    ?~  acc  out
+    ?-  p.i.acc
+      %2  $(out (cons-spring out q.i.acc), acc t.acc)
+      %3  $(out (cons-spring q.i.acc out), acc t.acc)
+    ==
   ::
   ++  cons
     |=  [a=source b=source]
     ^-  source
-    ?:  &(=(~ a) =(~ b))  ~
-    [~ a b]
-  ::
-  ::
-  ++  formulaic
-    |=  n=*
-    ^-  ?
-    ?=(^ ((soft nock) n))
-  ::
-  ++  uni-int-smart
-    |=  [a=[=sock src=source] b=[=sock src=source]]
-    ^-  [sock source]
-    ?:  |(?=(%| cape.sock.a) ?=(%| cape.sock.b))  [|+~ ~]
-    ?:  ?&  ?=(@ cape.sock.a)
-            ?=(@ cape.sock.b)
-            =(data.sock.a data.sock.b)
-            (formulaic data.sock.a)
-        ==
-      [sock.a (uni src.a src.b)]
-    ?:  &(?=(~ src.a) ?=(~ src.b))  [(~(purr so sock.a) sock.b) ~]
-    =/  l=[=sock src=source]
-      %=  $
-        sock.a  ~(hed so sock.a)
-        sock.b  ~(hed so sock.b)
-        src.a   (hed src.a)
-        src.b   (hed src.b)
-      ==
-    ::
-    =/  r=[=sock src=source]
-      %=  $
-        sock.a  ~(tel so sock.a)
-        sock.b  ~(tel so sock.b)
-        src.a   (tel src.a)
-        src.b   (tel src.b)
-      ==
-    ::
-    [(~(knit so sock.l) sock.r) (cons src.l src.r)]
+    :_  t.a
+    :: ~<  %slog.[0 %cons-done]
+    =/  len-a  (lent i.a)
+    =/  len-b  (lent i.b)
+    =/  out=(lest spring)  (mul-springs i.a i.b cons-spring |)
+    =/  len-out  (lent out)
+    ?:  (lte len-out (add len-a len-b))  out
+    ?:  (lte len-out 9)  out
+    =-  ?~(- ~[~] -)
+    ?:  =(~[~] i.a)
+      ?:  =(~[~] i.b)  ~
+      (turn i.b push-spring-tel)
+    ?:  =(~[~] i.b)
+      (turn i.a push-spring-hed)
+    %+  weld
+      (turn i.a push-spring-hed)
+    (turn i.b push-spring-tel)
   ::
   ++  uni
-    !@  check-noir
-      |=  [a=source b=source]
-      =*  sam  +<
-      :: ~&  >>  %comp
-      =/  a
-        :: ~>  %bout
-        (uni1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (uni2 sam)
-      ::
-      ?>  (eq a b)
-      a
-    uni2
-  ::
-  ++  uni1
     |=  [a=source b=source]
     ^-  source
-    ?~  a  b
-    ?~  b  a
-    ::  debug check; shouldn't be necessary if source is normalized?
-    ::
-    =-  !@  check-noir
-          ?:  =([~ ~ ~] -)  ~&(>>> %uni-norm ~)  -
-        -
-    =;  n
-      [n $(a l.a, b l.b) $(a r.a, b r.b)]
-    %+  sort  ~(tap in (~(gas in (~(gas in *(set peon)) n.a)) n.b))
-    |=  [a=peon b=peon]
-    (gth sit.a sit.b)
+    :_  t.a
+    =-  ?~(- !! -)
+    %+  roll  `(list spring)`i.a
+    |=  [pin=spring acc=_`(list spring)`i.b]
+    ?:  (lien `(list spring)`i.b |=(spring (compat +< pin)))  acc
+    [pin acc]
   ::
-  ++  uni2
-    |=  [a=source b=source]
-    ^-  source
-    ?~  a  b
-    ?~  b  a
-    =;  n=(list peon)
-      [n $(a l.a, b l.b) $(a r.a, b r.b)]
-    =/  ns=[a=(list peon) b=(list peon)]  [n.a n.b]
-    |-  ^-  (list peon)
-    ?:  =(~ a.ns)  b.ns
-    ?:  =(~ b.ns)  a.ns
-    =^  head  ns
-      =*  i-a  i.-.a.ns
-      =*  i-b  i.-.b.ns
-      ?:  =(i-a i-b)  [i-a +.a.ns +.b.ns]
-      ?:  (gth sit.i-a sit.i-b)  [i-a +.a.ns b.ns]
-      [i-b a.ns +.b.ns]
-    ::
-    [head $]
-  ::
-  ++  trim
-    !@  check-noir
-      |=  [src=source cap=cape]
-      ^-  source
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (trim1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (trim2 sam)
-      ::
-      ?.  (eq a b)
-        ~|  a
-        ~|  b
-        ~|  [src cap]
-        !!
-      a
-    trim1
-  ::
-  ++  trim1
-    |=  [src=source cap=cape]
-    ^-  source
-    %-  sorted
-    ?~  src  ~
-    ?:  ?=(%| cap)  ~
-    ?:  ?=(%& cap)  src
-    (cons $(src (hed src), cap -.cap) $(src (tel src), cap +.cap))
-  ::
-  ++  trim2
-    |=  [src=source cap=cape]
-    ^-  source
-    ::
-    =;  out
-      =/  out1  (norm out)
-      ?.  =(out out1)
-        ~|  %mask-norm
-        ~|  [src cap]
-        ~|  out1
-        ~|  out
-        !!
-      out1
-    ::  shortcut: nothing to mask
-    ::
-    ?:  =(~ src)  ~
-    ::  accumulator to be pushed to a %& cape
-    ::
-    =|  acc=(list (pair @ (list peon)))
-    =/  rev  1
-    |-  ^-  source
-    ?^  cap
-      ::  shortcut: nothing to push, nothing to mask
-      ::
-      ?:  &(=(~ acc) =(~ src))  ~
-      =+  [n l r]=?~(src [~ ~ ~] src)
-      =?  acc  !=(~ n)  [[rev n] acc]
-      %+  cons
-        $(rev (peg rev 2), src l, cap -.cap)
-      $(rev (peg rev 3), src r, cap +.cap)
-    ?:  ?=(%| cap)  ~
-    ::  nothing to push
-    ::
-    ?:  =(~ acc)  src
-    ::  push to node list
-    ::
-    =/  [n=(list peon) lr=[source source]]  ?~(src [~ ~ ~] src)
-    =-  ?:  =([~ ~ ~] -)  ~  -
-    :_  lr
-    %+  roll  acc
-    |:  [[ax=*@ l=*(list peon)] out=n]
-    ^+  n
-    ?:  =(~ l)  out
-    =/  rel  (hub ax rev)
-    %+  reel  l
-    |:  [p=*peon out=out]
-    [p(ax (peg ax.p rel)) out]
+  ++  slot-spring
+    |=  ax=@
+    |=  pin=spring
+    ^-  spring
+    ?:  =(ax 1)  pin
+    ?~  pin  ~
+    ?@  pin  (peg pin ax)
+    :: ?.  (gth ax 100)
+    ::   =>  .(pin `spring`pin)
+    ::   |-  ^-  spring
+    ::   ?:  =(ax 1)  pin
+    ::   ?~  pin  ~
+    ::   ?@  pin  (peg pin ax)
+    ::   ?-  (cap ax)
+    ::     %2  $(pin -.pin, ax (mas ax))
+    ::     %3  $(pin +.pin, ax (mas ax))
+    ::   ==
+    :: ~+
+    =>  .(pin `spring`pin)
+    ?^  res=(mole |.(.*(pin [%0 ax])))  u.res
+    |-  ^-  spring
+    ?:  =(ax 1)  pin
+    ?~  pin  ~
+    ?@  pin  (peg pin ax)
+    ?-  (cap ax)
+      %2  $(pin -.pin, ax (mas ax))
+      %3  $(pin +.pin, ax (mas ax))
+    ==
   ::
   ++  slot
     |=  [src=source ax=@]
     ^-  source
-    ~|  [src ax]
-    %-  sorted
-    ?:  =(1 ax)  src
-    =/  rev  1
-    =|  acc=(list (pair @ (list peon)))
-    |-  ^-  source
-    =+  [n l r]=?@(src [~ ~ ~] src)
-    ?.  =(1 ax)
-      =?  acc  !=(~ n)  [[rev n] acc]
-      ?-  (cap ax)
-        %2  $(ax (mas ax), src l, rev (peg rev 2))
-        %3  $(ax (mas ax), src r, rev (peg rev 3))
-      ==
-    ::  rev == ax input
-    ::
-    =.  n
-      %+  roll  acc
-      |:  [[ax=*@ l=*(list peon)] out=n]
-      ^+  n
-      =/  rel  (hub ax rev)
-      %+  reel  l
-      |:  [p=*peon out=out]
-      [p(ax (peg ax.p rel)) out]
-    ::
-    ?:  &(?=(~ n) ?=(~ l) ?=(~ r))  ~
-    [n l r]
-  ::  equality of provenance trees modulo permutation of peons in lists
+    :_  t.src
+    (turn-spring i.src (slot-spring ax) %slot)
   ::
-  ++  eq
-    =/  rev  1
-    |=  [a=source b=source]
-    ^-  ?
-    ?:  |(&(?=(~ a) ?=(^ b)) &(?=(~ b) ?=(^ a)))
-      ~&  >>>  rev  |
-    ?~  a  &
-    ?>  ?=(^ b)
-    =/  n-a-check  (sort n.a |=([a=peon b=peon] (gth sit.a sit.b)))
-    =/  n-b-check  (sort n.b |=([a=peon b=peon] (gth sit.a sit.b)))
-    =/  a-check=?
-      |-  ^-  ?
-      ?~  n-a-check  &
-      ?~  n.a  !!
-      ?.  =(sit.i.n.a sit.i.n-a-check)  |
-      $(n.a t.n.a, n-a-check t.n-a-check)
-    ::
-    ?.  a-check
-      ~|  n.a
-      !!
-    =/  b-check=?
-      |-  ^-  ?
-      ?~  n-b-check  &
-      ?~  n.b  !!
-      ?.  =(sit.i.n.b sit.i.n-b-check)  |
-      $(n.b t.n.b, n-b-check t.n-b-check)
-    ::
-    ?.  b-check
-      ~|  n.b
-      !!
-    ?:  !=((silt n.a) (silt n.b))
-      ~&  >>>  rev  |
-    ?&  
-        $(a l.a, b l.b, rev (peg rev 2))
-        $(a r.a, b r.b, rev (peg rev 3))
-    ==
-  ::
-  ++  edit
-    !@  check-noir
-      |=  [rec=source ax=@ don=source]
-      ^-  source
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (edit1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (edit2 sam)  ::  faster?
-      ::
-      =/  c
-        :: ~>  %bout
-        (edit3 sam)  :: even faster?
-      ::
-      ?.  (eq a b)
-        ~|  sam
-        ~|  [a b]
-        !!
-      ?.  (eq b c)
-        ~|  sam
-        ~|  [b c]
-        !!
-      a
-    edit3
-  ::
-  ++  edit1
-    |=  [rec=source ax=@ don=source]
-    ^-  source
+  ++  edit-spring
+    |=  ax=@
+    |=  [rec=spring don=spring]
+    ^-  spring
     ?:  =(ax 1)  don
-    =/  rev  1
-    =|  acc=(list (pair @ (list peon)))
-    |-  ^-  source
-    ?:  =(1 ax)  don
-    =+  [n l r]=?~(rec [~ ~ ~] rec)
-    =?  acc  !=(~ n)  [[rev n] acc]
-    %-  cons
-    ^-  [source source]
-    ?-    (cap ax)
-        %2
-      :-  $(rec l, ax (mas ax), rev (peg rev 2))
-      =.  rev  (peg rev 3)
-      =+  [n-r lr-r]=?~(r [~ ~ ~] r)
-      =.  n-r
-        %+  roll  acc
-        |:  [[ax=*@ l=*(list peon)] out=n-r]
-        ^+  n-r
-        =/  rel  (hub ax rev)
-        %+  reel  l
-        |:  [p=*peon out=out]
-        [p(ax (peg ax.p rel)) out]
-      ::
-      ?:  =([~ ~ ~] [n-r lr-r])  ~
-      [n-r lr-r]
-    ::
-        %3
-      :_  $(rec r, ax (mas ax), rev (peg rev 3))
-      =.  rev  (peg rev 2)
-      =+  [n-l lr-l]=?~(l [~ ~ ~] l)
-      =.  n-l
-        %+  roll  acc
-        |:  [[ax=*@ l=*(list peon)] out=n-l]
-        ^+  n-l
-        =/  rel  (hub ax rev)
-        %+  reel  l
-        |:  [p=*peon out=out]
-        [p(ax (peg ax.p rel)) out]
-      ::
-      ?:  =([~ ~ ~] [n-l lr-l])  ~
-      [n-l lr-l]
-    ==
-  ::
-  ++  edit2
-    |=  [rec=source ax=@ don=source]
-    ^-  source
-    ?:  =(ax 1)  don
-    ::  shortcut: nothing to put, nowhere to put
-    ::
-    ?:  &(=(~ rec) =(~ don))  ~
-    =+  [n l r]=?~(rec [~ ~ ~] rec)
-    =+  l1=[n l r]=?~(l [~ ~ ~] l)
-    =+  r1=[n l r]=?~(r [~ ~ ~] r)
-    =.  n.l1
-      %+  reel  `(list peon)`n
-      |:  [p=*peon out=n.l1]
-      [p(ax (peg ax.p 2)) out]
-    ::
-    =.  n.r1
-      %+  reel  `(list peon)`n
-      |:  [p=*peon out=n.r1]
-      [p(ax (peg ax.p 3)) out]
-    ::
-    ?-    (cap ax)
-        %2
-      %+  cons
-        $(rec ?:(=([~ ~ ~] l1) ~ l1), ax (mas ax))
-      ?:(=([~ ~ ~] r1) ~ r1)
-    ::
-        %3
-      %+  cons
-        ?:(=([~ ~ ~] l1) ~ l1)
-      $(rec ?:(=([~ ~ ~] r1) ~ r1), ax (mas ax))
-    ==
-  ::
-  ++  edit3
-    |=  [rec=source ax=@ don=source]
-    ^-  source
-    %-  sorted
-    ?:  =(ax 1)  don
-    =|  tack=(list [c=?(%2 %3) p=source])
-    |-  ^-  source
+    ?:  &(?=(~ rec) ?=(~ don))  ~
+    =|  tack=(list [c=?(%2 %3) p=spring])
+    |-  ^-  spring
     ?.  =(1 ax)
       ?-  (cap ax)
         %2  $(ax (mas ax), rec (hed rec), tack [2+(tel rec) tack])
         %3  $(ax (mas ax), rec (tel rec), tack [3+(hed rec) tack])
       ==
-    |-  ^-  source
+    |-  ^-  spring
     ?~  tack  don
     ?-  c.i.tack
-      %2  $(don (cons don p.i.tack), tack t.tack)
-      %3  $(don (cons p.i.tack don), tack t.tack)
+      %2  $(don (cons-spring don p.i.tack), tack t.tack)
+      %3  $(don (cons-spring p.i.tack don), tack t.tack)
     ==
   ::
-  ++  hed
-    |=  src=source
+  ++  edit
+    |=  [rec=source ax=@ don=source]
     ^-  source
-    %-  sorted
-    ?~  src  ~
-    ?:  =(~ n.src)  l.src
-    =+  [n lr]=?~(l.src [~ ~ ~] l.src)
-    :_  lr
-    %+  reel  n.src
-    |:  [p=*peon out=n]
-    [p(ax (peg ax.p 2)) out]
+    :: ~&  [(lent i.rec) (lent i.don) ax=ax]
+    :: ~?  =(55.296 (lent i.don))  [i.rec ax]
+    :: ~?  =(55.296 (lent i.don))  (spring-diff &1.i.don &3.i.don)
+    :: ~?  =(55.296 (lent i.don))  (spring-diff &2.i.don &3.i.don)
+    :: ~>  %bout.[0 %edit]
+    :_  t.rec
+    =/  check=?  (lth (mul (lent rec) (lent don)) 100)
+    (mul-springs i.rec i.don (edit-spring ax) check)
+  ::
+  ++  hed
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?@  pin  (peg pin 2)
+    -.pin
+    :: ?:  ?=(%null -.pin)  null+~
+    :: ?:  ?=(%axis -.pin)  pin(p (peg p.pin 2))
+    :: p.pin
   ::
   ++  tel
-    |=  src=source
-    ^-  source
-    %-  sorted
-    ?~  src  ~
-    ?:  =(~ n.src)  r.src
-    =+  [n lr]=?~(r.src [~ ~ ~] r.src)
-    :_  lr
-    %+  reel  n.src
-    |:  [p=*peon out=n]
-    [p(ax (peg ax.p 3)) out]
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?@  pin  (peg pin 3)
+    +.pin
+    :: ?:  ?=(%null -.pin)  null+~
+    :: ?:  ?=(%axis -.pin)  pin(p (peg p.pin 3))
+    :: q.pin
   ::  unify urges
   ::
   ++  uni-urge
@@ -676,188 +568,132 @@
     |=  [@uxsite a=cape b=cape]
     (~(uni ca a) b)
   ::
+  ++  compose-spring
+    |=  [a=spring b=spring]
+    ^-  spring
+    ?~  b  ~
+    |-  ^-  spring
+    ?~  a  ~
+    ~+
+    ?@  a  ((slot-spring a) b)
+    (cons-spring $(a -.a) $(a +.a))
+  ::
+  ++  compose-mask-spring
+    |=  cap=cape
+    |=  [a=spring b=spring]
+    ^-  spring
+    ?~  b  ~
+    |-  ^-  spring
+    ?~  a  ~
+    ?:  ?=(%| cap)  ~
+    ~+
+    ?:  ?=(%& cap)
+      ?@  a  ((slot-spring a) b)
+      (cons-spring $(a -.a) $(a +.a))
+    %+  cons-spring
+      $(cap -.cap, a ?@(a (peg a 2) -.a))
+    $(cap +.cap, a ?@(a (peg a 3) +.a))
+  ::
+  ++  compose
+    |=  [a=(lest spring) b=(lest spring)]
+    ^-  (lest spring)
+    ~+
+    (mul-springs a b compose-spring &)
+  ::
+  ++  compose-mask
+    |=  [a=(lest spring) b=(lest spring) cap=cape]
+    ^-  (lest spring)
+    ~+
+    (mul-springs a b (compose-mask-spring cap) &)
+  ::
+  ++  spring-diff
+    |=  [a=spring b=spring]
+    ^-  ~
+    =/  rev  1
+    =-  ~&  >>>  "diff done a: {<`@ux`(mug a)>}, b: {<`@ux`(mug b)>}"  -
+    |-  ^-  ~
+    ?:  =(a b)  ~
+    ?:  |(?=(~ a) ?=(~ b))
+      ~&  [where=rev a=a b=b]
+      ~
+    ?:  |(&(?=(@ a) ?=(^ b)) &(?=(@ b) ?=(^ a)))
+      ~&  [where=rev a=a b=b]
+      ~
+    ?:  |(?=(@ a) ?=(@ b))
+      ~&  [where=rev a=a b=b]
+      ~
+    =+  $(a -.a, b -.b, rev (peg rev 2))
+    $(a +.a, b +.b, rev (peg rev 3))
+  ::
   ++  urge
-    !@  check-noir
-      |=  [src=source cap=cape]
-      ^-  ^urge
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (urge1 sam)
-      ::
-      =/  b
-        :: ~>  %bout
-        (urge2 sam)
-      ::
-      ?>  =(a b)
-      a
-    urge2
-  ::
-  ++  urge1
-    |=  [src=source cap=cape]
+    |=  [src=source cap=cape tak=(lest @uxsite)]
     ^-  ^urge
-    ?:  |(?=(%| cap) ?=(~ src))  ~
-    =/  [p=cape q=cape]  ?@(cap [& &] cap)
-    ;:  uni-urge
-      $(src l.src, cap p)
-      $(src r.src, cap q)
+    ~|  cap
+    ?:  =([~ ~] i.src)  ~
+    =^  comps=(lest (lest spring))  tak
+      =/  hed  i.src
+      =/  tel  t.src
+      |-  ^-  [(lest (lest spring)) (lest @uxsite)]
+      ?~  tel  [~[hed] tak]
+      =.  hed  (turn-spring hed (mask-spring-cut cap) %urge)
+      ?:  ?=([~ ~] hed)  [~[hed] ~[i.tak]]
+      =/  site  i.tak
+      =^  r=(list (lest spring))  tak
+        =/  comp  (compose hed i.tel)
+        $(hed comp, tel t.tel, tak ?~(t.tak !! t.tak))
+      ::
+      [[hed r] [site tak]]
     ::
-      %+  roll  n.src
-      |=  [peon m=^urge]
-      =/  need=cape  (~(pat ca cap) ax)
-      (jib m sit _need |=(c=cape (~(uni ca c) need)))
-    ==
-  ::
-  ++  urge2
-    |=  [src=source cap=cape]
-    ^-  ^urge
-    =|  tel=(list (pair source cape))
     =|  out=^urge
     |-  ^-  ^urge
-    ?:  |(?=(%| cap) ?=(~ src))
-      ?~  tel  out
-      $(src p.i.tel, cap q.i.tel, tel t.tel)
-    =/  [p=cape q=cape]  ?@(cap [& &] cap)
+    ?:  |(?=(%| cap) ?=([~ ~] i.comps))  out
+    =/  need=cape
+      =>  [comps=comps cap=cap ..urge]
+      ~+
+      %+  roll  `(list spring)`i.comps
+      |=  [pin=spring acc=cape]
+      ?~  pin  acc
+      %-  ~(uni ca acc)
+      =>  [pin=`spring`pin cap=`cape`cap ..ca]
+      |-  ^-  cape
+      ?~  pin  |
+      ?:  ?=(%| cap)  |
+      ~+
+      ?@  pin  (~(pat ca cap) pin)
+      =/  [p=cape q=cape]  ?@(cap [& &] cap)
+      =/  l  $(pin -.pin, cap p)
+      =/  r  $(pin +.pin, cap q)
+      (~(uni ca l) r)
+    ::
+    ?~  t.comps  out
+    ?~  t.tak  !!
     %=  $
-      tel  [[r.src q] tel]
-      src  l.src
-      cap  p
-      out  %+  uni-urge  out
-           %+  roll  n.src
-           |=  [peon m=^urge]
-           =/  need=cape  (~(pat ca cap) ax)
-           (jib m sit _need |=(c=cape (~(uni ca c) need)))
+      tak    t.tak
+      out    (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
+      comps  t.comps
     ==
   ::
-  ++  route
-    |=  [src=source here=@uxsite]
-    ^-  spring
-    ?~  src  ~
-    =/  n  (murn n.src |=(peon ?.(=(sit here) ~ `ax)))
-    =/  l  $(src l.src)
-    =/  r  $(src r.src)
-    ?:  &(=(~ n) =(~ l) =(~ r))  ~
-    [n l r]
-  ::
-  ++  relo
-    !@  check-noir
-      |=  [src=source pin=spring]
-      ^-  source
-      =*  sam  +<
-      =/  a
-        :: ~>  %bout
-        (relo1 sam)
-      =/  b
-        :: ~>  %bout
-        (relo2 sam)
-      ?>  (eq a b)
-      a
-    relo2
-  ::
-  ++  relo1
-    |=  [src=source pin=spring]
-    ^-  source
-    %-  sorted
-    ?~  pin  ~
-    =/  recur  (cons $(pin l.pin) $(pin r.pin))
-    %+  reel  n.pin
-    |:  [ax=*@ out=recur]
-    (uni (slot src ax) out)
-  ::
-  ++  relo2
-    =|  out=source
-    |=  [src=source pin=spring]
-    |-  ^-  source
-    ?~  pin  out
-    ?~  src  out
-    =.  out
-      :: ~&  %unis
-      :: ~>  %bout
-      ?:  =(~ n.pin)  out
-      %+  reel  n.pin
-      |:  [ax=*@ out=out]
-      (uni (slot src ax) out)
-    ::
-    ?~  out  (cons $(pin l.pin) $(pin r.pin))
-    =/  l  $(pin l.pin, out l.out)
-    =/  r  $(pin r.pin, out r.out)
-    ?:  &(=(~ n.out) =(~ l) =(~ r))  ~
-    [n.out l r]
+  ++  prune-spring
+    |=  [pin=spring cap=cape]
+    ^-  cape
+    ?:  ?=(%| cap)  |
+    ?~  pin  |
+    ~+
+    ?@  pin  (~(pat ca cap) pin)
+    =/  [p=cape q=cape]  ?@(cap [& &] cap)
+    =/  l  $(pin -.pin, cap p)
+    =/  r  $(pin +.pin, cap q)
+    =>  [l=l r=r ..ca]
+    ~+
+    (~(uni ca l) r)
   ::
   ++  prune
-    |=  [src=source site=@uxsite cap=cape]
-    ^-  (unit [[cape spring] source])
-    :: =-  ?~(- ~&(>> %bail-gas ~) `[[c.acc p] s]:u)
-    =<  ?~  .  ~  =>  u  `[[c.acc p] s]
-    =/  acc=[c=cape g=@]  [| 10.000]
-    |-  ^-  (unit [[p=spring s=source] acc=[c=cape g=@]])
-    ?:  =(0 g.acc)  ~
-    ?~  src  `[[~ ~] acc]
-    ?:  ?=(%| cap)  `[[~ ~] acc]
-    =>  ^-  [n-pin=(unit (list @)) _.]
-      =*  dot  .
-      ^-  [n-pin=(unit (list @)) _dot]
-      =|  n-pin=(list @)
-      |-
-      ?:  =(0 g.acc)  [~ dot]
-      ?~  n.src  [`n-pin dot]
-      ?.  =(site sit.i.n.src)  [`n-pin dot]
-      %=  $
-        n.src    t.n.src
-        n-pin    [ax.i.n.src n-pin]
-        c.acc  (~(uni ca c.acc) (~(pat ca cap) ax.i.n.src))
-        g.acc  (dec g.acc)
-      ==
-    ::
-    ?~  n-pin  ~
-    =/  [l-cap=cape r-cap=cape]  ?@(cap [& &] cap)
-    =/  l-out  $(src l.src, cap l-cap, g.acc (dec g.acc))
-    ?~  l-out  ~
-    =^  [l-pin=spring l-src=source]  acc  u.l-out
-    =/  r-out  $(src r.src, cap r-cap, g.acc (dec g.acc))
-    ?~  r-out  ~
-    =^  [r-pin=spring r-src=source]  acc  u.r-out
-    :-  ~
-    :_  acc
-    :-  ?:(&(=(~ u.n-pin) =(~ l-pin) =(~ r-pin)) ~ [u.n-pin l-pin r-pin])
-    ?:(&(=(~ n.src) =(~ l-src) =(~ r-src)) ~ [n.src l-src r-src])
-    ::
-    :: =/  c-out=cape  |
-    :: |=  [src=source site=@uxsite cap=cape]
-    :: ^-  [[cape spring] source]
-    :: ~&  %prune
-    :: ~>  %bout
-    :: =<  [[cap pin] src]
-    :: |-  ^-  [[pin=spring src=source] cap=cape]
-    :: ?~  src  [[~ ~] c-out]
-    :: =^  [n-src=(list peon) n-pin=(list @)]  c-out
-    ::   =|  l-out=(list @)
-    ::   |-  ^-  [[(list peon) (list @)] cape]
-    ::   ?~  n.src  [[~ l-out] c-out]
-    ::   ?.  =(site sit.i.n.src)  [[n.src l-out] c-out]
-    ::   %=  $
-    ::     n.src  t.n.src
-    ::     l-out  [ax.i.n.src l-out]
-    ::     c-out  ?:  ?=(%| cap)  c-out
-    ::            (~(uni ca c-out) (~(pat ca cap) ax.i.n.src))
-    ::   ==
-    :: ::
-    :: =/  [l-cap=cape r-cap=cape]  ?@(cap [cap cap] cap)
-    :: =^  [l-pin=spring l-src=source]  c-out  $(src l.src, cap l-cap)
-    :: =^  [r-pin=spring r-src=source]  c-out  $(src r.src, cap r-cap)
-    :: :_  c-out
-    :: :-  ?:(&(=(~ n-pin) =(~ l-pin) =(~ r-pin)) ~ [n-pin l-pin r-pin])
-    :: ?:(&(=(~ n-src) =(~ l-src) =(~ r-src)) ~ [n-src l-src r-src])
-  ::  XX use the fact that n.src is sorted?
+    |=  [src=(list spring) cap=cape]
+    ^-  cape
+    %+  roll  src
+    |=  [pin=spring acc=_`cape`|]
+    (~(uni ca acc) (prune-spring pin cap))
   ::
-  :: ++  contains
-  ::   |=  [src=source site=@uxsite]
-  ::   ^-  ?
-  ::   ?~  src  |
-  ::   ?|  (lien n.src |=(peon =(site sit)))
-  ::       $(src l.src)
-  ::       $(src r.src)
-  ::   ==
   --
 ::
 ::    axis after axis
@@ -888,18 +724,24 @@
 ++  jib
   |*  [m=(map) k=* v=(trap *) g=$-(* *)]
   ^+  m
-  =-  ?^(- u (~(put by m) k $:v))
-  |-  ^-  (unit _m)
-  ?~  m  ~
-  ?:  =(k p.n.m)
-    `m(q.n (g q.n.m))
-  ?:  (gor k p.n.m)
-    =/  l  $(m l.m)
-    ?~  l  ~
-    `m(l u.l)
-  =/  r  $(m r.m)
-  ?~  r  ~
-  `m(r u.r)
+  ?~  v-old=(~(get by m) k)
+    (~(put by m) k $:v)
+  (~(put by m) k (g u.v-old))
+  ::
+  :: |*  [m=(map) k=* v=(trap *) g=$-(* *)]
+  :: ^+  m
+  :: =-  ?^(- u (~(put by m) k $:v))
+  :: |-  ^-  (unit _m)
+  :: ?~  m  ~
+  :: ?:  =(k p.n.m)
+  ::   `m(q.n (g q.n.m))
+  :: ?:  (gor k p.n.m)
+  ::   =/  l  $(m l.m)
+  ::   ?~  l  ~
+  ::   `m(l u.l)
+  :: =/  r  $(m r.m)
+  :: ?~  r  ~
+  :: `m(r u.r)
 ::
 ::  lazily concatenated list
 ::
@@ -1074,4 +916,19 @@
   --
 ::
 +$  sock-anno  [=sock src=source]
+++  depf
+  |=  n=*
+  ^-  @
+  ?@  n  0
+  ~+
+  +((max $(n -.n) $(n +.n)))
+::
+++  count-leaves
+  |=  n=*
+  ^-  @
+  =-  ~(wyt in -)
+  |-  ^-  (set @)
+  ?@  n  [n ~ ~]
+  ~+
+  (~(uni in $(n -.n)) $(n +.n))
 --

@@ -56,6 +56,7 @@
     ?:  =(one cape.know)  know
     ?:  |(?=(%| one) ?=(%| cape.know))  lost:so
     ?:  ?=(%& one)  know
+    ~+
     %-  ~(knit so $(know ~(hed so know), one -.one))
     $(know ~(tel so know), one +.one)
   ::    union two capes
@@ -179,7 +180,8 @@
   ++  norm
     |-  ^-  sock
     =-  =>  !@  norm:check-soak
-              ~?  >>>  !=(- one)  %norm-so  .
+              :: ~?  >>>  !=(- one)  %norm-so  .
+              ?:  !=(- one)  ~|  [- one]  !!  .
             .
         -
     ?-  cape.one
@@ -307,7 +309,7 @@
       $(one tel, two tel(one two))
     |-  ^-  sock
     ?:  =(data.one data.two)  one
-    ?.  &(?=(^ data.one) ?=(^ data.two))  lost
+    ?:  |(?=(@ data.one) ?=(@ data.two))  lost
     %-  %~  knit  so
         $(data.one -.data.one, data.two -.data.two)
     $(data.one +.data.one, data.two +.data.two)
@@ -363,7 +365,7 @@
     ?:  &(?=(%| cape.one) ?=(%| cape.two))  lost
     =|  acc=(list (pair ?(%2 %3) sock))
     |-  ^-  sock
-    ?.  =(1 axe)
+    ?.  |(=(1 axe) &(=(| cape.one) =(| cape.two)))
       ?-  (cap axe)
           %2  $(one hed, acc [[%2 tel] acc], axe (mas axe))
           %3  $(one tel, acc [[%3 hed] acc], axe (mas axe))
