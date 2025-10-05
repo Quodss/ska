@@ -366,7 +366,7 @@
     ?~  pin  ~
     ?:  ?=(%| cap)  ~
     ?:  ?=(%& cap)  pin
-    ~+
+    ~+  ::  helps with backtracking?
     %+  cons-spring  $(cap -.cap, pin ?@(pin (peg pin 2) -.pin))
     $(cap +.cap, pin ?@(pin (peg pin 3) +.pin))
   ::
@@ -378,7 +378,7 @@
     ?:  ?=(%| cap)  ~
     ?:  ?=(%& cap)  pin
     ?@  pin  pin
-    ~+
+    ~+  ::  helps with backtracking?
     %+  cons-spring  $(cap -.cap, pin -.pin)
     $(cap +.cap, pin +.pin)
   ::
@@ -479,23 +479,6 @@
     ?:  =(ax 1)  pin
     ?~  pin  ~
     ?@  pin  (peg pin ax)
-    :: ?.  (gth ax 100)
-    ::   =>  .(pin `spring`pin)
-    ::   |-  ^-  spring
-    ::   ?:  =(ax 1)  pin
-    ::   ?~  pin  ~
-    ::   ?@  pin  (peg pin ax)
-    ::   ?-  (cap ax)
-    ::     %2  $(pin -.pin, ax (mas ax))
-    ::     %3  $(pin +.pin, ax (mas ax))
-    ::   ==
-    :: ~+
-    =>  .(pin `spring`pin)
-    ?^  res=(mole |.(.*(pin [%0 ax])))  u.res
-    |-  ^-  spring
-    ?:  =(ax 1)  pin
-    ?~  pin  ~
-    ?@  pin  (peg pin ax)
     ?-  (cap ax)
       %2  $(pin -.pin, ax (mas ax))
       %3  $(pin +.pin, ax (mas ax))
@@ -574,37 +557,15 @@
     ?~  b  ~
     |-  ^-  spring
     ?~  a  ~
-    ~+
+    ~+  ::  load-bearing
     ?@  a  ((slot-spring a) b)
     (cons-spring $(a -.a) $(a +.a))
-  ::
-  ++  compose-mask-spring
-    |=  cap=cape
-    |=  [a=spring b=spring]
-    ^-  spring
-    ?~  b  ~
-    |-  ^-  spring
-    ?~  a  ~
-    ?:  ?=(%| cap)  ~
-    ~+
-    ?:  ?=(%& cap)
-      ?@  a  ((slot-spring a) b)
-      (cons-spring $(a -.a) $(a +.a))
-    %+  cons-spring
-      $(cap -.cap, a ?@(a (peg a 2) -.a))
-    $(cap +.cap, a ?@(a (peg a 3) +.a))
   ::
   ++  compose
     |=  [a=(lest spring) b=(lest spring)]
     ^-  (lest spring)
-    ~+
+    ~+  ::  helps with backtracking?
     (mul-springs a b compose-spring &)
-  ::
-  ++  compose-mask
-    |=  [a=(lest spring) b=(lest spring) cap=cape]
-    ^-  (lest spring)
-    ~+
-    (mul-springs a b (compose-mask-spring cap) &)
   ::
   ++  spring-diff
     |=  [a=spring b=spring]
@@ -649,7 +610,7 @@
     ?:  |(?=(%| cap) ?=([~ ~] i.comps))  out
     =/  need=cape
       =>  [comps=comps cap=cap ..urge]
-      ~+
+      ~+  ::  helps with backtracking?
       %+  roll  `(list spring)`i.comps
       |=  [pin=spring acc=cape]
       ?~  pin  acc
@@ -658,7 +619,6 @@
       |-  ^-  cape
       ?~  pin  |
       ?:  ?=(%| cap)  |
-      ~+
       ?@  pin  (~(pat ca cap) pin)
       =/  [p=cape q=cape]  ?@(cap [& &] cap)
       =/  l  $(pin -.pin, cap p)
@@ -678,13 +638,11 @@
     ^-  cape
     ?:  ?=(%| cap)  |
     ?~  pin  |
-    ~+
+    ~+  ::  load-bearing
     ?@  pin  (~(pat ca cap) pin)
     =/  [p=cape q=cape]  ?@(cap [& &] cap)
     =/  l  $(pin -.pin, cap p)
     =/  r  $(pin +.pin, cap q)
-    =>  [l=l r=r ..ca]
-    ~+
     (~(uni ca l) r)
   ::
   ++  prune
@@ -916,19 +874,4 @@
   --
 ::
 +$  sock-anno  [=sock src=source]
-++  depf
-  |=  n=*
-  ^-  @
-  ?@  n  0
-  ~+
-  +((max $(n -.n) $(n +.n)))
-::
-++  count-leaves
-  |=  n=*
-  ^-  @
-  =-  ~(wyt in -)
-  |-  ^-  (set @)
-  ?@  n  [n ~ ~]
-  ~+
-  (~(uni in $(n -.n)) $(n +.n))
 --

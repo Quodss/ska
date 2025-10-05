@@ -33,7 +33,7 @@
   ++  int
     |=  two=cape
     ^-  cape
-    ?:  =(one two)  one
+    ?:  =(one two)  one  ::  not important
     ?-  one
         %|  %|
         %&  two
@@ -53,10 +53,10 @@
   ++  app
     |=  know=sock
     ^-  sock
-    ?:  =(one cape.know)  know
+    ?:  =(one cape.know)  know  ::  not important
     ?:  |(?=(%| one) ?=(%| cape.know))  lost:so
     ?:  ?=(%& one)  know
-    ~+
+    ~+  ::  helps with backtracking?
     %-  ~(knit so $(know ~(hed so know), one -.one))
     $(know ~(tel so know), one +.one)
   ::    union two capes
@@ -65,7 +65,7 @@
   ++  uni
     |=  two=cape
     ^-  cape
-    ?:  =(one two)  one
+    ?:  =(one two)  one  ::  load-bearing
     ?-  one
         %&  &
         %|  two
@@ -250,8 +250,6 @@
     ==
   ::    axis
   ::
-  ::  create a sock that, if known, has cells down the given axis
-  ::  and at that axis is one
   ++  pull
     |=  axe=@
     ?<  =(0 axe)
@@ -301,7 +299,7 @@
   ++  purr
     |=  two=sock
     |-  ^-  sock
-    ?:  =(one two)  one
+    ?:  =(one two)  one  ::  helps a bit
     ?:  |(?=(%| cape.one) ?=(%| cape.two))  lost
     ?:  |(?=(^ cape.one) ?=(^ cape.two))
       %-  %~  knit  so

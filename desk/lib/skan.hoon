@@ -55,7 +55,7 @@
 ++  uni-melo
   |=  l=(list (jar * meal))
   ^-  (jar * (pair @ meal))
-  ~+
+  ~+  ::  surprisingly not that important
   =>  !@(verb ~&(>> %uni-melo-recalc .) .)
   ?~  l  ~
   =/  out=(jar * (pair @ meal))
