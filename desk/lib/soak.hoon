@@ -179,10 +179,9 @@
   ::  throw away unknown axes in data (setting to ~)
   ++  norm
     |-  ^-  sock
-    =-  =>  !@  norm:check-soak
-              :: ~?  >>>  !=(- one)  %norm-so  .
-              ?:  !=(- one)  ~|  [- one]  !!  .
-            .
+    =-  =>  !@  norm:check-soak  .
+            :: ~?  >>>  !=(- one)  %norm-so  .
+            ?:  !=(- one)  ~|  [- one]  !!  .
         -
     ?-  cape.one
         %|  lost
@@ -204,14 +203,13 @@
   ::  every axis known in one is also known in 2, with equal data
   ::
   ++  huge
-    !@  check-soak
-      |=  two=sock
-      ^-  ?
-      =/  a  (huge1 two)
-      =/  b  (huge2 two)
-      ?>  =(a b)
-      a
-    huge2
+    !@  check-soak  huge2
+    |=  two=sock
+    ^-  ?
+    =/  a  (huge1 two)
+    =/  b  (huge2 two)
+    ?>  =(a b)
+    a
   ::
   ++  huge1
     |=  two=sock
@@ -333,28 +331,26 @@
   ::
   ::  update mask and data at an axis into a sock
   ++  darn
-    !@  check-soak
-      |=  [axe=@ two=sock]
-      ^-  sock
-      =*  sam  +<
-      =/  a  (darn1 sam)
-      =/  b  (darn2 sam)
-      ?.  =(a b)
-        |-
-        ?:  |(?=(^ cape.a) ?=(^ cape.b))
-          (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
-        ?:  |(?=(%| cape.a) ?=(%| cape.b))
-          ~|  a
-          ~|  b
-          !!
-        ?:  |(?=(@ data.a) ?=(@ data.b))
-          ?:  =(data.a data.b)  lost
-          ~|  a
-          ~|  b
-          !!
-        (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
-      a
-    darn1
+    !@  check-soak  darn1
+    |=  [axe=@ two=sock]
+    ^-  sock
+    =*  sam  +<
+    =/  a  (darn1 sam)
+    =/  b  (darn2 sam)
+    ?:  =(a b)  a
+    |-
+    ?:  |(?=(^ cape.a) ?=(^ cape.b))
+      (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
+    ?:  |(?=(%| cape.a) ?=(%| cape.b))
+      ~|  a
+      ~|  b
+      !!
+    ?:  |(?=(@ data.a) ?=(@ data.b))
+      ?:  =(data.a data.b)  lost
+      ~|  a
+      ~|  b
+      !!
+    (~(knit so $(a ~(hed so a), b ~(hed so b))) $(a ~(tel so a), b ~(tel so b)))
   ::
   ++  darn1
     |=  [axe=@ two=sock]

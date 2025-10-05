@@ -2,6 +2,7 @@
 ::  to be integrated into runtime, no tests
 ::
 =*  stub  !!
+=*  mure  mure:vi
 =*  one  `@`1
 ::  default flags: not loopy, fully direct
 ::
@@ -54,8 +55,8 @@
 ++  uni-melo
   |=  l=(list (jar * meal))
   ^-  (jar * (pair @ meal))
-  ~+
-  =>  !@(verb ~&(>> %uni-melo-recalc .) .)
+  ~+  ::  surprisingly not that important
+  =>  !@(verb . ~&(>> %uni-melo-recalc .))
   ?~  l  ~
   =/  out=(jar * (pair @ meal))
     %-  ~(run by i.l)
@@ -340,12 +341,11 @@
     ?.  (~(huge so less-memo.i) sock.sub)  memo-loop(meme-0 t.meme-0)
     ::  memo hit for 0x0: record entry
     ::
-    =>  !@  verb
-          %=    .
-              bars.gen
-            (memo:p [arm.i site.i] ~ area.i bars.gen)
-          ==
-        .
+    =>  !@  verb  .
+        %=    .
+            bars.gen
+          (memo:p [arm.i site.i] ~ area.i bars.gen)
+        ==
     gen(memo-entry `idx.i)
   =<  gen
   =|  seat=(unit spot)  ::  call site
@@ -359,7 +359,15 @@
   =;  res=(error [[sock-anno flags info] short])
     ?-  -.res
       %&  p.res
-      %|  =>  !@(verb ~&(>>> [%redo ?-(-.p.res %loop res, %melo [fol=`@ux`(mug p.p.res) sock=`@ux`(mug q.p.res)])] .) .)
+      %|  =>  !@  verb  .
+          ~&  >>>
+            :-  %redo
+            ?-  -.p.res
+              %loop  res
+              %melo  [fol=`@ux`(mug p.p.res) sock=`@ux`(mug q.p.res)]
+            ==
+          .
+          ::
           ?-    -.p.res
               %loop
             redo-loop(block-loop.gen (~(put ju block-loop.gen) p.p.res q.p.res))
@@ -377,7 +385,7 @@
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
   =^  [code=nomm prod=sock-anno =flags]  gen
-    =>  !@(verb .(bars.gen (step:p here-site seat bars.gen)) .)
+    =>  !@(verb . .(bars.gen (step:p here-site seat bars.gen)))
     |-  ^-  [[nomm sock-anno flags] short]
     =*  fol-loop  $
     :: =/  l  (lent i.src.sub)
@@ -418,9 +426,8 @@
       ?.  =(& cape.sock.f-prod)
         ::  indirect call
         ::
-        =>  !@  verb
-              .(bars.gen (indi:p ?~(trace ~ `i.trace) bars.gen))
-            .
+        =>  !@  verb  .
+            .(bars.gen (indi:p ?~(trace ~ `i.trace) bars.gen))
         :_  gen
         :+  [%2 s-code f-code ~]
           (dunno sub)
@@ -438,12 +445,11 @@
       ::  check memo cache
       ::
       ?^  m=(memo fol-new s-prod gen stack)
-        =>  !@  verb
-              %=    .
-                  bars.gen.u.m
-                (memo:p from.u.m ?~(trace ~ `i.trace) area.u.m bars.gen.u.m)
-              ==
-            .
+        =>  !@  verb  .
+            %=    .
+                bars.gen.u.m
+              (memo:p from.u.m ?~(trace ~ `i.trace) area.u.m bars.gen.u.m)
+            ==
         :_  gen.u.m
         :+  [%2 s-code f-code memo+idx.u.m]
           pro.u.m
@@ -484,17 +490,16 @@
         ::  would be greater than the latch would also be greater than the kid,
         ::  and vice versa)
         ::
-        =>  !@  verb
-              %=    .
-                  bars.gen
-                =/  kid-seat  ?~(trace ~ `i.trace)
-                =/  par-area=(unit spot)
-                  ?:  =(q.i.tak here-site)  area.gen
-                  (~(get by areas.stack) q.i.tak)
-                ::
-                (loop:p there-site q.i.tak kid-seat par-area bars.gen)
-              ==
-            .
+        =>  !@  verb  .
+            %=    .
+                bars.gen
+              =/  kid-seat  ?~(trace ~ `i.trace)
+              =/  par-area=(unit spot)
+                ?:  =(q.i.tak here-site)  area.gen
+                (~(get by areas.stack) q.i.tak)
+              ::
+              (loop:p there-site q.i.tak kid-seat par-area bars.gen)
+            ==
         =.  cycles.gen
           %+  add-frond
             [ q.i.tak
@@ -512,18 +517,17 @@
       ::  check melo cache
       ::
       ?^  m=(melo there-site fol-new s-prod gen stack)
-        =>  !@  verb
-              %=    .
-                  bars.gen.u.m
-                %:  melo:p
-                  there-site
-                  from.u.m
-                  ?~(trace ~ `i.trace)
-                  area.u.m
-                  bars.gen.u.m
-                ==
+        =>  !@  verb  .
+            %=    .
+                bars.gen.u.m
+              %:  melo:p
+                there-site
+                from.u.m
+                ?~(trace ~ `i.trace)
+                area.u.m
+                bars.gen.u.m
               ==
-            .
+            ==
         :_  gen.u.m
         :+  [%2 s-code f-code site+[here-arm.gen from.u.m]]
           pro.u.m
@@ -641,17 +645,16 @@
     ::
         [%11 [a=@ h=^] f=^]
       =^  [h-code=nomm h-prod=sock-anno h-flags=flags]  gen  fol-loop(fol h.fol)
-      =>  !@  verb
-            =/  pot=(unit spot)
-              ?.  =(%spot a.fol)  ~
-              ((soft spot) data.sock.h-prod)
-            ::
-            ?~  pot  +
-            %_  +
-              area.gen  ?~(area.gen pot area.gen)
-              trace  [u.pot trace]
-            ==
-          .
+      =>  !@  verb  .
+          =/  pot=(unit spot)
+            ?.  =(%spot a.fol)  ~
+            ((soft spot) data.sock.h-prod)
+          ::
+          ?~  pot  +
+          %_  +
+            area.gen  ?~(area.gen pot area.gen)
+            trace  [u.pot trace]
+          ==
       =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol f.fol)
       :_  (hint a.fol h-prod f-prod gen)
       :+  [%d11 [a.fol h-code] f-code]
@@ -677,7 +680,7 @@
     ::  finalize simple
     ::
     ^-  [info short]
-    =>  !@(verb .(bars.gen (done:p here-site seat area.gen bars.gen)) .)
+    =>  !@(verb . .(bars.gen (done:p here-site seat area.gen bars.gen)))
     =/  mayb-site=(unit cape)  (~(get by want.gen) here-site)
     =/  want-site=cape  ?~(mayb-site | u.mayb-site)
     ::  minified subject for codegen
@@ -727,7 +730,7 @@
     ::
     :-  ~
     ^-  short
-    =>  !@(verb .(bars.gen (ciao:p here-site seat area.gen bars.gen)) .)
+    =>  !@(verb . .(bars.gen (ciao:p here-site seat area.gen bars.gen)))
     =.  set.i.cycles.gen      (dive set.i.cycles.gen here-site)
     =.  process.i.cycles.gen  (dive process.i.cycles.gen here-site)
     =.  melo.i.cycles.gen
@@ -780,7 +783,7 @@
       =/  par-masked-2=sock  (~(app ca par-want-2) par-sub)
       ?:  =(cape.par-masked-1 cape.par-masked-2)
         [par-masked-1 gen]
-      =>  !@(verb ~&(>> fixpoint-loop+c .) .)  ::  XX explain fixpoint search in writing
+      =>  !@(verb . ~&(>> fixpoint-loop+c .))  ::  XX explain fixpoint search in writing
       $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
     ::
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
@@ -821,7 +824,7 @@
   ?:  ?=(%| -.err-gen)  err-gen
   =.  gen  p.err-gen
   =>  +
-  =>  !@(verb .(bars.gen (fini:p here-site seat area.gen bars.gen)) .)
+  =>  !@(verb . .(bars.gen (fini:p here-site seat area.gen bars.gen)))
   ::
   ::  finalize in-process sites
   ::
@@ -1355,24 +1358,5 @@
                [less fol]:(~(got by doors.arms.lon) p.p.site.n)
              [less fol]:(~(got by sites.arms.lon) p.site.n)
     ==
-  ==
-::
-++  strip-hints
-  |=  fol=*
-  ^-  *
-  ?+  fol  !!
-    [^ *]                [$(fol -.fol) $(fol +.fol)]
-    [%0 *]               fol
-    [%1 *]               fol
-    [%2 p=* q=*]         [%2 $(fol p.fol) $(fol q.fol)]
-    [%3 p=*]             [%3 $(fol p.fol)]
-    [%4 p=*]             [%4 $(fol p.fol)]
-    [%5 p=* q=*]         [%5 $(fol p.fol) $(fol q.fol)]
-    [%6 p=* q=* r=*]     [%6 $(fol p.fol) $(fol q.fol) $(fol r.fol)]
-    [%7 p=* q=*]         [%7 $(fol p.fol) $(fol q.fol)]
-    [%8 p=* q=*]         [%8 $(fol p.fol) $(fol q.fol)]
-    [%9 p=@ q=*]         [%9 p.fol $(fol q.fol)]
-    [%10 [p=@ q=*] r=*]  [%10 [p.fol $(fol q.fol)] $(fol r.fol)]
-    [%11 * p=*]          $(fol p.fol)
   ==
 --
