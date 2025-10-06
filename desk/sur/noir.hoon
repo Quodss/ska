@@ -625,11 +625,11 @@
       =/  r  $(pin +.pin, cap q)
       (~(uni ca l) r)
     ::
+    =.  out  (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
     ?~  t.comps  out
     ?~  t.tak  !!
     %=  $
       tak    t.tak
-      out    (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
       comps  t.comps
     ==
   ::
