@@ -1358,6 +1358,7 @@
     ?~  f1  ~
     ?~  info.n
       ~&  %indirect
+      ~>  %bout.[0 %indirect]
       :: !!
       :: (run-nomm-1 u.s1 u.f1)
       (mole |.(.*(u.s1 u.f1)))
