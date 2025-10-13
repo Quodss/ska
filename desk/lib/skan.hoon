@@ -10,7 +10,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-=/  verb  ~
+:: =/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -1446,7 +1446,8 @@
       ?~  load
         :: ~&  ~(wyt by core.jets.lon)
         this
-      ~&  >>  cold-loop+(lent load)
+      =>  !@  verb  .
+          ~&  >>  cold-loop+(lent load)  .
       cold-loop(queu (flop load), load ~)
     ?:  ?&(?=(^ break.i.queu) cons.u.break.i.queu)
       ::  merge analysis of an autocons head and tail
@@ -1455,30 +1456,37 @@
       =*  b  back.cole.jets.lon
       =/  heds=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 2)))
       =/  lets=(list [sub=sock fol=*])  ~(tap in (~(get ju b) p.p (peg q.p 3)))
-      ~&  >  [%commence-join (lent heds) (lent lets)]
+      =>  !@  verb  .
+          ~&  >  [%commence-join (lent heds) (lent lets)]  .
       ?@  fol.i.queu  !!
       |-  ^+  this
       =*  hed-loop  $
       ?~  heds
-        ~&  >  %done-joining
+        =>  !@  verb  .
+            ~&  >  %done-joining  .
         cold-loop(queu t.queu)
       ?.  =(fol.i.heds -.fol.i.queu)
-        ~&  >>  %join-head-wrong-fol
+        =>  !@  verb  .
+            ~&  >>  %join-head-wrong-fol  .
         hed-loop(heds t.heds)
       ?.  (~(huge so sub.i.heds) sub.i.queu)
-        ~&  >>  %join-head-wrong-sub
+        =>  !@  verb  .
+            ~&  >>  %join-head-wrong-sub  .
         hed-loop(heds t.heds)
       =/  tels  lets
       |-  ^+  this
       =*  tel-loop  $
       ?~  tels  hed-loop(heds t.heds)
       ?.  =(fol.i.tels +.fol.i.queu)
-        ~&  >>  %join-tail-wrong-fol
+        =>  !@  verb  .
+            ~&  >>  %join-tail-wrong-fol  .
         tel-loop(tels t.tels)
       ?.  (~(huge so sub.i.tels) sub.i.queu)
-        ~&  >>  %join-tail-wrong-sub
+        =>  !@  verb  .
+            ~&  >>  %join-tail-wrong-sub  .
         tel-loop(tels t.tels)
-      ~&  >  joined+p
+      =>  !@  verb  .
+          ~&  >  joined+p  .
       =/  join  (~(pack so sub.i.heds) sub.i.tels)
       =.  call.cole.jets.lon  (~(put by call.cole.jets.lon) [join fol.i.queu] p)
       =.  back.cole.jets.lon  (~(put ju back.cole.jets.lon) p join fol.i.queu)
@@ -1493,9 +1501,12 @@
     =.  here-arm.gen.can  here-arm
     ::  analyze
     ::
-    ~?  >  ?=(^ break.i.queu)  [%enter here-arm point.u.break.i.queu]
-    ~?  >  ?=(~ break.i.queu)  [%enter here-arm]
+    =>  !@  verb  .
+        ~?  >  ?=(^ break.i.queu)  [%enter here-arm point.u.break.i.queu]
+        ~?  >  ?=(~ break.i.queu)  [%enter here-arm]
+        .
     =/  gen=short
+      !@  verb  (can [sub fol]:i.queu)
       ~>  %bout.[0 %skan]
       (can [sub fol]:i.queu)
     ::
@@ -1578,7 +1589,8 @@
           |=([p=path q=(set sock)] [(lent p) p q])
         |=([l=[len=@ *] r=[len=@ *]] (lth len.l len.r))
       |:  [[len=*@ p=*path q=*(set sock)] load=load]
-      ~&  >  [%enqueu p]
+      =>  !@  verb  .
+          ~&  >  [%enqueu p]  .
       %-  ~(rep in q)
       |:  [s=*sock load=load]
       =/  batt  (~(pull so s) 2)
