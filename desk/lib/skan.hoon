@@ -774,7 +774,6 @@
     ?:  ?=(%| -.err-gen)  err-gen
     =/  gen  p.err-gen
     =^  par-final=sock  gen
-      =/  c  0
       =/  par-want-1=cape  (~(gut by want.gen) par |)
       =/  par-masked-1=sock  (~(app ca par-want-1) par-sub)
       |-  ^-  [sock short]
@@ -784,8 +783,8 @@
       =/  par-masked-2=sock  (~(app ca par-want-2) par-sub)
       ?:  =(cape.par-masked-1 cape.par-masked-2)
         [par-masked-1 gen]
-      =>  !@(verb . ~&(>> fixpoint-loop+c .))  ::  XX explain fixpoint search in writing
-      $(par-masked-1 par-masked-2, c +(c), par-want-1 par-want-2)
+      =>  !@(verb . ~&(>> %fixpoint-loop .))
+      $(par-masked-1 par-masked-2)
     ::
     ?.  (~(huge so par-final) sock.kid-sub)  |+[%loop par kid]
     &+gen
