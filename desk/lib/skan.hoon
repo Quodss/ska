@@ -10,7 +10,7 @@
 =/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
-:: =/  verb  ~
+=/  verb  ~
 ::  print bars?
 ::
 =/  p-bars  &
@@ -389,14 +389,6 @@
     =>  !@(verb . .(bars.gen (step:p here-site seat bars.gen)))
     |-  ^-  [[nomm sock-anno flags] short]
     =*  fol-loop  $
-    :: =/  l  (lent i.src.sub)
-    :: ~?  >>>  (gth l 1.000)  lent-sub-fol+[here-site l]
-    :: =>  +
-    :: =-
-    ::   =/  l  (lent i.src.pro)
-    ::   ~?  >>>  =(l 55.296)  lent-pro-fol+[here-site l (strip-hints fol)]
-    ::   =>  +
-    ::   -
     ^-  [[nomm pro=sock-anno flags] short]
     ?+    fol  [[[%0 0] (dunno sub) deff] gen]
         [p=^ q=^]
