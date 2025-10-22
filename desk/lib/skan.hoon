@@ -1419,7 +1419,7 @@
 ::  unit of work: subject, formula, if comes from jetted core dissasembly:
 ::    cons frame? jet registration coordinate
 ::
-+$  todo  [sub=sock fol=* break=(unit [cons=? point=bell])]
++$  todo  [sub=sock fol=* break=(unit [cons=? point=ring])]
 ::  analysis engine
 ::
 ++  ka

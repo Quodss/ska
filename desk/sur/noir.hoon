@@ -83,7 +83,7 @@
   ==
 ::  formula registration coordinate: path + axis in the core
 ::
-+$  bell  (pair path @)
++$  ring  (pair path @)
 ::  memoization table entry
 ::
 +$  meme
@@ -126,11 +126,11 @@
     $:  root=(jug * path)
         core=(jug path sock)
         batt=(jug ^ path)
-        ::  [sub fol]  <--> bell bidirectional mapping
+        ::  [sub fol]  <--> ring bidirectional mapping
         ::
         $=  cole
-        $:  call=(map [sock *] bell)
-            back=(jug bell [sub=sock fol=*])
+        $:  call=(map [sock *] ring)
+            back=(jug ring [sub=sock fol=*])
     ==  ==
   ::::  global code table for memoized entries
     ::
@@ -152,7 +152,7 @@
   ==
 ::
 +$  boil
-  $:  cole=(map [sock *] bell)
+  $:  cole=(map [sock *] ring)
       code=(map [sock *] nomm-1)
       fols=(jar * [less=sock code=nomm-1])
   ==
