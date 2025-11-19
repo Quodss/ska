@@ -873,5 +873,5 @@
     ==
   --
 ::
-+$  sock-anno  [=sock src=source]
++$  sock-anno  [=sock src=source local=source]
 --

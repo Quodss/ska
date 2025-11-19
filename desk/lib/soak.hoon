@@ -158,6 +158,14 @@
         [p -.one t]
       ==
     ==
+  ::    compose
+  ::
+  ::  `one` is original need, `two` is need of `one`
+  ::
+  ++  cmp
+    |=  two=cape
+    ^-  cape
+    !!
   --
 ::  operations on sock
 ++  so

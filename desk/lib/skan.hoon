@@ -28,7 +28,7 @@
 ++  dunno
   |=  sub=sock-anno
   ^-  sock-anno
-  [|+~ [~[~] t.src.sub]]
+  [|+~ [~[~] t.src.sub] [~[~] t.local.sub]]
   :: [|+~ [~[null+~] t.src.sub]]
 ::
 ++  safe
@@ -318,8 +318,9 @@
   =|  =stack  ::  lexically scoped
   ::  provenance is updated by the caller
   ::  length of the provenance list must match stack depth during analysis
+  ::  second provenance list: stack of %7s
   ::
-  =/  sub=sock-anno  [bus ~[~[1]]]
+  =/  sub=sock-anno  [bus ~[~[1]] ~[~[~]]]
   :: =/  sub=sock-anno  [bus ~[~[axis+1]]]
   =;  res-eval-entry=short
     ::  debug asserts
@@ -385,68 +386,77 @@
   =.  list.stack  [here-site list.stack]
   =.  fols.stack  (~(add ja fols.stack) fol sub here-site)
   ::
-  =^  [code=nomm prod=sock-anno =flags]  gen
+  =*  fol-res  ,[code=nomm prod=sock-anno =flags need=cape]
+  =^  [code=nomm prod=sock-anno =flags need=cape]  gen
     =>  !@(verb . .(bars.gen (step:p here-site seat bars.gen)))
-    |-  ^-  [[nomm sock-anno flags] short]
+    |-  ^-  [fol-res short]
     =*  fol-loop  $
-    ^-  [[nomm pro=sock-anno flags] short]
-    ?+    fol  [[[%0 0] (dunno sub) deff] gen]
+    ?+    fol  [[[%0 0] (dunno sub) deff |] gen]
         [p=^ q=^]
-      =^  [l-code=nomm l-prod=sock-anno l-flags=flags]  gen  fol-loop(fol p.fol)
-      =^  [r-code=nomm r-prod=sock-anno r-flags=flags]  gen  fol-loop(fol q.fol)
+      =^  l=fol-res  gen  fol-loop(fol p.fol)
+      =^  r=fol-res  gen  fol-loop(fol q.fol)
       :_  gen
-      :+  [l-code r-code]
-        :-  (~(knit so sock.l-prod) sock.r-prod)
-        (cons:source src.l-prod src.r-prod)
-      (fold-flag l-flags r-flags ~)
-    
+      :*  [code.l code.r]
+        ::
+          :+  (~(knit so sock.prod.l) sock.prod.r)
+            (cons:source src.prod.l src.prod.r)
+          (cons:source local.prod.l local.prod.r)
+        ::
+          (fold-flag flags.l flags.r ~)
+        ::
+          (~(uni ca need.l) need.r)
+      ==
+    ::
         [%0 p=@]
-      ?:  =(0 p.fol)  [[fol (dunno sub) deff] gen]
-      ?:  =(1 p.fol)  [[fol sub deff] gen]
-      :_  gen
-      :+  fol
-        :-  (~(pull so sock.sub) p.fol)
-        (slot:source src.sub p.fol)
-      deff
+      ?:  =(0 p.fol)  [[fol (dunno sub) deff |] gen]
+      =/  prod=sock-anno
+        ?:  =(1 p.fol)  sub
+        :+  (~(pull so sock.sub) p.fol)
+          (slot:source src.sub p.fol)
+        (slot:source local.sub p.fol)
+      ::
+      [[fol prod deff (~(pat ca &) p.fol)] gen]
     ::
         [%1 p=*]
       :_  gen
-      [fol [&+p.fol [~[~] t.src.sub]] deff]
+      [fol [&+p.fol [~[~] t.src.sub] [~[~] t.local.sub]] deff |]
     ::
         [%2 p=^ q=^]
-      =^  [s-code=nomm s-prod=sock-anno s-flags=flags]  gen  fol-loop(fol p.fol)
-      =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol q.fol)
-      ?.  =(& cape.sock.f-prod)
+      =^  s=fol-res  gen  fol-loop(fol p.fol)
+      =^  f=fol-res  gen  fol-loop(fol q.fol)
+      ?.  =(& cape.sock.prod.f)
         ::  indirect call
         ::
         =>  !@  verb  .
             .(bars.gen (indi:p ?~(trace ~ `i.trace) bars.gen))
         :_  gen
-        :+  [%2 s-code f-code ~]
-          (dunno sub)
-        ::  if indirect due to dynamically generated formula (fork/unknown
-        ::  result) as opposed to a missing data in the original subject
-        ::  - don't mark as indirect
-        ::
-        =/  indi=?  &(?=([@ ~] i.src.sub) !=(~[~] i.src.sub))
-        (fold-flag s-flags f-flags [| !indi] ~)
+        :^    [%2 code.s code.f ~]
+            (dunno sub)
+          ::  if indirect due to dynamically generated formula (fork/unknown
+          ::  result) as opposed to a missing data in the original subject
+          ::  - don't mark as indirect
+          ::
+          =/  indi=?  &(?=([@ ~] i.src.sub) !=(~[~] i.src.sub))
+          (fold-flag flags.s flags.f [| !indi] ~)
+        (~(uni ca need.s) need.f)
       ::  direct call
       ::
-      =/  fol-new  data.sock.f-prod
-      =/  fol-urge  (urge:source src.f-prod & ?~(list.stack !! list.stack))
+      =/  fol-new  data.sock.prod.f
+      =/  fol-urge  (urge:source src.prod.f & ?~(list.stack !! list.stack))
       =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::  check memo cache
       ::
-      ?^  m=(memo fol-new s-prod gen stack)
+      ?^  m=(memo fol-new prod.s gen stack)
         =>  !@  verb  .
             %=    .
                 bars.gen.u.m
               (memo:p from.u.m ?~(trace ~ `i.trace) area.u.m bars.gen.u.m)
             ==
         :_  gen.u.m
-        :+  [%2 s-code f-code memo+idx.u.m]
-          pro.u.m
-        (fold-flag s-flags f-flags ~)
+        :^    [%2 code.s code.f memo+idx.u.m]
+            pro.u.m
+          (fold-flag flags.s flags.f ~)
+        (~(uni ca need.s) need.f)
       ::  fallible checks or analyse through: allocate new evalsite
       ::
       =^  there-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
@@ -464,7 +474,7 @@
       ::  stack filtered by formula
       ::
       =/  tak  (~(get ja fols.stack) fol-new)
-      |-  ^-  [[nomm sock-anno flags] short]
+      |-  ^-  [fol-res short]
       =*  stack-loop  $
       ?^  tak
         ::  loop heuristic:
@@ -472,7 +482,7 @@
         ::
         ?:  (~(has ju block-loop.gen) q.i.tak there-site)
           stack-loop(tak t.tak)
-        ?~  want=(close sock.s-prod sock.p.i.tak q.i.tak gen)
+        ?~  want=(close sock.prod.s sock.p.i.tak q.i.tak gen)
           stack-loop(tak t.tak)
         ::  loop hit
         ::
@@ -498,18 +508,19 @@
             [ q.i.tak
             there-site
             sock.p.i.tak
-            s-prod
+            prod.s
             ?~(list.stack !! list.stack)
             ]
           cycles.gen
         ::
         :_  gen
-        :+  [%2 s-code f-code site+[here-arm.gen q.i.tak]]
-          (dunno sub)
-        (fold-flag s-flags f-flags [& &] ~)
+        :^    [%2 code.s code.f site+[here-arm.gen q.i.tak]]
+            (dunno sub)
+          (fold-flag flags.s flags.f [& &] ~)
+        (~(uni ca need.s) need.f)
       ::  check melo cache
       ::
-      ?^  m=(melo there-site fol-new s-prod gen stack)
+      ?^  m=(melo there-site fol-new prod.s gen stack)
         =>  !@  verb  .
             %=    .
                 bars.gen.u.m
@@ -522,15 +533,17 @@
               ==
             ==
         :_  gen.u.m
-        :+  [%2 s-code f-code site+[here-arm.gen from.u.m]]
-          pro.u.m
-        (fold-flag s-flags f-flags [& &] ~)
+        :^    [%2 code.s code.f site+[here-arm.gen from.u.m]]
+            pro.u.m
+          (fold-flag flags.s flags.f [& &] ~)
+        (~(uni ca need.s) need.f)
       ::  non-loop case: analyse through
       ::
       =/  area-stash  area.gen
+      =/  need-call=cape  (prune:source i.src.prod.s cape.sock.prod.s)
       =^  [pro=sock-anno =flags =info]  gen
         %=  eval-loop
-          sub          s-prod(src [~[1] src.s-prod])
+          sub          prod.s(src [~[1] src.prod.s], local ~[~[~]])
           fol          fol-new
           here-site    there-site
           seat         ?~(trace ~ `i.trace)
@@ -540,7 +553,7 @@
         ==
       ::
       =/  code=nomm
-        :^  %2  s-code  f-code
+        :^  %2  code.s  code.f
         ?^  memo.info
           ::  the call got memoized
           ::
@@ -548,66 +561,76 @@
         site+[here-arm.gen there-site]
       ::
       :_  gen(area area-stash)
-      :+  code
-        ?~  t.src.pro  !!
-        :: ~&  (depf q.i.src.pro)
-        :: ~&  (depf q.i.t.src.pro)
-        :: =-  =/  l  (lent i.src.pro)
-        ::     ~?  >>>  (gth l 1.000)  compose+l
-        ::     =>  +
-        ::     -
-        %=  pro
-          t.src  t.t.src.pro
-          i.src  (compose:source i.src.pro i.t.src.pro)
-        ==
-      (fold-flag flags s-flags f-flags ~)
+      ^-  fol-res
+      :^    code
+          ?~  t.src.pro  !!
+          %=  pro
+            t.src  t.t.src.pro
+            i.src  (compose:source i.src.pro i.t.src.pro)
+          ::
+            t.local  t.local.prod.s
+            i.local  (compose:source i.src.pro i.local.prod.s)
+          ==
+        (fold-flag flags flags.s flags.f ~)
+      (~(uni ca (~(uni ca need-call) need.s)) need.f)
     ::
         [%3 p=^]
-      =^  [p-code=nomm * p-flags=flags]  gen  fol-loop(fol p.fol)
+      =^  p=fol-res  gen  fol-loop(fol p.fol)
       :_  gen
-      :+  [%3 p-code]
-        (dunno sub)
-      p-flags
+      :^    [%3 code.p]
+          (dunno sub)
+        flags.p
+      need.p
     ::
         [%4 p=^]
-      =^  [p-code=nomm * p-flags=flags]  gen  fol-loop(fol p.fol)
+      =^  p=fol-res  gen  fol-loop(fol p.fol)
       :_  gen
-      :+  [%4 p-code]
-        (dunno sub)
-      p-flags
+      :^    [%4 code.p]
+          (dunno sub)
+        flags.p
+      need.p
     ::
         [%5 p=^ q=^]
-      =^  [p-code=nomm * p-flags=flags]  gen  fol-loop(fol p.fol)
-      =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
+      =^  p=fol-res  gen  fol-loop(fol p.fol)
+      =^  q=fol-res  gen  fol-loop(fol q.fol)
       :_  gen
-      :+  [%5 p-code q-code]
-        (dunno sub)
-      (fold-flag p-flags q-flags ~)
+      :^    [%5 code.p code.q]
+          (dunno sub)
+        (fold-flag flags.p flags.q ~)
+      (~(uni ca need.p) need.q)
     ::
         [%6 c=^ y=^ n=^]
-      =^  [c-code=nomm * c-flags=flags]                 gen  fol-loop(fol c.fol)
-      =^  [y-code=nomm y-prod=sock-anno y-flags=flags]  gen  fol-loop(fol y.fol)
-      =^  [n-code=nomm n-prod=sock-anno n-flags=flags]  gen  fol-loop(fol n.fol)
-      =/  int=sock  (~(purr so sock.y-prod) sock.n-prod)
+      =^  c=fol-res  gen  fol-loop(fol c.fol)
+      =^  y=fol-res  gen  fol-loop(fol y.fol)
+      =^  n=fol-res  gen  fol-loop(fol n.fol)
+      =/  int=sock  (~(purr so sock.prod.y) sock.prod.n)
       =/  uni-src=source
         =,  source
-        (uni (mask src.y-prod cape.int) (mask src.n-prod cape.int))
+        (uni (mask src.prod.y cape.int) (mask src.prod.n cape.int))
+      ::
+      =/  uni-local=source
+        =,  source
+        (uni (mask local.prod.y cape.int) (mask local.prod.n cape.int))
       ::
       :_  gen
-      :+  [%6 c-code y-code n-code]
-        :-  int
-        uni-src
-      (fold-flag c-flags y-flags n-flags ~)
+      :^    [%6 code.c code.y code.n]
+          [int uni-src uni-local]
+        (fold-flag flags.c flags.y flags.n ~)
+      (~(uni ca (~(uni ca need.c) need.y)) need.n)
     ::
         [%7 p=^ q=^]
-      =^  [p-code=nomm p-prod=sock-anno p-flags=flags]  gen  fol-loop(fol p.fol)
-      =^  [q-code=nomm q-prod=sock-anno q-flags=flags]  gen
-        fol-loop(fol q.fol, sub p-prod)
+      =^  p=fol-res  gen  fol-loop(fol p.fol, local.sub [~[1] local.sub])
+      =^  q=fol-res  gen  fol-loop(fol q.fol, sub prod.p(local local.sub))
+      =/  local-provenance=(lest spring:source)  i.local.prod.p
       ::
       :_  gen
-      :+  [%7 p-code q-code]
-        q-prod
-      (fold-flag p-flags q-flags ~)
+      :^    [%7 code.p code.q]
+          prod.q
+        (fold-flag flags.p flags.q ~)
+      ::  "prune" is actually more like "distribute a cape along a provenance",
+      ::  works both for product capes and for subject needs
+      ::
+      (prune:source local-provenance need.q)
     ::
         [%8 p=^ q=^]
       fol-loop(fol [%7 [p.fol %0 1] q.fol])
@@ -616,50 +639,55 @@
       fol-loop(fol [%7 q.fol %2 [%0 1] %0 p.fol])
     ::
         [%10 [a=@ don=^] rec=^]
-      ?:  =(0 a.fol)  [[[%0 0] (dunno sub) deff] gen]
-      =^  [don-code=nomm don-prod=sock-anno don-flags=flags]  gen
-        fol-loop(fol don.fol)
-      ::
-      =^  [rec-code=nomm rec-prod=sock-anno rec-flags=flags]  gen
-        fol-loop(fol rec.fol)
-      ::
+      ?:  =(0 a.fol)  [[[%0 0] (dunno sub) deff |] gen]
+      =^  don=fol-res  gen  fol-loop(fol don.fol)
+      =^  rec=fol-res  gen  fol-loop(fol rec.fol)
       :_  gen
-      :+  [%10 [a.fol don-code] rec-code]
-        :-  (~(darn so sock.rec-prod) a.fol sock.don-prod)
-        (edit:source src.rec-prod a.fol src.don-prod)
-      (fold-flag rec-flags don-flags ~)
+      :^    [%10 [a.fol code.don] code.rec]
+          :+  (~(darn so sock.prod.rec) a.fol sock.prod.don)
+            (edit:source src.prod.rec a.fol src.prod.don)
+          (edit:source local.prod.rec a.fol local.prod.don)
+        (fold-flag flags.rec flags.don ~)
+      (~(uni ca need.don) need.rec)
     ::
         [%11 p=@ q=^]
-      =^  [q-code=nomm q-prod=sock-anno q-flags=flags]  gen  fol-loop(fol q.fol)
+      =^  q=fol-res  gen  fol-loop(fol q.fol)
       :_  gen
-      :+  [%s11 p.fol q-code]
-        q-prod
-      q-flags
+      :^    [%s11 p.fol code.q]
+          prod.q
+        flags.q
+      need.q
     ::
         [%11 [a=@ h=^] f=^]
-      =^  [h-code=nomm h-prod=sock-anno h-flags=flags]  gen  fol-loop(fol h.fol)
+      =^  h=fol-res  gen  fol-loop(fol h.fol)
       =>  !@  verb  .
           =/  pot=(unit spot)
             ?.  =(%spot a.fol)  ~
-            ((soft spot) data.sock.h-prod)
+            ((soft spot) data.sock.prod.h)
           ::
           ?~  pot  +
           %_  +
             area.gen  ?~(area.gen pot area.gen)
             trace  [u.pot trace]
           ==
-      =^  [f-code=nomm f-prod=sock-anno f-flags=flags]  gen  fol-loop(fol f.fol)
-      :_  (hint a.fol h-prod f-prod gen)
-      :+  [%d11 [a.fol h-code] f-code]
-        f-prod
-      (fold-flag f-flags h-flags ~)
+      =^  f=fol-res  gen  fol-loop(fol f.fol)
+      :_  (hint a.fol prod.h prod.f gen)
+      :^    [%d11 [a.fol code.h] code.f]
+          prod.f
+        (fold-flag flags.f flags.h ~)
+      (~(uni ca need.f) need.h)
     ::
         [%12 p=^ q=^]
-      =^  [p-code=nomm * p-flags=flags]  gen  fol-loop(fol p.fol)
-      =^  [q-code=nomm * q-flags=flags]  gen  fol-loop(fol q.fol)
-      [[[%12 p-code q-code] (dunno sub) (fold-flag p-flags q-flags ~)] gen]
+      =^  p=fol-res  gen  fol-loop(fol p.fol)
+      =^  q=fol-res  gen  fol-loop(fol q.fol)
+      :_  gen
+      :^    [%12 code.p code.q]
+          (dunno sub)
+        (fold-flag flags.p flags.q ~)
+      (~(uni ca need.p) need.q)
     ==
   ::
+  ~!  prod
   =/  move=(lest spring:source)  i.src.prod
   =/  capture=cape  (prune:source move cape.sock.prod)
   ::
@@ -750,7 +778,7 @@
   ^-  (error (pair info short))
   =>  .(cycles.gen `(list cycle)`cycles.gen)
   =^  pop=cycle  cycles.gen  ?~(cycles.gen !! cycles.gen)
-  ::  validate fronds, expanding needs
+  ::  validate fronds, expanding wants
   ::
   =/  err-gen=err-state
     %+  reel-deep  frond.pop
@@ -935,14 +963,14 @@
   ?~  meme  ~
   =*  i  i.meme
   ?.  (~(huge so less-memo.i) sock.sub)  $(meme t.meme)
-  ::  memo hit: propagate subject needs
+  ::  memo hit: propagate subject wants
   :: 
   =/  sub-urge
     (urge:source src.sub cape.less-code.i ?~(list.stack !! list.stack))
   ::
   =.  want.gen  (uni-urge:source want.gen sub-urge)
   =/  src  src.sub(i (compose:source map.i i.src.sub))
-  `[idx.i [arm.i site.i] area.i [prod.i src] gen]
+  `[idx.i [arm.i site.i] area.i [prod.i src ~[~[~]]] gen]
 ::
 ++  melo
   |=  $:  site=@uxsite
@@ -969,7 +997,7 @@
     ?.  (~(huge so less) sock.sub)  $(mele t.mele)
     =/  src  src.sub(i (compose:source map.i i.src.sub))
     =/  tak  ?~(list.stack !! list.stack)
-    `[[site.i area.i [prod.i src] gen] [tak site sub fol less q.i.mele] p.i.mele]
+    `[[site.i area.i [prod.i src ~[~[~]]] gen] [tak site sub fol less q.i.mele] p.i.mele]
   ::
   ::
   ?~  res  ~
