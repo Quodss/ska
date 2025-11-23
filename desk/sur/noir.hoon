@@ -54,7 +54,11 @@
 +$  nomm
   $^  [nomm nomm]                             ::  autocons
   $%  [%1 p=*]                                ::  Nock 1
-      [%2 p=nomm q=nomm site=call]            ::  Nock 2
+    ::                                        ::  Nock 2
+      [%i2 p=nomm q=nomm]                     ::    Indirect call
+      [%ds2 p=nomm site=glob]                 ::    Direct, safe formula
+      [%dus2 p=nomm q=nomm site=glob]         ::    Direct, unsafe formula
+    ::                                        ::
       [%3 p=nomm]                             ::  Nock 3
       [%4 p=nomm]                             ::  Nock 4
       [%5 p=nomm q=nomm]                      ::  Nock 5
@@ -70,7 +74,7 @@
 +$  nomm-1
   $^  [nomm-1 nomm-1]
   $%  [%1 p=*]
-      [%2 p=nomm-1 q=nomm-1 info=(unit [less=sock fol=*])]
+      [%2 p=nomm-1 q=(unit nomm-1) info=(unit [less=sock fol=*])]
       [%3 p=nomm-1]
       [%4 p=nomm-1]
       [%5 p=nomm-1 q=nomm-1]
@@ -589,7 +593,6 @@
   ++  urge
     |=  [src=source cap=cape tak=(lest @uxsite)]
     ^-  ^urge
-    ~|  cap
     ?:  =([~ ~] i.src)  ~
     =^  comps=(lest (lest spring))  tak
       =/  hed  i.src
@@ -873,5 +876,5 @@
     ==
   --
 ::
-+$  sock-anno  [=sock src=source local=source]
++$  sock-anno  [=sock src=source]
 --
