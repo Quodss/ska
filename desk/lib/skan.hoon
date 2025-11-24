@@ -436,6 +436,7 @@
         |=  [code-s=nomm code-f=nomm =glob]
         ^-  nomm
         ::  safety condition to compile fol-fol away
+        ::  XX sufficient but not necessary, smarter condition?
         ::
         ?:  ?=(?(%0 %1) -.code-f)  [%ds2 code-s glob]
         [%dus2 code-s code-f glob]
