@@ -273,6 +273,25 @@
       %2  $(axe lat, data.one -.data.one, cape.one -.cape.one)
       %3  $(axe lat, data.one +.data.one, cape.one +.cape.one)
     ==
+  ::    axis present?
+  ::
+  ++  find
+    |=  axe=@
+    ?<  =(0 axe)
+    |-  ^-  ?
+    ?:  =(1 axe)  &
+    ?:  |(?=(%| cape.one) ?=(@ data.one))
+      |
+    =+  [now lat]=[(cap axe) (mas axe)]
+    ?@  cape.one
+      ?-  now
+        %2  $(axe lat, data.one -.data.one)
+        %3  $(axe lat, data.one +.data.one)
+      ==
+    ?-  now
+      %2  $(axe lat, data.one -.data.one, cape.one -.cape.one)
+      %3  $(axe lat, data.one +.data.one, cape.one +.cape.one)
+    ==
   ::    pair
   ::
   ::  takes a pair of socks to a sock of a pair.

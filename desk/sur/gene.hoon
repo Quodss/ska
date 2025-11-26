@@ -9,8 +9,6 @@
       [%this r=@uvre]
       [%none ~]
   ==
-::
-+$  bell  [bus=sock fol=*]
 ::    linear control flow
 ::
 ::  a label for code for some nock, and the shape of its subject

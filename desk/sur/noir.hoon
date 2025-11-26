@@ -74,7 +74,7 @@
 +$  nomm-1
   $^  [nomm-1 nomm-1]
   $%  [%1 p=*]
-      [%2 p=nomm-1 q=(unit nomm-1) info=(unit [less=sock fol=*])]
+      [%2 p=nomm-1 q=(unit nomm-1) info=(unit bell)]
       [%3 p=nomm-1]
       [%4 p=nomm-1]
       [%5 p=nomm-1 q=nomm-1]
@@ -160,6 +160,110 @@
       code=(map [sock *] nomm-1)
       fols=(jar * [less=sock code=nomm-1])
   ==
+::
++$  bell  [bus=sock fol=*]
+::  %hole - the sub-noun is not needed (but its descendants might be needed)
+::  %look - test shape for presence, do not include in the args
+::  %arg  - one of the arguments
+::
++$  args  (tree ?(%hole %look %arg))
++$  args-locations  (map [sock *] args)
+::
+++  normalize-args
+  |=  =args
+  ^+  args
+  ?~  args  ~
+  =.  l.args  $(args l.args)
+  =.  r.args  $(args r.args)
+  ?:  ?=(%arg n.args)
+    ?:  =([~ ~] +.args)  args
+    ~&  [%norm args]
+    [n.args ~ ~]
+  ?:  ?=(%look n.args)
+    ?:  =([~ ~] +.args)  args
+    ~&  [%norm args]
+    [%hole +.args]
+  ::  n.args == %hole
+  ::
+  ?.  =([~ ~] +.args)  args
+  ~&  [%norm args]
+  ~
+::
+++  uni-args
+  |=  [a=args b=args]
+  ^-  args
+  =-  ?>  =(- (normalize-args -))  -
+  ?~  a  b
+  ?~  b  a
+  =/  l  (uni-args l.a l.b)
+  =/  r  (uni-args r.a r.b)
+  =/  n=?(%hole %look %arg)
+    ?:  |(?=(%arg n.a) ?=(%arg n.b))    %arg
+    ?:  |(?=(%look n.a) ?=(%look n.b))  %look
+    %hole
+  ::
+  ?:  ?=(%arg n)  [%arg ~ ~]
+  ?:  &(?=(%look n) |(?=(^ l) ?=(^ r)))  [%hole l r]
+  ?:  &(?=(%hole n) ?=(~ l) ?=(~ r))  ~
+  [n l r]
+::
+++  uni-args-loc
+  |=  [a=args-locations b=args-locations]
+  ^-  args-locations
+  %-  (~(uno by a) b)
+  |=  [bell a=args b=args]
+  (uni-args a b)
+::
+++  push-args
+  |=  [a=args ax=@]
+  ^-  args
+  ?:  =(1 ax)  a
+  ?-  (cap ax)
+    %2  [%hole $(ax (mas ax)) ~]
+    %3  [%hole ~ $(ax (mas ax))]
+  ==
+::
+++  urge-args
+  |=  [src=source tak=(lest bell) =args]
+  ^-  args-locations
+  ?:  =([~ ~] i.src)  ~
+  =^  comps=(lest (lest spring:source))  tak
+    =/  hed  i.src
+    =/  tel  t.src
+    |-  ^-  [(lest (lest spring:source)) (lest bell)]
+    ?~  tel  [~[hed] tak]
+    =.  hed  (turn-spring:source hed (mask-spring-cut-args:source args) %args)
+    ?:  ?=([~ ~] hed)  [~[hed] ~[i.tak]]
+    =/  site  i.tak
+    =^  r=(list (lest spring:source))  tak
+      =/  comp  (compose:source hed i.tel)
+      $(hed comp, tel t.tel, tak ?~(t.tak !! t.tak))
+    ::
+    [[hed r] [site tak]]
+  ::
+  =|  out=args-locations
+  |-  ^+  out
+  ?:  ?=([~ ~] i.comps)  out
+  =/  a=^args
+    %+  roll  `(list spring:source)`i.comps
+    |=  [pin=spring:source acc=^args]
+    ?~  pin  acc
+    %+  uni-args  acc
+    =>  .(pin `spring:source`pin)
+    |-  ^-  ^args
+    ?~  pin         [%hole ~ ~]
+    ?@  pin  (push-args args pin)
+    (uni-args $(pin -.pin) $(pin +.pin))
+  ::
+  =.  out  (jib out i.tak _a |=(b=^args (uni-args a b)))
+  ?~  t.comps  out
+  ?~  t.tak  !!
+  $(tak t.tak, comps t.comps)
+::
+++  update-args-loc
+  |=  [old=args-locations src=source tak=(lest bell) =args]
+  ^-  args-locations
+  (uni-args-loc old (urge-args +<+))
 ::
 +$  frond
   %-  deep
@@ -385,6 +489,17 @@
     ~+  ::  helps with backtracking?
     %+  cons-spring  $(cap -.cap, pin -.pin)
     $(cap +.cap, pin +.pin)
+  ::
+  ++  mask-spring-cut-args
+    |=  =args
+    =.  args  (normalize-args args)
+    |=  pin=spring
+    ^-  spring
+    ?~  pin  ~
+    ?~  args  ~
+    ?:  ?=(?(%arg %look) n.args)  pin
+    %+  cons-spring  $(args l.args, pin -.pin)
+    $(args r.args, pin +.pin)
   ::
   ++  mask
     |=  [src=source cap=cape]
@@ -631,10 +746,7 @@
     =.  out  (jib out i.tak _need |=(c=cape (~(uni ca c) need)))
     ?~  t.comps  out
     ?~  t.tak  !!
-    %=  $
-      tak    t.tak
-      comps  t.comps
-    ==
+    $(tak t.tak, comps t.comps)
   ::
   ++  prune-spring
     |=  [pin=spring cap=cape]

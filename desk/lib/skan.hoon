@@ -2,12 +2,9 @@
 /+  hoot
 /+  playpen
 ::    
-=*  stub  !!
+=*  stub  ~|(%stub !!)
 =*  mure  mure:vi
 =*  one  `@`1
-::  default flags: not loopy, fully direct
-::
-=/  deff  [| &]
 ::  Wing for compile-time branching in printing routines
 ::
 =/  verb  ~
@@ -238,7 +235,10 @@
 ::  direct: fully direct, to avoid memoizing evals that are too generic,
 ::  otherwise more specific evals would not be reanalyzed
 ::
-+$  flags  [loopy=? direct=?]
++$  flags  [loopy=? direct=? crash-safe=?]
+::  default flags: not loopy, fully direct, crash unsafe
+::
+++  deff  `flags`[| & |]
 ::  error: either m or parent-kid assumption pair which turned out to be false
 ::
 ++  error
@@ -407,11 +407,13 @@
         :-  (~(pull so sock.sub) p.fol)
         (slot:source src.sub p.fol)
       ::
-      [[fol prod deff] gen]
+      =/  f=flags  deff
+      =.  crash-safe.f  (~(find so sock.sub) p.fol)
+      [[fol prod f] gen]
     ::
         [%1 p=*]
       :_  gen
-      [fol [&+p.fol [~[~] t.src.sub]] deff]
+      [fol [&+p.fol [~[~] t.src.sub]] [| & &]]
     ::
         [%2 p=* q=*]
       =^  s=fol-res  gen  fol-loop(fol p.fol)
@@ -429,7 +431,7 @@
         ::  - don't mark as indirect
         ::
         =/  indi=?  &(?=([@ ~] i.src.sub) !=(~[~] i.src.sub))
-        (fold-flag flags.s flags.f [| !indi] ~)
+        (fold-flag flags.s flags.f [| !indi |] ~)
       ::  direct call
       ::
       =/  emit-two
@@ -445,6 +447,7 @@
       =/  fol-urge  (urge:source src.prod.f & ?~(list.stack !! list.stack))
       =.  want.gen  (uni-urge:source want.gen fol-urge)
       ::  check memo cache
+      ::  XX save crash safety?
       ::
       ?^  m=(memo fol-new prod.s gen stack)
         =>  !@  verb  .
@@ -455,7 +458,7 @@
         :_  gen.u.m
         :+  (emit-two code.s code.f memo+idx.u.m)
           pro.u.m
-        (fold-flag flags.s flags.f ~)
+        (fold-flag flags.s flags.f deff ~)
       ::  fallible checks or analyse through: allocate new evalsite
       ::
       =^  there-site  site-gen.gen  [site-gen.gen +(site-gen.gen)]
@@ -515,7 +518,7 @@
         :_  gen
         :+  (emit-two code.s code.f site+[here-arm.gen q.i.tak])
           (dunno sub)
-        (fold-flag flags.s flags.f [& &] ~)
+        (fold-flag flags.s flags.f [& & |] ~)
       ::  check melo cache
       ::
       ?^  m=(melo there-site fol-new prod.s gen stack)
@@ -533,7 +536,7 @@
         :_  gen.u.m
         :+  (emit-two code.s code.f site+[here-arm.gen from.u.m])
           pro.u.m
-        (fold-flag flags.s flags.f [& &] ~)
+        (fold-flag flags.s flags.f [& & |] ~)
       ::  non-loop case: analyse through
       ::
       =/  area-stash  area.gen
@@ -579,7 +582,7 @@
       :_  gen
       :+  [%4 code.p]
         (dunno sub)
-      flags.p
+      flags.p(crash-safe |)
     ::
         [%5 p=* q=*]
       =^  p=fol-res  gen  fol-loop(fol p.fol)
@@ -601,7 +604,7 @@
       :_  gen
       :+  [%6 code.c code.y code.n]
         [int uni-src]
-      (fold-flag flags.c flags.y flags.n ~)
+      (fold-flag flags.c flags.y flags.n deff ~)
     ::
         [%7 p=* q=*]
       =^  p=fol-res  gen  fol-loop(fol p.fol)
@@ -625,7 +628,8 @@
       :+  [%10 [a.fol code.don] code.rec]
         :-  (~(darn so sock.prod.rec) a.fol sock.prod.don)
         (edit:source src.prod.rec a.fol src.prod.don)
-      (fold-flag flags.rec flags.don ~)
+      =/  f=flags  (fold-flag flags.rec flags.don ~)
+      f(crash-safe (~(find so sock.prod.rec) a.fol))
     ::
         [%11 p=@ q=^]
       =^  q=fol-res  gen  fol-loop(fol q.fol)
@@ -658,7 +662,7 @@
       :_  gen
       :+    [%12 code.p code.q]
         (dunno sub)
-      (fold-flag flags.p flags.q ~)
+      (fold-flag flags.p flags.q deff ~)
     ==
   ::
   =/  move=(lest spring:source)  i.src.prod
@@ -1021,7 +1025,10 @@
   =/  out=flags  i.l
   %+  roll  t.l
   |:  [f=*flags out=out]
-  [|(loopy.f loopy.out) &(direct.f direct.out)]
+  [ |(loopy.f loopy.out)
+    &(direct.f direct.out)
+    &(crash-safe.f crash-safe.out)
+  ]
 ::
 ++  hint
   |=  [tag=@ hint=sock-anno result=sock-anno gen=short]
@@ -1721,9 +1728,12 @@
     ==
   ==
 ::
-++  strip-hints
+++  walk-nock
+  |=  gat=$-(* (unit *))
   |=  fol=*
   ^-  *
+  =-  ?:(=(- fol) fol -)
+  ?^  pro=(gat fol)  u.pro
   ?+  fol  !!
     [^ *]                [$(fol -.fol) $(fol +.fol)]
     [%0 *]               fol
@@ -1737,6 +1747,142 @@
     [%8 p=* q=*]         [%8 $(fol p.fol) $(fol q.fol)]
     [%9 p=@ q=*]         [%9 p.fol $(fol q.fol)]
     [%10 [p=@ q=*] r=*]  [%10 [p.fol $(fol q.fol)] $(fol r.fol)]
-    [%11 * p=*]          $(fol p.fol)
+    [%11 p=@ q=*]        [%11 p.fol $(fol q.fol)]
+    [%11 [p=@ q=*] r=*]  [%11 [p.fol $(fol q.fol)] $(fol r.fol)]
+    [%12 p=* q=*]        [%12 $(fol p.fol) $(fol q.fol)]
   ==
+::
+++  strip-hints
+  %-  walk-nock
+  |=  fol=*
+  ^-  (unit *)
+  ?.  ?=([%11 * p=*] fol)  ~
+  `p
+::
++$  meme-args
+  $:  =bell
+      prod=sock
+      map=(lest spring:source)
+      =args
+  ==
+::
+++  find-args-all
+  |=  code=(map bell nomm-1)
+  ^-  (map bell meme-args)
+  %-  ~(rep by code)
+  |=  [[k=bell v=nomm-1] acc=(map bell meme-args)]
+  ?:  (~(has by acc) k)  acc
+  ((find-args code) k v acc)
+::
+++  find-args
+  |=  code=(map bell nomm-1)
+  |=  [b=bell n=nomm-1 memo=(map bell meme-args)]
+  ^-  (map bell meme-args)
+  =|  stack-set=(set bell)
+  =|  stack-list=(list bell)
+  =/  sub=sock-anno  [bus.b ~[~[1]]]
+  =/  gen=[memo=(map bell meme-args) loc=args-locations loop-calls=(set bell)]
+    [memo ~ ~]
+  ::
+  =<  memo
+  |^  ^-  [sock-anno _gen]
+  =*  call-loop  $
+  =.  stack-set  (~(put in stack-set) b)
+  =.  stack-list  [b stack-list]
+  =;  [prod=sock-anno gen1=_gen]
+    ::  fixpoint search done, finalize
+    ::
+    =.  gen  gen1
+    =/  map=(lest spring:source)  i.src.prod
+    =/  final-args=(unit args)  (~(get by loc.gen) b)
+    =/  meme=meme-args  [b sock.prod map ?~(final-args ~ u.final-args)]
+    =.  memo.gen  (~(put by memo.gen) b meme)
+    =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
+    [prod gen]
+  ^-  [sock-anno _gen]
+  =/  args-loop=args  ~
+  |-  ^-  [sock-anno _gen]
+  =*  fixpoint-loop  $
+  =;  [prod=sock-anno gen1=_gen]
+    ::  traversal of nomm and callees done, check if we converged
+    ::
+    ?.  (~(has in loop-calls.gen1) b)  [prod gen1]
+    =/  =args  (normalize-args (~(gut by loc.gen1) b ~))
+    ?:  =(args-loop args)
+      [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
+    fixpoint-loop(args-loop args)
+  |-  ^-  [prod=sock-anno _gen]
+  =*  nomm-loop  $
+  ?+    n    stub
+      [p=^ q=*]
+    =^  l  gen  nomm-loop(n p.n)
+    =^  r  gen  nomm-loop(n q.n)
+    :_  gen
+    :-  (~(knit so sock.prod.l) sock.prod.r)
+    (cons:source src.prod.l src.prod.r)
+  ::
+      [%0 *]
+    ?:  =(0 p.n)  [(dunno sub) gen]
+    =/  prod=sock-anno
+      ?:  =(1 p.n)  sub
+      :-  (~(pull so sock.sub) p.n)
+      (slot:source src.sub p.n)
+    ::
+    =.  loc.gen  (update-loc-gen src.prod [%look ~ ~])
+    [prod gen]
+  ::
+      [%1 *]
+    :_  gen
+    [&+p.n [~[~] t.src.sub]]
+  ::
+      [%2 *]
+    ?~  info.n
+      ?~  q.n  !!
+      =^  s  gen  nomm-loop(n p.n)
+      =^  f  gen  nomm-loop(n u.q.n)
+      =.  loc.gen  (update-loc-gen src.prod.s [%arg ~ ~])
+      =.  loc.gen  (update-loc-gen src.prod.f [%arg ~ ~])
+      :_  gen
+      (dunno sub)
+    =^  s  gen            nomm-loop(n p.n)
+    =?  gen  ?=(^ q.n)  +:nomm-loop(n u.q.n)
+    =^  [args-callee=args prod=sock-anno]  gen
+      ?:  (~(has in stack-set) u.info.n)
+        =.  loop-calls.gen  (~(put in loop-calls.gen) u.info.n)
+        [[args-loop (dunno sub)] gen]
+      ?^  meme=(~(get by memo.gen) u.info.n)
+        =/  src  src.sub(i (compose:source map.u.meme i.src.sub))
+        [[args.u.meme [prod.u.meme src]] gen]
+      ::  analyze through
+      ::
+      =^  pro=sock-anno  gen
+        %=  call-loop
+          sub  s(src.prod [~[1] src.prod.s])
+          n    (~(got by code) u.info.n)
+        ==
+      ::
+      :_  gen
+      :-  args:(~(got by memo.gen) u.info.n)
+      ?~  t.src.pro  !!
+      %=  pro
+        t.src  t.t.src.pro
+        i.src  (compose:source i.src.pro i.t.src.pro)
+      ==
+    ::
+    =.  loc.gen  (update-loc-gen src.prod.s args-callee)
+    [prod gen]
+  ::
+    
+  ==  
+  ::
+  ++  update-loc-gen
+    |=  [src=source =args]
+    (update-args-loc loc.gen src ?~(stack-list !! stack-list) args)
+  --
 --
+
+
+
+
+
+
