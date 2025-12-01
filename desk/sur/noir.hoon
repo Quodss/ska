@@ -532,6 +532,7 @@
     ?~  pin  ~
     ?~  args  ~
     ?:  ?=(?(%arg %look) n.args)  pin
+    ?@  pin  pin
     %+  cons-spring  $(args l.args, pin -.pin)
     $(args r.args, pin +.pin)
   ::

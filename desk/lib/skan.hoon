@@ -1810,8 +1810,11 @@
     ::
     ?.  (~(has in loop-calls.gen1) b)  [prod gen1]
     =/  =args  (normalize-args (~(gut by loc.gen1) b ~))
+    =.  args  (subtract-cape-args args cape.bus.b)
     ?:  =(args-loop args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
+    ~&  [%battery fol.b]
+    ~&  [%fixpoint-search from=`*`args-loop to=`*`args]
     fixpoint-loop(args-loop args)
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
