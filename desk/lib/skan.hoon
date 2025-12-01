@@ -629,7 +629,7 @@
         :-  (~(darn so sock.prod.rec) a.fol sock.prod.don)
         (edit:source src.prod.rec a.fol src.prod.don)
       =/  f=flags  (fold-flag flags.rec flags.don ~)
-      f(crash-safe (~(find so sock.prod.rec) a.fol))
+      f(crash-safe &(crash-safe.f (~(find so sock.prod.rec) a.fol)))
     ::
         [%11 p=@ q=^]
       =^  q=fol-res  gen  fol-loop(fol q.fol)
@@ -1795,7 +1795,9 @@
     =.  gen  gen1
     =/  map=(lest spring:source)  i.src.prod
     =/  final-args=(unit args)  (~(get by loc.gen) b)
-    =/  meme=meme-args  [b sock.prod map ?~(final-args ~ u.final-args)]
+    =/  =args  ?~(final-args ~ u.final-args)
+    =.  args  (subtract-cape-args args cape.bus.b)
+    =/  meme=meme-args  [b sock.prod map args]
     =.  memo.gen  (~(put by memo.gen) b meme)
     =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
     [prod gen]
@@ -1813,7 +1815,7 @@
     fixpoint-loop(args-loop args)
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
-  ?+    n    stub
+  ?-    n
       [p=^ q=*]
     =^  l  gen  nomm-loop(n p.n)
     =^  r  gen  nomm-loop(n q.n)
@@ -1859,6 +1861,7 @@
         %=  call-loop
           sub  s(src.prod [~[1] src.prod.s])
           n    (~(got by code) u.info.n)
+          b    u.info.n
         ==
       ::
       :_  gen
@@ -1872,7 +1875,62 @@
     =.  loc.gen  (update-loc-gen src.prod.s args-callee)
     [prod gen]
   ::
-    
+      ?([%3 *] [%4 *])
+    =^  p  gen  nomm-loop(n p.n)
+    =.  loc.gen  (update-loc-gen src.prod.p [%arg ~ ~])
+    :_  gen
+    (dunno sub)
+  ::
+      [%5 *]
+    =^  p  gen  nomm-loop(n p.n)
+    =^  q  gen  nomm-loop(n q.n)
+    =.  loc.gen  (update-loc-gen src.prod.p [%arg ~ ~])
+    =.  loc.gen  (update-loc-gen src.prod.q [%arg ~ ~])
+    :_  gen
+    (dunno sub)
+  ::
+      [%6 *]
+    =^  c  gen  nomm-loop(n p.n)
+    =^  y  gen  nomm-loop(n q.n)
+    =^  n  gen  nomm-loop(n r.n)
+    ::  only the condition is the true argument here
+    ::
+    =.  loc.gen  (update-loc-gen src.prod.c [%arg ~ ~])
+    =/  int=sock  (~(purr so sock.prod.y) sock.prod.n)
+    =/  uni-src=source
+      =,  source
+      (uni (mask src.prod.y cape.int) (mask src.prod.n cape.int))
+    ::
+    :_  gen
+    [int uni-src]
+  ::
+      [%7 *]
+    =^  p  gen  nomm-loop(n p.n)
+    nomm-loop(n q.n, sub prod.p)
+  ::
+      [%10 *]
+    =^  rec  gen  nomm-loop(n q.n)
+    =^  don  gen  nomm-loop(n q.p.n)
+    ::  edit site needs to exist for safe arg disassembly
+    ::
+    =/  edit-site-src  (slot:source src.prod.rec p.p.n)
+    =.  loc.gen  (update-loc-gen edit-site-src [%look ~ ~])
+    :_  gen
+    :-  (~(darn so sock.prod.rec) p.p.n sock.prod.don)
+    (edit:source src.prod.rec p.p.n src.prod.don)
+  ::
+      [%11 *]
+    ?@  p.n  nomm-loop(n q.n)
+    =.  gen  +:nomm-loop(n q.p.n)
+    nomm-loop(n q.n)
+  ::
+      [%12 *]
+    =^  p  gen  nomm-loop(n p.n)
+    =^  q  gen  nomm-loop(n q.n)
+    =.  loc.gen  (update-loc-gen src.prod.p [%arg ~ ~])
+    =.  loc.gen  (update-loc-gen src.prod.q [%arg ~ ~])
+    :_  gen
+    (dunno sub)
   ==  
   ::
   ++  update-loc-gen

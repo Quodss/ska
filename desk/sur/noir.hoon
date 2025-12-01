@@ -169,6 +169,40 @@
 +$  args  (tree ?(%hole %look %arg))
 +$  args-locations  (map [sock *] args)
 ::
+++  subtract-cape-args
+  |=  [a=args c=cape]
+  ^-  args
+  =-  ?>  =(- (normalize-args -))  -
+  ?@  c  ?:(c ~ a)
+  ?~  a  ~
+  ?-    n.a
+      %hole
+    =/  l=args  $(a l.a, c -.c)
+    =/  r=args  $(a r.a, c +.c)
+    ?:  &(?=(~ l) ?=(~ r))  ~
+    [%hole l r]
+  ::
+      %arg
+    ?>  =(~ l.a)
+    ?>  =(~ r.a)
+    =/  l=args  $(c -.c)
+    =/  r=args  $(c +.c)
+    ?:  &(?=(~ l) ?=(~ r))  ~
+    ?:  |(?=(~ l) ?=(~ r))  [%hole l r]
+    ?:  &(?=(%arg n.l) ?=(%arg n.r))  [%arg ~ ~]
+    [%hole l r]
+  ::
+      %look
+    ?>  =(~ l.a)
+    ?>  =(~ r.a)
+    =/  l=args  $(c -.c)
+    =/  r=args  $(c +.c)
+    ?:  &(?=(~ l) ?=(~ r))  ~
+    ?:  |(?=(~ l) ?=(~ r))  [%hole l r]
+    ?:  &(?=(%look n.l) ?=(%look n.r))  [%look ~ ~]
+    [%hole l r]
+  ==
+
 ++  normalize-args
   |=  =args
   ^+  args
