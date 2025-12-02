@@ -202,7 +202,7 @@
     ?:  &(?=(%look n.l) ?=(%look n.r))  [%look ~ ~]
     [%hole l r]
   ==
-
+::
 ++  normalize-args
   |=  =args
   ^+  args
@@ -219,9 +219,14 @@
     [%hole +.args]
   ::  n.args == %hole
   ::
-  ?.  =([~ ~] +.args)  args
-  ~&  [%norm args]
-  ~
+  ?:  =([~ ~] +.args)
+    ~&  [%norm args]
+    ~
+  ?:  &(?=(^ r.args) ?=(%look n.r.args) ?=(^ l.args))
+    [%hole l.args ~]
+  ?:  &(?=(^ l.args) ?=(%look n.l.args) ?=(^ r.args))
+    [%hole ~ r.args]
+  args
 ::
 ++  uni-args
   |=  [a=args b=args]
@@ -244,6 +249,10 @@
   ?:  ?=(%arg n)  [%arg ~ ~]
   ?:  &(?=(%look n) |(?=(^ l) ?=(^ r)))  [%hole l r]
   ?:  &(?=(%hole n) ?=(~ l) ?=(~ r))  ~
+  ?:  &(?=(%hole n) ?=(^ r) ?=(%look n.r) ?=(^ l))
+    [%hole l ~]
+  ?:  &(?=(%hole n) ?=(^ l) ?=(%look n.l) ?=(^ r))
+    [%hole ~ r]
   [n l r]
 ::
 ++  uni-args-loc
@@ -261,6 +270,20 @@
     %2  [%hole $(ax (mas ax)) ~]
     %3  [%hole ~ $(ax (mas ax))]
   ==
+::
+++  hed-args
+  |=  a=args
+  ^-  args
+  ?~  a  ~
+  ?:  ?=(%hole n.a)  l.a
+  a
+::
+++  tel-args
+  |=  a=args
+  ^-  args
+  ?~  a  ~
+  ?:  ?=(%hole n.a)  r.a
+  a
 ::
 ++  urge-args
   |=  [src=source tak=(lest bell) =args]
@@ -297,7 +320,9 @@
     ?~  pin         ~
     ?:  =(~ args)   ~
     ?@  pin  (push-args args pin)
-    (uni-args $(pin -.pin) $(pin +.pin))
+    %+  uni-args
+      $(pin -.pin, args (hed-args args))
+    $(pin +.pin, args (tel-args args))
   ::
   =.  out  (jib out i.tak _a |=(b=^args (uni-args a b)))
   ?~  t.comps  out

@@ -1788,7 +1788,6 @@
   |^  ^-  [sock-anno _gen]
   =*  call-loop  $
   =.  stack-set  (~(put in stack-set) b)
-  ~&  [%enter %bell-mug `@ux`(mug b)]
   =.  stack-list  [b stack-list]
   =;  [prod=sock-anno gen1=_gen]
     ::  fixpoint search done, finalize
@@ -1814,8 +1813,6 @@
     =.  args  (subtract-cape-args args cape.bus.b)
     ?:  =(args-loop args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
-    :: ~&  [%bell-mug `@ux`(mug b)]
-    :: ~&  [%fixpoint-search from=`*`args-loop to=`*`args]
     fixpoint-loop(args-loop args)
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
@@ -1834,11 +1831,7 @@
       :-  (~(pull so sock.sub) p.n)
       (slot:source src.sub p.n)
     ::
-    ~&  [%0 p.n]
-    ~&  [%mug-bell `@ux`(mug b)]
-    ~&  [%fore (~(gut by loc.gen) b ~)]
     =?  loc.gen  !=(1 p.n)  (update-loc-gen src.prod [%look ~ ~])
-    ~&  [%aftr (~(gut by loc.gen) b ~)]
     [prod gen]
   ::
       [%1 *]
@@ -1880,10 +1873,7 @@
         i.src  (compose:source i.src.pro i.t.src.pro)
       ==
     ::
-    ~&  [%mug-bell `@ux`(mug b)]
-    ~&  [%fore (~(gut by loc.gen) b ~)]
     =.  loc.gen  (update-loc-gen src.prod.s args-callee)
-    ~&  [%aftr (~(gut by loc.gen) b ~)]
     [prod gen]
   ::
       ?([%3 *] [%4 *])
@@ -1925,11 +1915,7 @@
     ::  edit site needs to exist for safe arg disassembly
     ::
     =/  edit-site-src  (slot:source src.prod.rec p.p.n)
-    ~&  [%10 p.p.n]
-    ~&  [%mug-bell `@ux`(mug b)]
-    ~&  [%fore (~(gut by loc.gen) b ~)]
     =?  loc.gen  !=(1 p.p.n)  (update-loc-gen edit-site-src [%look ~ ~])
-    ~&  [%aftr (~(gut by loc.gen) b ~)]
     :_  gen
     :-  (~(darn so sock.prod.rec) p.p.n sock.prod.don)
     (edit:source src.prod.rec p.p.n src.prod.don)
