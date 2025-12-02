@@ -226,7 +226,12 @@
 ++  uni-args
   |=  [a=args b=args]
   ^-  args
-  =-  ?>  =(- (normalize-args -))  -
+  =-  ?:  =(- (normalize-args -))  -
+      ~|  `*`a
+      ~|  `*`b
+      ~|  `*`-
+      ~|  `*`(normalize-args -)
+      !!
   ?~  a  b
   ?~  b  a
   =/  l  (uni-args l.a l.b)
@@ -284,8 +289,13 @@
     ?~  pin  acc
     %+  uni-args  acc
     =>  .(pin `spring:source`pin)
+    =-  ?:  =(- (normalize-args -))  -
+        ~|  `*`-
+        ~|  `*`(normalize-args -)
+        !!
     |-  ^-  ^args
-    ?~  pin         [%hole ~ ~]
+    ?~  pin         ~
+    ?:  =(~ args)   ~
     ?@  pin  (push-args args pin)
     (uni-args $(pin -.pin) $(pin +.pin))
   ::
