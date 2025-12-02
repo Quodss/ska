@@ -169,20 +169,41 @@
 +$  args  (tree ?(%hole %look %arg))
 +$  args-locations  (map [sock *] args)
 ::
+++  blind
+  |=  [l=args r=args]
+  ^-  args
+  ?:  &(?=(~ l) ?=(~ r))  ~
+  ?:  &(?=(^ r) ?=(%look n.r) ?=(^ l))
+    [%hole l ~]
+  ?:  &(?=(^ l) ?=(%look n.l) ?=(^ r))
+    [%hole ~ r]
+  [%hole l r]
+::
 ++  subtract-cape-args
   |=  [a=args c=cape]
   ^-  args
-  =-  ?>  =(- (normalize-args -))  -
+  =-  ?:  =(- (normalize-args -))  -
+      ~|  `*`-
+      ~|  `*`(normalize-args -)
+      !!
+  ^-  args
   ?@  c  ?:(c ~ a)
   ?~  a  ~
   ?-    n.a
       %hole
+    =-  ?:  =(- (normalize-args -))  -
+        ~|  `*`-
+        ~|  `*`(normalize-args -)
+        !!
     =/  l=args  $(a l.a, c -.c)
     =/  r=args  $(a r.a, c +.c)
-    ?:  &(?=(~ l) ?=(~ r))  ~
-    [%hole l r]
+    (blind l r)
   ::
       %arg
+    =-  ?:  =(- (normalize-args -))  -
+        ~|  `*`-
+        ~|  `*`(normalize-args -)
+        !!
     ?>  =(~ l.a)
     ?>  =(~ r.a)
     =/  l=args  $(c -.c)
@@ -193,14 +214,18 @@
     [%hole l r]
   ::
       %look
+    =-  ?:  =(- (normalize-args -))  -
+        ~|  `*`-
+        ~|  `*`(normalize-args -)
+        !!
     ?>  =(~ l.a)
     ?>  =(~ r.a)
     =/  l=args  $(c -.c)
     =/  r=args  $(c +.c)
     ?:  &(?=(~ l) ?=(~ r))  ~
-    ?:  |(?=(~ l) ?=(~ r))  [%hole l r]
+    ?:  |(?=(~ l) ?=(~ r))  (blind l r)
     ?:  &(?=(%look n.l) ?=(%look n.r))  [%look ~ ~]
-    [%hole l r]
+    (blind l r)
   ==
 ::
 ++  normalize-args
@@ -222,11 +247,7 @@
   ?:  =([~ ~] +.args)
     ~&  [%norm args]
     ~
-  ?:  &(?=(^ r.args) ?=(%look n.r.args) ?=(^ l.args))
-    [%hole l.args ~]
-  ?:  &(?=(^ l.args) ?=(%look n.l.args) ?=(^ r.args))
-    [%hole ~ r.args]
-  args
+  (blind l.args r.args)
 ::
 ++  uni-args
   |=  [a=args b=args]
@@ -247,13 +268,11 @@
     %hole
   ::
   ?:  ?=(%arg n)  [%arg ~ ~]
-  ?:  &(?=(%look n) |(?=(^ l) ?=(^ r)))  [%hole l r]
-  ?:  &(?=(%hole n) ?=(~ l) ?=(~ r))  ~
-  ?:  &(?=(%hole n) ?=(^ r) ?=(%look n.r) ?=(^ l))
-    [%hole l ~]
-  ?:  &(?=(%hole n) ?=(^ l) ?=(%look n.l) ?=(^ r))
-    [%hole ~ r]
-  [n l r]
+  ?:  ?=(%hole n)  (blind l r)
+  ::  n == %look
+  ::
+  ?:  |(?=(^ l) ?=(^ r))  [%hole l r]
+  [%look ~ ~]
 ::
 ++  uni-args-loc
   |=  [a=args-locations b=args-locations]

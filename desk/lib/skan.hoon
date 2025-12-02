@@ -1789,6 +1789,7 @@
   =*  call-loop  $
   =.  stack-set  (~(put in stack-set) b)
   =.  stack-list  [b stack-list]
+  ~&  [%enter `@ux`(mug b)]
   =;  [prod=sock-anno gen1=_gen]
     ::  fixpoint search done, finalize
     ::
@@ -1797,7 +1798,17 @@
     =/  final-args=(unit args)  (~(get by loc.gen) b)
     =/  =args  ?~(final-args ~ u.final-args)
     =.  args  (subtract-cape-args args cape.bus.b)
-    =/  meme=meme-args  [b sock.prod map args]
+    ::  captured parts of the subject are required as arguments
+    ::
+    =/  args-capture=^args
+      =.  stack-list  [-.stack-list ~]
+      =.  loc.gen  ~
+      =.  loc.gen  (update-loc-gen ~[map] [%arg ~ ~])
+      ?~  loc.gen  ~
+      ?>  ?=([* ~ ~] loc.gen)
+      q.n.loc.gen
+    ::
+    =/  meme=meme-args  [b sock.prod map (uni-args args args-capture)]
     =.  memo.gen  (~(put by memo.gen) b meme)
     =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
     [prod gen]
@@ -1813,6 +1824,8 @@
     =.  args  (subtract-cape-args args cape.bus.b)
     ?:  =(args-loop args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
+    ~&  [%fixpoint `@ux`(mug b)]
+    ~&  [fore=`*`args-loop aftr=`*`args]
     fixpoint-loop(args-loop args)
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
