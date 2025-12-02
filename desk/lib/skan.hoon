@@ -1,3 +1,17 @@
+::::  TODO
+::  arity:
+::    - walk the callgraph to reestablish SCCs
+::    - use SCC knowledge to propagate finalized parts of memo cache (basically
+::      robust meloization without guesses)
+::    - fix BUG
+::  vere:
+::    - experiment with full integration: replace cold state, lean on read-only
+::      nature of programs
+::   refactor (eventually):
+::    - merge +scan, +cook and any other walks into one (maybe two?) traversals
+::      - case for two traversals: the first one does more work due to
+::        backtracking if loop/melo guess fails, the second one could do more 
+::        heavy stuff
 /-  *noir
 /+  hoot
 /+  playpen
@@ -1808,7 +1822,8 @@
       ?>  ?=([* ~ ~] loc.gen)
       q.n.loc.gen
     ::
-    =/  meme=meme-args  [b sock.prod map (uni-args args args-capture)]
+    :: =/  meme=meme-args  [b sock.prod map (uni-args args args-capture)]  ::  XX BUG: why does this introduce more args?
+    =/  meme=meme-args  [b sock.prod map args]
     =.  memo.gen  (~(put by memo.gen) b meme)
     =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
     [prod gen]
@@ -1826,7 +1841,7 @@
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
     ~&  [%fixpoint `@ux`(mug b)]
     ~&  [fore=`*`args-loop aftr=`*`args]
-    fixpoint-loop(args-loop args)
+    fixpoint-loop(args-loop args)  ::  propagate memo cache of calls that are outside of this SCC
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
   ?-    n
