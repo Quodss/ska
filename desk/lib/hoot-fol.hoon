@@ -1,3 +1,4 @@
 /*  hoot-src  %hoon  /lib/hoot/hoon
 ::
-+:(ride %noun hoot-src)
+=/  gen=hoon  (rain /lib/hoot/hoon hoot-src)
++:(~(mint ut %noun) %noun gen)

@@ -1,3 +1,4 @@
 /*  play-src  %hoon  /lib/playpen/hoon
 ::
-+:(ride %noun play-src)
+=/  gen=hoon  (rain /lib/playpen/hoon play-src)
++:(~(mint ut %noun) %noun gen)
