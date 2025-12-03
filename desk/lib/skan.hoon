@@ -1777,8 +1777,135 @@
   $:  =bell
       prod=sock
       map=(lest spring:source)
-      =args
+      args-transitive=args
+      args-top=args
   ==
+::  product: map SCC entry -> SCC members (not including itself)
+::
+++  find-sccs-all
+  |=  code=(map bell nomm-1)
+  ^-  (map bell (set bell))
+  %-  ~(rep by code)
+  |=  [[k=bell v=nomm-1] acc=(map bell (set bell))]
+  ?:  (~(has by acc) k)
+    ~&  [%skip `@ux`(mug k)]
+    acc
+  ((find-sccs code) k v acc)
+::
+++  find-sccs
+  |=  code=(map bell nomm-1)
+  |=  [b=bell n=nomm-1 sccs=(map bell (set bell))]
+  !.  ^+  sccs
+  =|  stack-set=(set bell)
+  =|  stack-list=(list bell)
+  =<  sccs
+  =*  res-mold  ,[loop=(unit [entry=bell members=(set bell)])]
+  |^  ^-  [res-mold sccs=_sccs]
+  =*  call-loop  $
+  ~&  [%enter `@ux`(mug b)]
+  =.  stack-set  (~(put in stack-set) b)
+  =.  stack-list  [b stack-list]
+  =;  [res-mold sccs1=_sccs]
+    ::  call done, check if we are an entry point
+    ::
+    =.  sccs  sccs1
+    ?~  loop
+      =.  sccs  (~(put by sccs) b ~)
+      [~ sccs]
+    ?:  =(b entry.u.loop)
+      =.  sccs  (~(put by sccs) b members.u.loop)
+      [~ sccs]
+    :_  sccs
+    loop(members.u (~(put in members.u.loop) b))
+  |-  ^-  [res-mold sccs=_sccs]
+  =*  nomm-loop  $
+  ?-    n
+      [p=^ q=*]
+    =^  l  sccs  nomm-loop(n p.n)
+    =^  r  sccs  nomm-loop(n q.n)
+    :_  sccs
+    ^-  (unit [entry=bell members=(set bell)])
+    (merge-loops loop.l loop.r)
+  ::
+      [%0 *]  [~ sccs]
+      [%1 *]  [~ sccs]
+  ::
+      [%2 *]
+    ?~  info.n
+      ?~  q.n  !!
+      =^  s  sccs  nomm-loop(n p.n)
+      =^  f  sccs  nomm-loop(n u.q.n)
+      :_  sccs
+      (merge-loops loop.s loop.f)
+    =^  s  sccs  nomm-loop(n p.n)
+    =^  f=res-mold  sccs  ?~  q.n  [~ sccs]  nomm-loop(n u.q.n)
+    ?:  (~(has by sccs) u.info.n)
+      :_  sccs
+      (merge-loops loop.s loop.f)
+    ?:  (~(has in stack-set) u.info.n)
+      :_  sccs
+      :(merge-loops loop.s loop.f `[u.info.n ~])
+    =^  call  sccs  call-loop(b u.info.n, n (~(got by code) u.info.n))
+    :_  sccs
+    :(merge-loops loop.s loop.f loop.call)
+  ::
+      [%3 *]  nomm-loop(n p.n)
+      [%4 *]  nomm-loop(n p.n)
+  ::
+      [%5 *]
+    =^  p  sccs  nomm-loop(n p.n)
+    =^  q  sccs  nomm-loop(n q.n)
+    :_  sccs
+    (merge-loops loop.p loop.q)
+  ::
+      [%6 *]
+    =^  p  sccs  nomm-loop(n p.n)
+    =^  q  sccs  nomm-loop(n q.n)
+    =^  r  sccs  nomm-loop(n r.n)
+    :_  sccs
+    :(merge-loops loop.p loop.q loop.r)
+  ::
+      [%7 *]
+    =^  p  sccs  nomm-loop(n p.n)
+    =^  q  sccs  nomm-loop(n q.n)
+    :_  sccs
+    (merge-loops loop.p loop.q)
+  ::
+      [%10 *]
+    =^  qp  sccs  nomm-loop(n q.p.n)
+    =^  q   sccs  nomm-loop(n q.n)
+    :_  sccs
+    (merge-loops loop.qp loop.q)
+  ::
+      [%11 *]
+    ?@  p.n  nomm-loop(n q.n)
+    =^  qp  sccs  nomm-loop(n q.p.n)
+    =^  q   sccs  nomm-loop(n q.n)
+    :_  sccs
+    (merge-loops loop.qp loop.q)
+  ::
+      [%12 *]
+    =^  p  sccs  nomm-loop(n p.n)
+    =^  q  sccs  nomm-loop(n q.n)
+    :_  sccs
+    (merge-loops loop.p loop.q)
+  ==
+  ::
+  ++  merge-loops
+    =*  loop  ,(unit [entry=bell members=(set bell)])
+    |=  [a=loop b=loop]
+    ^-  loop
+    ?~  a  b
+    ?~  b  a
+    :-  ~
+    :_  (~(uni in members.u.a) members.u.b)
+    ?:  =(entry.u.a entry.u.b)  entry.u.a
+    |-  ^-  bell
+    ?~  stack-list  !!
+    ?:  =(i.stack-list entry.u.a)  entry.u.b
+    ?:  =(i.stack-list entry.u.b)  entry.u.a
+    $(stack-list t.stack-list)
+  --
 ::
 ++  find-args-all
   |=  code=(map bell nomm-1)
@@ -1792,6 +1919,8 @@
   |=  code=(map bell nomm-1)
   |=  [b=bell n=nomm-1 memo=(map bell meme-args)]
   ^-  (map bell meme-args)
+  =+  ~>  %bout.[0 'find sccs']  =+  (find-sccs-all code)  ~&  %done  -
+  =>  +
   =|  stack-set=(set bell)
   =|  stack-list=(list bell)
   =/  sub=sock-anno  [bus.b ~[~[1]]]
@@ -1811,7 +1940,10 @@
     =/  map=(lest spring:source)  i.src.prod
     =/  final-args=(unit args)  (~(get by loc.gen) b)
     =/  =args  ?~(final-args ~ u.final-args)
-    =.  args  (subtract-cape-args args cape.bus.b)
+    ~?  =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]])  [%fore `*`args]
+    ~?  =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]])  %sub
+    =.  args  (subtract-cape-args args cape.bus.b =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]]))
+    ~?  =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]])  [%aftr `*`args]
     ::  captured parts of the subject are required as arguments
     ::
     =/  args-capture=^args
@@ -1823,7 +1955,8 @@
       q.n.loc.gen
     ::
     :: =/  meme=meme-args  [b sock.prod map (uni-args args args-capture)]  ::  XX BUG: why does this introduce more args?
-    =/  meme=meme-args  [b sock.prod map args]
+    :: =/  meme=meme-args  [b sock.prod map args (uni-args args args-capture)]
+    =/  meme=meme-args  [b sock.prod map args (uni-args args args-capture)]
     =.  memo.gen  (~(put by memo.gen) b meme)
     =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
     [prod gen]
@@ -1836,7 +1969,7 @@
     ::
     ?.  (~(has in loop-calls.gen1) b)  [prod gen1]
     =/  =args  (normalize-args (~(gut by loc.gen1) b ~))
-    =.  args  (subtract-cape-args args cape.bus.b)
+    =.  args  (subtract-cape-args args cape.bus.b |)
     ?:  =(args-loop args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
     ~&  [%fixpoint `@ux`(mug b)]
@@ -1883,7 +2016,7 @@
         [[args-loop (dunno sub)] gen]
       ?^  meme=(~(get by memo.gen) u.info.n)
         =/  src  src.sub(i (compose:source map.u.meme i.src.sub))
-        [[args.u.meme [prod.u.meme src]] gen]
+        [[args-transitive.u.meme [prod.u.meme src]] gen]
       ::  analyze through
       ::
       =^  pro=sock-anno  gen
@@ -1894,7 +2027,7 @@
         ==
       ::
       :_  gen
-      :-  args:(~(got by memo.gen) u.info.n)
+      :-  args-transitive:(~(got by memo.gen) u.info.n)
       ?~  t.src.pro  !!
       %=  pro
         t.src  t.t.src.pro

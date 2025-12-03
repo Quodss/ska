@@ -180,7 +180,7 @@
   [%hole l r]
 ::
 ++  subtract-cape-args
-  |=  [a=args c=cape]
+  |=  [a=args c=cape verb=?]
   ^-  args
   =-  ?:  =(- (normalize-args -))  -
       ~|  `*`-
