@@ -1,9 +1,10 @@
 ::::  TODO
 ::  arity:
 ::    - walk the callgraph to reestablish SCCs
+::      - done, but maybe double check with another approach? maybe it will also
+::        be faster...
 ::    - use SCC knowledge to propagate finalized parts of memo cache (basically
 ::      robust meloization without guesses)
-::    - fix BUG
 ::  vere:
 ::    - experiment with full integration: replace cold state, lean on read-only
 ::      nature of programs
@@ -1780,131 +1781,188 @@
       args-transitive=args
       args-top=args
   ==
-::  product: map SCC entry -> SCC members (not including itself)
+::  product: map SCC entry -> SCC members (including itself)
 ::
 ++  find-sccs-all
   |=  code=(map bell nomm-1)
   ^-  (map bell (set bell))
   %-  ~(rep by code)
   |=  [[k=bell v=nomm-1] acc=(map bell (set bell))]
-  ?:  (~(has by acc) k)
-    ~&  [%skip `@ux`(mug k)]
-    acc
+  ?:  (~(has by acc) k)  acc
   ((find-sccs code) k v acc)
 ::
 ++  find-sccs
   |=  code=(map bell nomm-1)
-  |=  [b=bell n=nomm-1 sccs=(map bell (set bell))]
-  !.  ^+  sccs
+  |=  [b=bell n=nomm-1 sccs-init=(map bell (set bell))]
+  ^+  sccs-init
   =|  stack-set=(set bell)
   =|  stack-list=(list bell)
-  =<  sccs
-  =*  res-mold  ,[loop=(unit [entry=bell members=(set bell)])]
-  |^  ^-  [res-mold sccs=_sccs]
+  =-
+    ?.  =(~ ongoing:-)
+      ~&  (turn ongoing:- |=([e=bell *] `@ux`(mug e)))
+      !!
+    final:-
+  =/  gen=[final=_sccs-init ongoing=(list [entry=bell members=(set bell)])]
+    [sccs-init ~]
+  ::
+  |^  ^-  [loopy=? _gen]
   =*  call-loop  $
-  ~&  [%enter `@ux`(mug b)]
+  ^-  [loopy=? _gen]
   =.  stack-set  (~(put in stack-set) b)
   =.  stack-list  [b stack-list]
-  =;  [res-mold sccs1=_sccs]
+  =;  [loopy=? gen1=_gen]
     ::  call done, check if we are an entry point
     ::
-    =.  sccs  sccs1
-    ?~  loop
-      =.  sccs  (~(put by sccs) b ~)
-      [~ sccs]
-    ?:  =(b entry.u.loop)
-      =.  sccs  (~(put by sccs) b members.u.loop)
-      [~ sccs]
-    :_  sccs
-    loop(members.u (~(put in members.u.loop) b))
-  |-  ^-  [res-mold sccs=_sccs]
+    =.  gen  gen1
+    ~&  [loopy `@ux`(mug b)]
+    ?.  loopy
+      =.  final.gen  (~(put by final.gen) b [b ~ ~])
+      |+gen
+    ?~  ongoing.gen  !!
+    ?.  =(b entry.i.ongoing.gen)  &+gen
+    ~?  =(0x4f09.4c02 (mug b))  (turn ongoing.gen |=([e=bell *] `@ux`(mug e)))
+    :-  |
+    %=  gen
+      ongoing  t.ongoing.gen
+      final    (~(put by final.gen) b members.i.ongoing.gen)
+    ==
+  ::
+  |-  ^-  [loopy=? _gen]
   =*  nomm-loop  $
+  ^-  [loopy=? _gen]
   ?-    n
       [p=^ q=*]
-    =^  l  sccs  nomm-loop(n p.n)
-    =^  r  sccs  nomm-loop(n q.n)
-    :_  sccs
-    ^-  (unit [entry=bell members=(set bell)])
-    (merge-loops loop.l loop.r)
+    =^  l  gen  nomm-loop(n p.n)
+    =^  r  gen  nomm-loop(n q.n)
+    :_  gen
+    |(loopy.l loopy.r)
   ::
-      [%0 *]  [~ sccs]
-      [%1 *]  [~ sccs]
+      [%0 *]  |+gen
+      [%1 *]  |+gen
   ::
       [%2 *]
+    ^-  [loopy=? _gen]
     ?~  info.n
       ?~  q.n  !!
-      =^  s  sccs  nomm-loop(n p.n)
-      =^  f  sccs  nomm-loop(n u.q.n)
-      :_  sccs
-      (merge-loops loop.s loop.f)
-    =^  s  sccs  nomm-loop(n p.n)
-    =^  f=res-mold  sccs  ?~  q.n  [~ sccs]  nomm-loop(n u.q.n)
-    ?:  (~(has by sccs) u.info.n)
-      :_  sccs
-      (merge-loops loop.s loop.f)
-    ?:  (~(has in stack-set) u.info.n)
-      :_  sccs
-      :(merge-loops loop.s loop.f `[u.info.n ~])
-    =^  call  sccs  call-loop(b u.info.n, n (~(got by code) u.info.n))
-    :_  sccs
-    :(merge-loops loop.s loop.f loop.call)
+      =^  s  gen  nomm-loop(n p.n)
+      =^  f  gen  nomm-loop(n u.q.n)
+      :_  gen
+      |(loopy.s loopy.f)
+    =^  s  gen  nomm-loop(n p.n)
+    =^  f  gen
+      ?~  q.n  [loopy=| gen]
+      nomm-loop(n u.q.n)
+    ::
+    ?:  (~(has by final.gen) u.info.n)  |+gen
+    =^  present=?  gen  (find-merge u.info.n)
+    ?:  present  &+gen
+    ?.  (~(has in stack-set) u.info.n)
+      =^  call  gen  call-loop(b u.info.n, n (~(got by code) u.info.n))
+      :_  gen
+      |(loopy.s loopy.f loopy.call)
+    =/  members=(set bell)
+      ::  XX silly
+      ::  stack members from current call to the recursive target
+      ::
+      =-  ~?  =(0x53.27e3 (mug u.info.n:+))  members+(turn - (cork mug @ux))  (silt -)
+      (scag +((need (find ~[u.info.n] stack-list))) stack-list)
+    ::
+    =.  ongoing.gen  [[u.info.n members] ongoing.gen]
+    &+merge
   ::
       [%3 *]  nomm-loop(n p.n)
       [%4 *]  nomm-loop(n p.n)
   ::
       [%5 *]
-    =^  p  sccs  nomm-loop(n p.n)
-    =^  q  sccs  nomm-loop(n q.n)
-    :_  sccs
-    (merge-loops loop.p loop.q)
+    =^  p  gen  nomm-loop(n p.n)
+    =^  q  gen  nomm-loop(n q.n)
+    :_  gen
+    |(loopy.p loopy.q)
   ::
       [%6 *]
-    =^  p  sccs  nomm-loop(n p.n)
-    =^  q  sccs  nomm-loop(n q.n)
-    =^  r  sccs  nomm-loop(n r.n)
-    :_  sccs
-    :(merge-loops loop.p loop.q loop.r)
+    =^  p  gen  nomm-loop(n p.n)
+    =^  q  gen  nomm-loop(n q.n)
+    =^  r  gen  nomm-loop(n r.n)
+    :_  gen
+    |(loopy.p loopy.q loopy.r)
   ::
       [%7 *]
-    =^  p  sccs  nomm-loop(n p.n)
-    =^  q  sccs  nomm-loop(n q.n)
-    :_  sccs
-    (merge-loops loop.p loop.q)
+    =^  p  gen  nomm-loop(n p.n)
+    =^  q  gen  nomm-loop(n q.n)
+    :_  gen
+    |(loopy.p loopy.q)
   ::
       [%10 *]
-    =^  qp  sccs  nomm-loop(n q.p.n)
-    =^  q   sccs  nomm-loop(n q.n)
-    :_  sccs
-    (merge-loops loop.qp loop.q)
+    =^  qp  gen  nomm-loop(n q.p.n)
+    =^  q   gen  nomm-loop(n q.n)
+    :_  gen
+    |(loopy.qp loopy.q)
   ::
       [%11 *]
     ?@  p.n  nomm-loop(n q.n)
-    =^  qp  sccs  nomm-loop(n q.p.n)
-    =^  q   sccs  nomm-loop(n q.n)
-    :_  sccs
-    (merge-loops loop.qp loop.q)
+    =^  qp  gen  nomm-loop(n q.p.n)
+    =^  q   gen  nomm-loop(n q.n)
+    :_  gen
+    |(loopy.qp loopy.q)
   ::
       [%12 *]
-    =^  p  sccs  nomm-loop(n p.n)
-    =^  q  sccs  nomm-loop(n q.n)
-    :_  sccs
-    (merge-loops loop.p loop.q)
+    =^  p  gen  nomm-loop(n p.n)
+    =^  q  gen  nomm-loop(n q.n)
+    :_  gen
+    |(loopy.p loopy.q)
   ==
   ::
-  ++  merge-loops
-    =*  loop  ,(unit [entry=bell members=(set bell)])
-    |=  [a=loop b=loop]
-    ^-  loop
-    ?~  a  b
-    ?~  b  a
-    :-  ~
-    :_  (~(uni in members.u.a) members.u.b)
-    ?:  =(entry.u.a entry.u.b)  entry.u.a
+  ++  merge
+    ^+  gen
+    ?~  ongoing.gen  !!
+    =/  scc  i.ongoing.gen
+    =/  top=(list [entry=bell members=(set bell)])  (flop t.ongoing.gen)
+    =|  bot=(list [entry=bell members=(set bell)])
+    |-  ^+  gen
+    ?~  top  gen
+    ?:  =(~ (~(int in members.scc) members.i.top))
+      $(top t.top, bot [i.top bot])
+    %=    gen
+        ongoing
+      :_  bot
+      :-  (min-entry entry.scc entry.i.top)
+      %+  roll  `(list [entry=bell members=(set bell)])`top
+      |=  [[entry=bell members=(set bell)] acc=_members.scc]
+      (~(uni in acc) members)
+    ==
+  ::
+  ++  min-entry
+    |=  [a=bell b=bell]
+    ^-  bell
+    ?:  =(a b)  a
     |-  ^-  bell
     ?~  stack-list  !!
-    ?:  =(i.stack-list entry.u.a)  entry.u.b
-    ?:  =(i.stack-list entry.u.b)  entry.u.a
+    ?:  =(a i.stack-list)
+      ?>  ?=(^ (find ~[b] t.stack-list))
+      b
+    ?:  =(b i.stack-list)
+      ?>  ?=(^ (find ~[a] t.stack-list))
+      a
     $(stack-list t.stack-list)
+  ::
+  ++  find-merge
+    |=  b=bell
+    ^-  [? _gen]
+    =|  top=(list [entry=bell members=(set bell)])
+    =/  bot=(list [entry=bell members=(set bell)])  ongoing.gen
+    |-  ^-  [? _gen]
+    ?~  bot  [| gen]
+    ?.  (~(has in members.i.bot) b)
+      $(bot t.bot, top [i.bot top])
+    :-  &
+    %=    gen
+        ongoing
+      :_  t.bot
+      :-  entry.i.bot
+      %+  roll  top
+      |=  [[entry=bell members=(set bell)] acc=_members.i.bot]
+      (~(uni in acc) members)
+    ==
   --
 ::
 ++  find-args-all
@@ -1919,7 +1977,16 @@
   |=  code=(map bell nomm-1)
   |=  [b=bell n=nomm-1 memo=(map bell meme-args)]
   ^-  (map bell meme-args)
-  =+  ~>  %bout.[0 'find sccs']  =+  (find-sccs-all code)  ~&  %done  -
+  =+
+    ~>  %bout.[0 'find sccs']
+    =/  m  (find-sccs-all code)
+    ~&  %done
+    ~&  ~(wyt by m)
+    %-  ~(rep by m)
+    |=  [[k=bell v=(set bell)] *]
+    =/  n  ~(wyt in v)
+    ~?  !=(1 n)  n
+    ~
   =>  +
   =|  stack-set=(set bell)
   =|  stack-list=(list bell)
@@ -1954,8 +2021,6 @@
       ?>  ?=([* ~ ~] loc.gen)
       q.n.loc.gen
     ::
-    :: =/  meme=meme-args  [b sock.prod map (uni-args args args-capture)]  ::  XX BUG: why does this introduce more args?
-    :: =/  meme=meme-args  [b sock.prod map args (uni-args args args-capture)]
     =/  meme=meme-args  [b sock.prod map args (uni-args args args-capture)]
     =.  memo.gen  (~(put by memo.gen) b meme)
     =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
