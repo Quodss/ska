@@ -1797,11 +1797,9 @@
   ^+  sccs-init
   =|  stack-set=(set bell)
   =|  stack-list=(list bell)
-  =-
-    ?.  =(~ ongoing:-)
-      ~&  (turn ongoing:- |=([e=bell *] `@ux`(mug e)))
-      !!
-    final:-
+  =<
+    ?>  =(~ ongoing)
+    final
   =/  gen=[final=_sccs-init ongoing=(list [entry=bell members=(set bell)])]
     [sccs-init ~]
   ::
@@ -1814,13 +1812,11 @@
     ::  call done, check if we are an entry point
     ::
     =.  gen  gen1
-    ~&  [loopy `@ux`(mug b)]
     ?.  loopy
       =.  final.gen  (~(put by final.gen) b [b ~ ~])
       |+gen
     ?~  ongoing.gen  !!
     ?.  =(b entry.i.ongoing.gen)  &+gen
-    ~?  =(0x4f09.4c02 (mug b))  (turn ongoing.gen |=([e=bell *] `@ux`(mug e)))
     :-  |
     %=  gen
       ongoing  t.ongoing.gen
@@ -1864,7 +1860,7 @@
       ::  XX silly
       ::  stack members from current call to the recursive target
       ::
-      =-  ~?  =(0x53.27e3 (mug u.info.n:+))  members+(turn - (cork mug @ux))  (silt -)
+      %-  silt
       (scag +((need (find ~[u.info.n] stack-list))) stack-list)
     ::
     =.  ongoing.gen  [[u.info.n members] ongoing.gen]
@@ -1980,12 +1976,12 @@
   =+
     ~>  %bout.[0 'find sccs']
     =/  m  (find-sccs-all code)
-    ~&  %done
-    ~&  ~(wyt by m)
-    %-  ~(rep by m)
-    |=  [[k=bell v=(set bell)] *]
-    =/  n  ~(wyt in v)
-    ~?  !=(1 n)  n
+  ::   ~&  %done
+  ::   ~&  ~(wyt by m)
+  ::   %-  ~(rep by m)
+  ::   |=  [[k=bell v=(set bell)] *]
+  ::   =/  n  ~(wyt in v)
+  ::   ~?  !=(1 n)  n
     ~
   =>  +
   =|  stack-set=(set bell)
@@ -2007,10 +2003,7 @@
     =/  map=(lest spring:source)  i.src.prod
     =/  final-args=(unit args)  (~(get by loc.gen) b)
     =/  =args  ?~(final-args ~ u.final-args)
-    ~?  =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]])  [%fore `*`args]
-    ~?  =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]])  %sub
-    =.  args  (subtract-cape-args args cape.bus.b =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]]))
-    ~?  =(cape.bus.b [%.y [%.n [[[%.n [[%.n [[%.n [%.n [%.n [%.n [%.y %.n]]]]] %.n]] %.n]] %.n] %.n]]])  [%aftr `*`args]
+    =.  args  (subtract-cape-args args cape.bus.b)
     ::  captured parts of the subject are required as arguments
     ::
     =/  args-capture=^args
@@ -2034,7 +2027,7 @@
     ::
     ?.  (~(has in loop-calls.gen1) b)  [prod gen1]
     =/  =args  (normalize-args (~(gut by loc.gen1) b ~))
-    =.  args  (subtract-cape-args args cape.bus.b |)
+    =.  args  (subtract-cape-args args cape.bus.b)
     ?:  =(args-loop args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
     ~&  [%fixpoint `@ux`(mug b)]
