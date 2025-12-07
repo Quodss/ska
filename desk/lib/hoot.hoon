@@ -6755,7 +6755,7 @@
 ::    5aa: new partial nock interpreter
 +|  %new-partial-nock-interpreter
 ::
-++  musk  !.                                            ::  nock with block set
+++  musk  !:                                            ::  nock with block set
   |%
   ++  abet
     ::    simplify raw result

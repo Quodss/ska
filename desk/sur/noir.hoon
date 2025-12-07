@@ -133,7 +133,7 @@
         ::  [sub fol]  <--> ring bidirectional mapping
         ::
         $=  cole
-        $:  call=(map [sock *] ring)
+        $:  call=(map bell ring)
             back=(jug ring [sub=sock fol=*])
     ==  ==
   ::::  global code table for memoized entries
@@ -156,8 +156,8 @@
   ==
 ::
 +$  boil
-  $:  cole=(map [sock *] ring)
-      code=(map [sock *] nomm-1)
+  $:  cole=(map bell ring)
+      code=(map bell nomm-1)
       fols=(jar * [less=sock code=nomm-1])
   ==
 ::
@@ -167,7 +167,7 @@
 ::  %arg  - one of the arguments
 ::
 +$  args  (tree ?(%hole %look %arg))
-+$  args-locations  (map [sock *] args)
++$  args-locations  (map bell args)
 ::
 ++  blind
   |=  [l=args r=args]
@@ -199,33 +199,33 @@
     =/  r=args  $(a r.a, c +.c)
     (blind l r)
   ::
-      %arg
-    =-  ?:  =(- (normalize-args -))  -
-        ~|  `*`-
-        ~|  `*`(normalize-args -)
-        !!
-    ?>  =(~ l.a)
-    ?>  =(~ r.a)
-    =/  l=args  $(c -.c)
-    =/  r=args  $(c +.c)
-    ?:  &(?=(~ l) ?=(~ r))  ~
-    ?:  |(?=(~ l) ?=(~ r))  [%hole l r]
-    ?:  &(?=(%arg n.l) ?=(%arg n.r))  [%arg ~ ~]
-    [%hole l r]
+      %arg  [%arg ~ ~]
+    :: =-  ?:  =(- (normalize-args -))  -
+    ::     ~|  `*`-
+    ::     ~|  `*`(normalize-args -)
+    ::     !!
+    :: ?>  =(~ l.a)
+    :: ?>  =(~ r.a)
+    :: =/  l=args  $(c -.c)
+    :: =/  r=args  $(c +.c)
+    :: ?:  &(?=(~ l) ?=(~ r))  ~
+    :: ?:  |(?=(~ l) ?=(~ r))  [%hole l r]
+    :: ?:  &(?=(%arg n.l) ?=(%arg n.r))  [%arg ~ ~]
+    :: [%hole l r]
   ::
-      %look
-    =-  ?:  =(- (normalize-args -))  -
-        ~|  `*`-
-        ~|  `*`(normalize-args -)
-        !!
-    ?>  =(~ l.a)
-    ?>  =(~ r.a)
-    =/  l=args  $(c -.c)
-    =/  r=args  $(c +.c)
-    ?:  &(?=(~ l) ?=(~ r))  ~
-    ?:  |(?=(~ l) ?=(~ r))  (blind l r)
-    ?:  &(?=(%look n.l) ?=(%look n.r))  [%look ~ ~]
-    (blind l r)
+      %look  ~
+    :: =-  ?:  =(- (normalize-args -))  -
+    ::     ~|  `*`-
+    ::     ~|  `*`(normalize-args -)
+    ::     !!
+    :: ?>  =(~ l.a)
+    :: ?>  =(~ r.a)
+    :: =/  l=args  $(c -.c)
+    :: =/  r=args  $(c +.c)
+    :: ?:  &(?=(~ l) ?=(~ r))  ~
+    :: ?:  |(?=(~ l) ?=(~ r))  (blind l r)
+    :: ?:  &(?=(%look n.l) ?=(%look n.r))  [%look ~ ~]
+    :: (blind l r)
   ==
 ::
 ++  normalize-args

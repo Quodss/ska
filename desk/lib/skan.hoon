@@ -32,7 +32,8 @@
 ::  print filename?
 ::
 =/  p-file  |
-::  check that the formula does not crash, returning constant product
+::
+::  first pass of the analysis
 ::
 |%
 ::  ignorant sock-anno
@@ -41,7 +42,7 @@
   |=  sub=sock-anno
   ^-  sock-anno
   [|+~ [~[~] t.src.sub]]
-  :: [|+~ [~[null+~] t.src.sub]]
+::  check that the formula does not crash, returning constant product
 ::
 ++  safe
   |=  fol=*
@@ -307,8 +308,6 @@
   $(rest t.rest)
 ::
 +$  stack
-  ::  TODO leave essential
-  ::
   $:
     ::  list: linear stack of evalsites
     ::    
@@ -1355,122 +1354,6 @@
     acc
   ::
   $(lit t.lit)
-::
-++  run-nomm-1
-  |=  [s=* f=*]
-  ^-  (unit *)
-  =/  cor  ka
-  =.  cor  (rout:cor s f)  ::  XX properly stateful analysis
-  =/  bol=boil  (cook lon.cor)
-  =/  matches=(list [less=sock code=nomm-1])  (~(get ja fols.bol) f)
-  =/  match  (match-sock &+s matches)
-  ?~  match  !!
-  =/  n=nomm-1  u.match
-  =|  trace=(list spot)
-  ::  exec loop
-  ::
-  |-  ^-  (unit)
-  ?-    n
-      [p=^ q=*]
-    =/  l  $(n p.n)
-    ?~  l  ~
-    =/  r  $(n q.n)
-    ?~  r  ~
-    `[u.l u.r]
-  ::
-      [%0 p=@]
-    ?:  =(0 p.n)
-      ~&  '[%0 0]'
-      ~&  trace
-      ~
-    ?:  =(1 p.n)  `s
-    =-  ~?  ?=(~ -)  '%0 crash'  -
-    (mole |.(.*(s [0 p.n])))
-  ::
-      [%1 p=*]
-    `p.n
-  ::
-      [%2 *]
-    ?~  info.n
-      ~&  %indirect
-      =/  s1  $(n p.n)
-      ?~  s1  ~
-      ?~  q.n  !!
-      =/  f1  $(n u.q.n)
-      ?~  f1  ~
-      ~>  %bout.[0 %indirect]
-      (mole |.(.*(u.s1 u.f1)))
-    =/  s1  $(n p.n)
-    ?~  s1  ~
-    ?>
-      ?~  q.n  &
-      =/  f1  $(n u.q.n)
-      ?~  f1  |
-      =(fol.u.info.n u.f1)
-    ::
-    =/  new=nomm-1  (~(got by code.bol) u.info.n)
-    ?^  res=(jet u.s1 fol.u.info.n)  u.res
-    $(s u.s1, n new)
-  ::
-      [%3 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    `.?(u.p)
-  ::
-      [%4 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    ?^  u.p  ~&  '%4 cell'  ~
-    `+(u.p)
-  ::
-      [%5 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    =/  q  $(n q.n)
-    ?~  q  ~
-    `=(u.p u.q)
-  ::
-      [%6 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    ?+  u.p  ~&('%6 non-loobean' ~)
-      %&  $(n q.n)
-      %|  $(n r.n)
-    ==
-  ::
-      [%7 *]
-    =/  p  $(n p.n)
-    ?~  p  ~
-    $(s u.p, n q.n)
-  ::
-      [%10 *]
-    ?:  =(0 p.p.n)  ~&  '%10 0'  ~
-    =/  don  $(n q.p.n)
-    ?~  don  ~
-    =/  rec  $(n q.n)
-    ?~  rec  ~
-    =-  ~?  ?=(~ -)  '%10 crash'  -
-    (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
-  ::
-      [%11 @ *]
-    $(n q.n)
-  ::
-      [%11 [@ *] *]
-    =?  trace  =(p.p.n %spot)
-      =/  pot=(unit spot)  ((soft spot) +.q.p.n)
-      ?~  pot  trace
-      [u.pot trace]
-    ::
-    =/  h  $(n q.p.n)
-    ?~  h  ~
-    $(n q.n)
-  ::
-      [%11 *]
-    ~|  %impossible  !!
-  ::
-      [%12 *]
-    ~|  %no-scry  !!
-  ==
 ::  unit of work: subject, formula, if comes from jetted core dissasembly:
 ::    cons frame? jet registration coordinate
 ::
@@ -1677,6 +1560,124 @@
   %~  uni  in
   ?.  (~(has in s) p.n.a)  ~
   [n.a ~ ~]
+--
+::  second pass of the analysis
+|%
+++  run-nomm-1
+  |=  [s=* f=*]
+  ^-  (unit *)
+  =/  cor  ka
+  =.  cor  (rout:cor s f)  ::  XX properly stateful analysis
+  =/  bol=boil  (cook lon.cor)
+  =/  matches=(list [less=sock code=nomm-1])  (~(get ja fols.bol) f)
+  =/  match  (match-sock &+s matches)
+  ?~  match  !!
+  =/  n=nomm-1  u.match
+  =|  trace=(list spot)
+  ::  exec loop
+  ::
+  |-  ^-  (unit)
+  ?-    n
+      [p=^ q=*]
+    =/  l  $(n p.n)
+    ?~  l  ~
+    =/  r  $(n q.n)
+    ?~  r  ~
+    `[u.l u.r]
+  ::
+      [%0 p=@]
+    ?:  =(0 p.n)
+      ~&  '[%0 0]'
+      ~&  trace
+      ~
+    ?:  =(1 p.n)  `s
+    =-  ~?  ?=(~ -)  '%0 crash'  -
+    (mole |.(.*(s [0 p.n])))
+  ::
+      [%1 p=*]
+    `p.n
+  ::
+      [%2 *]
+    ?~  info.n
+      ~&  %indirect
+      =/  s1  $(n p.n)
+      ?~  s1  ~
+      ?~  q.n  !!
+      =/  f1  $(n u.q.n)
+      ?~  f1  ~
+      ~>  %bout.[0 %indirect]
+      (mole |.(.*(u.s1 u.f1)))
+    =/  s1  $(n p.n)
+    ?~  s1  ~
+    ?>
+      ?~  q.n  &
+      =/  f1  $(n u.q.n)
+      ?~  f1  |
+      =(fol.u.info.n u.f1)
+    ::
+    =/  new=nomm-1  (~(got by code.bol) u.info.n)
+    ?^  res=(jet u.s1 fol.u.info.n)  u.res
+    $(s u.s1, n new)
+  ::
+      [%3 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    `.?(u.p)
+  ::
+      [%4 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    ?^  u.p  ~&  '%4 cell'  ~
+    `+(u.p)
+  ::
+      [%5 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    =/  q  $(n q.n)
+    ?~  q  ~
+    `=(u.p u.q)
+  ::
+      [%6 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    ?+  u.p  ~&('%6 non-loobean' ~)
+      %&  $(n q.n)
+      %|  $(n r.n)
+    ==
+  ::
+      [%7 *]
+    =/  p  $(n p.n)
+    ?~  p  ~
+    $(s u.p, n q.n)
+  ::
+      [%10 *]
+    ?:  =(0 p.p.n)  ~&  '%10 0'  ~
+    =/  don  $(n q.p.n)
+    ?~  don  ~
+    =/  rec  $(n q.n)
+    ?~  rec  ~
+    =-  ~?  ?=(~ -)  '%10 crash'  -
+    (mole |.(.*([u.don u.rec] [%10 [p.p.n %0 2] %0 3])))
+  ::
+      [%11 @ *]
+    $(n q.n)
+  ::
+      [%11 [@ *] *]
+    =?  trace  =(p.p.n %spot)
+      =/  pot=(unit spot)  ((soft spot) +.q.p.n)
+      ?~  pot  trace
+      [u.pot trace]
+    ::
+    =/  h  $(n q.p.n)
+    ?~  h  ~
+    $(n q.n)
+  ::
+      [%11 *]
+    ~|  %impossible  !!
+  ::
+      [%12 *]
+    ~|  %no-scry  !!
+  ==
 ::
 ++  cook
   |=  lon=long
@@ -1773,14 +1774,6 @@
   ^-  (unit *)
   ?.  ?=([%11 * p=*] fol)  ~
   `p
-::
-+$  meme-args
-  $:  =bell
-      prod=sock
-      map=(lest spring:source)
-      args-transitive=args
-      args-top=args
-  ==
 ::  product: map SCC entry -> SCC members (including itself)
 ::
 ++  find-sccs-all
@@ -1800,6 +1793,9 @@
   =<
     ?>  =(~ ongoing)
     final
+  ::  final: finalized SCCs: map entry -> members (including the entry)
+  ::  ongoing: stack of SCCs
+  ::
   =/  gen=[final=_sccs-init ongoing=(list [entry=bell members=(set bell)])]
     [sccs-init ~]
   ::
@@ -1857,11 +1853,12 @@
       :_  gen
       |(loopy.s loopy.f loopy.call)
     =/  members=(set bell)
-      ::  XX silly
-      ::  stack members from current call to the recursive target
-      ::
       %-  silt
-      (scag +((need (find ~[u.info.n] stack-list))) stack-list)
+      =/  out=(list bell)  ~[u.info.n]
+      |-  ^-  (list bell)
+      ?~  stack-list  !!
+      ?:  =(u.info.n i.stack-list)  out
+      $(stack-list t.stack-list, out [i.stack-list out])
     ::
     =.  ongoing.gen  [[u.info.n members] ongoing.gen]
     &+merge
@@ -1969,26 +1966,57 @@
   ?:  (~(has by acc) k)  acc
   ((find-args code) k v acc)
 ::
++$  meme-args
+  $:  =bell
+      prod=sock
+      map=(lest spring:source)
+      args-transitive=args
+      args-top=args
+  ==
+::
+++  mug-set-bell
+  |=  s=(tree bell)
+  ^-  (tree @ux)
+  ?~  s  ~
+  [(mug n.s) $(s l.s) $(s r.s)]
+::
+++  valid-sccs
+  |=  sccs=(map bell (set bell))
+  ^-  ?
+  ::  a member of SCC must not be present anywhere else, nor
+  ::  be a key to another SCC other than its own
+  ::
+  %-  ~(rep by sccs)
+  |=  [[k-out=bell v-set-out=(set bell)] acc=?]
+  %-  ~(rep in v-set-out)
+  |=  [v-bell=bell acc=?]
+  %-  ~(rep by sccs)
+  |=  [[k-in=bell v-set-in=(set bell)] acc=?]
+  ?&  acc
+      ?|  =(k-in k-out)
+          &(!=(v-bell k-in) !(~(has in v-set-in) v-bell))
+  ==  ==
+::
 ++  find-args
   |=  code=(map bell nomm-1)
   |=  [b=bell n=nomm-1 memo=(map bell meme-args)]
   ^-  (map bell meme-args)
-  =+
+  =/  sccs=(map bell (set bell))
     ~>  %bout.[0 'find sccs']
-    =/  m  (find-sccs-all code)
-  ::   ~&  %done
-  ::   ~&  ~(wyt by m)
-  ::   %-  ~(rep by m)
-  ::   |=  [[k=bell v=(set bell)] *]
-  ::   =/  n  ~(wyt in v)
-  ::   ~?  !=(1 n)  n
-    ~
-  =>  +
+    (find-sccs-all code)
+  ::
+  :: ~&  %validity-check
+  :: ?>  ~>  %bout.[0 'validity check']  (valid-sccs sccs)
   =|  stack-set=(set bell)
   =|  stack-list=(list bell)
   =/  sub=sock-anno  [bus.b ~[~[1]]]
-  =/  gen=[memo=(map bell meme-args) loc=args-locations loop-calls=(set bell)]
-    [memo ~ ~]
+  =+  ^=  gen
+      ^-  $:  memo=(map bell meme-args)
+              loc=args-locations
+              loop-calls=(map bell args)
+              melo=(map bell meme-args)  ::  memo inside of a nontrivial scc
+          ==
+      [memo ~ ~ ~]
   ::
   =<  memo
   |^  ^-  [sock-anno _gen]
@@ -1996,6 +2024,7 @@
   =.  stack-set  (~(put in stack-set) b)
   =.  stack-list  [b stack-list]
   ~&  [%enter `@ux`(mug b)]
+  :: ~?  =(0x19f5.57a4 (mug b))  (mug-set-bell (~(got by sccs) b))
   =;  [prod=sock-anno gen1=_gen]
     ::  fixpoint search done, finalize
     ::
@@ -2003,7 +2032,10 @@
     =/  map=(lest spring:source)  i.src.prod
     =/  final-args=(unit args)  (~(get by loc.gen) b)
     =/  =args  ?~(final-args ~ u.final-args)
+    :: ~&  fore+`*`args
+    :: ~&  cape.bus.b
     =.  args  (subtract-cape-args args cape.bus.b)
+    :: ~&  aftr+`*`args
     ::  captured parts of the subject are required as arguments
     ::
     =/  args-capture=^args
@@ -2015,24 +2047,34 @@
       q.n.loc.gen
     ::
     =/  meme=meme-args  [b sock.prod map args (uni-args args args-capture)]
-    =.  memo.gen  (~(put by memo.gen) b meme)
+    ?:  (~(has by sccs) b)
+      =.  memo.gen  (~(put by memo.gen) b meme)
+      =.  memo.gen  (~(uni by memo.gen) melo.gen)
+      =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
+      =.  melo.gen  ~
+      [prod gen]
+    =.  melo.gen  (~(put by melo.gen) b meme)
     =?  loc.gen  ?=(^ final-args)  (~(del by loc.gen) b)
     [prod gen]
   ^-  [sock-anno _gen]
-  =/  args-loop=args  ~
+  =/  counter=@  0
   |-  ^-  [sock-anno _gen]
   =*  fixpoint-loop  $
   =;  [prod=sock-anno gen1=_gen]
     ::  traversal of nomm and callees done, check if we converged
     ::
-    ?.  (~(has in loop-calls.gen1) b)  [prod gen1]
+    ?~  args-loop-mayb=(~(get by loop-calls.gen1) b)  [prod gen1]
     =/  =args  (normalize-args (~(gut by loc.gen1) b ~))
     =.  args  (subtract-cape-args args cape.bus.b)
-    ?:  =(args-loop args)
+    ?:  =(u.args-loop-mayb args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
-    ~&  [%fixpoint `@ux`(mug b)]
-    ~&  [fore=`*`args-loop aftr=`*`args]
-    fixpoint-loop(args-loop args)  ::  propagate memo cache of calls that are outside of this SCC
+    ~&  [%fixpoint counter `@ux`(mug b)]
+    ~?  =(0x2a97.a282 (mug b))  [fore=`*`u.args-loop-mayb aftr=`*`args]
+    %=  fixpoint-loop
+      loop-calls.gen  (~(put by loop-calls.gen1) b args)
+      memo.gen        memo.gen1
+      counter         +(counter)
+    ==
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
   ?-    n
@@ -2070,11 +2112,16 @@
     =?  gen  ?=(^ q.n)  +:nomm-loop(n u.q.n)
     =^  [args-callee=args prod=sock-anno]  gen
       ?:  (~(has in stack-set) u.info.n)
-        =.  loop-calls.gen  (~(put in loop-calls.gen) u.info.n)
-        [[args-loop (dunno sub)] gen]
+        ?~  args-loop-mayb=(~(get by loop-calls.gen) u.info.n)
+          =.  loop-calls.gen  (~(put by loop-calls.gen) u.info.n ~)
+          [[~ (dunno sub)] gen]
+        [[u.args-loop-mayb (dunno sub)] gen]
       ?^  meme=(~(get by memo.gen) u.info.n)
         =/  src  src.sub(i (compose:source map.u.meme i.src.sub))
         [[args-transitive.u.meme [prod.u.meme src]] gen]
+      ?^  meal=(~(get by melo.gen) u.info.n)
+        =/  src  src.sub(i (compose:source map.u.meal i.src.sub))
+        [[args-transitive.u.meal [prod.u.meal src]] gen]
       ::  analyze through
       ::
       =^  pro=sock-anno  gen
@@ -2085,7 +2132,11 @@
         ==
       ::
       :_  gen
-      :-  args-transitive:(~(got by memo.gen) u.info.n)
+      =/  args-transitive=args
+        ?^  meal=(~(get by melo.gen) u.info.n)  args-transitive.u.meal
+        args-transitive:(~(got by memo.gen) u.info.n)
+      ::
+      :-  args-transitive
       ?~  t.src.pro  !!
       %=  pro
         t.src  t.t.src.pro
@@ -2141,6 +2192,9 @@
   ::
       [%11 *]
     ?@  p.n  nomm-loop(n q.n)
+    ~?  &(=(%spot p.p.n) =(0x2a97.a282 (mug b)))
+      ((soft spot) +.q.p.n)
+    ::
     =.  gen  +:nomm-loop(n q.p.n)
     nomm-loop(n q.n)
   ::
