@@ -1847,7 +1847,18 @@
     ::
     ?:  (~(has by final.gen) u.info.n)  |+gen
     =^  present=?  gen  (find-merge u.info.n)
-    ?:  present  &+gen
+    ?:  present
+      ?~  ongoing.gen  !!
+      =/  members=(set bell)
+        %-  silt
+        =/  out=(list bell)  ~[entry.i.ongoing.gen]
+        |-  ^-  (list bell)
+        ?~  stack-list  !!
+        ?:  =(entry.i.ongoing.gen i.stack-list)  out
+        $(stack-list t.stack-list, out [i.stack-list out])
+      ::
+      =.  members.i.ongoing.gen  (~(uni in members.i.ongoing.gen) members)
+      &+gen
     ?.  (~(has in stack-set) u.info.n)
       =^  call  gen  call-loop(b u.info.n, n (~(got by code) u.info.n))
       :_  gen
