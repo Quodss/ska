@@ -231,23 +231,24 @@
 ++  normalize-args
   |=  =args
   ^+  args
-  ?~  args  ~
-  =.  l.args  $(args l.args)
-  =.  r.args  $(args r.args)
-  ?:  ?=(%arg n.args)
-    ?:  =([~ ~] +.args)  args
-    ~&  [%norm args]
-    [n.args ~ ~]
-  ?:  ?=(%look n.args)
-    ?:  =([~ ~] +.args)  args
-    ~&  [%norm args]
-    [%hole +.args]
-  ::  n.args == %hole
-  ::
-  ?:  =([~ ~] +.args)
-    ~&  [%norm args]
-    ~
-  (blind l.args r.args)
+  args
+  :: ?~  args  ~
+  :: =.  l.args  $(args l.args)
+  :: =.  r.args  $(args r.args)
+  :: ?:  ?=(%arg n.args)
+  ::   ?:  =([~ ~] +.args)  args
+  ::   ~&  [%norm args]
+  ::   [n.args ~ ~]
+  :: ?:  ?=(%look n.args)
+  ::   ?:  =([~ ~] +.args)  args
+  ::   ~&  [%norm args]
+  ::   [%hole +.args]
+  :: ::  n.args == %hole
+  :: ::
+  :: ?:  =([~ ~] +.args)
+  ::   ~&  [%norm args]
+  ::   ~
+  :: (blind l.args r.args)
 ::
 ++  uni-args
   |=  [a=args b=args]
@@ -258,8 +259,10 @@
       ~|  `*`-
       ~|  `*`(normalize-args -)
       !!
+  ?:  =(a b)  a
   ?~  a  b
   ?~  b  a
+  ~+
   =/  l  (uni-args l.a l.b)
   =/  r  (uni-args r.a r.b)
   =/  n=?(%hole %look %arg)
@@ -285,6 +288,7 @@
   |=  [a=args ax=@]
   ^-  args
   ?:  =(1 ax)  a
+  ~+
   ?-  (cap ax)
     %2  [%hole $(ax (mas ax)) ~]
     %3  [%hole ~ $(ax (mas ax))]

@@ -2068,12 +2068,21 @@
     =.  args  (subtract-cape-args args cape.bus.b)
     ?:  =(u.args-loop-mayb args)
       [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
+    ?:  =(4 counter)
+      ::  ugly hack: if we didn't converge in three tries we use the entire
+      ::  subject as an argument for the loop calls and for this call
+      ::  XX but why we don't converge in complete:musk?
+      ::
+      =.  loc.gen1  (~(put by loc.gen1) b [%arg ~ ~])
+      [prod gen1(loop-calls (~(del in loop-calls.gen1)))]
     ~&  [%fixpoint counter `@ux`(mug b)]
-    ~?  =(0x2a97.a282 (mug b))  [fore=`*`u.args-loop-mayb aftr=`*`args]
-    %=  fixpoint-loop
-      loop-calls.gen  (~(put by loop-calls.gen1) b args)
-      memo.gen        memo.gen1
-      counter         +(counter)
+    :: ~?  =(0x2a97.a282 (mug b))  [fore=`*`u.args-loop-mayb aftr=`*`args]
+    %=    fixpoint-loop
+        loop-calls.gen
+      (~(put by loop-calls.gen1) b ?:(=(counter 3) [%arg ~ ~] args))
+    ::
+        memo.gen  memo.gen1
+        counter   +(counter)
     ==
   |-  ^-  [prod=sock-anno _gen]
   =*  nomm-loop  $
@@ -2192,8 +2201,8 @@
   ::
       [%11 *]
     ?@  p.n  nomm-loop(n q.n)
-    ~?  &(=(%spot p.p.n) =(0x2a97.a282 (mug b)))
-      ((soft spot) +.q.p.n)
+    :: ~?  &(=(%spot p.p.n) =(0x2a97.a282 (mug b)))
+    ::   ((soft spot) +.q.p.n)
     ::
     =.  gen  +:nomm-loop(n q.p.n)
     nomm-loop(n q.n)
