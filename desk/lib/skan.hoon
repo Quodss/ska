@@ -1930,7 +1930,7 @@
         ongoing
       :_  bot
       :-  (min-entry entry.scc entry.i.top)
-      %+  roll  `(list [entry=bell members=(set bell)])`top
+      %+  roll  `(list [bell (set bell)])`top
       |=  [[entry=bell members=(set bell)] acc=_members.scc]
       (~(uni in acc) members)
     ==
@@ -1968,6 +1968,10 @@
       (~(uni in acc) members)
     ==
   --
+::  XX for posterity: this does not really work as we can only guess the
+::  argument breakdown between branches. In next commits we will switch
+::  to a simpler scheme: we will get the union of all argument usage, subtract
+::  the cape, then merge args to most common noun parent
 ::
 ++  find-args-all
   |=  code=(map bell nomm-1)
@@ -2016,8 +2020,8 @@
     ~>  %bout.[0 'find sccs']
     (find-sccs-all code)
   ::
-  :: ~&  %validity-check
-  :: ?>  ~>  %bout.[0 'validity check']  (valid-sccs sccs)
+  ~&  %validity-check
+  ?>  ~>  %bout.[0 'validity check']  (valid-sccs sccs)
   =|  stack-set=(set bell)
   =|  stack-list=(list bell)
   =/  sub=sock-anno  [bus.b ~[~[1]]]
@@ -2182,6 +2186,18 @@
   ::
       [%6 *]
     =^  c  gen  nomm-loop(n p.n)
+    ::  XX We take a union of argument requirements of branches, which is
+    ::  actually a guess. We cannot know for sure if the argument in one branch
+    ::  is supposed to be present in the other. So the question is, what kind
+    ::  of pessimization to choose: either the argument will be overfit on one
+    ::  branch, or the argument will be some sort of common denominator
+    ::  (currently the first option is chosen). 
+    ::
+    ::  We don't have union args. Should we? Something like:
+    ::    {+12 = %foo} V {+12 = %bar, +13 = arg} for $%([%foo ~] [%bar p=*])
+    ::
+    ::  This would basically be type discovery in Nock
+    ::
     =^  y  gen  nomm-loop(n q.n)
     =^  n  gen  nomm-loop(n r.n)
     ::  only the condition is the true argument here
