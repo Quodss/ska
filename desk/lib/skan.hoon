@@ -1968,10 +1968,6 @@
       (~(uni in acc) members)
     ==
   --
-::  XX for posterity: this does not really work as we can only guess the
-::  argument breakdown between branches. In next commits we will switch
-::  to a simpler scheme: we will get the union of all argument usage, subtract
-::  the cape, then merge args to most common noun parent
 ::
 ++  find-args-all
   |=  code=(map bell nomm-1)
@@ -2049,7 +2045,7 @@
     =/  =args  ?~(final-args ~ u.final-args)
     :: ~&  fore+`*`args
     :: ~&  cape.bus.b
-    =.  args  (subtract-cape-args args cape.bus.b)
+    =.  args  (subtract-cape-args-final args cape.bus.b)
     :: ~&  aftr+`*`args
     ::  captured parts of the subject are required as arguments
     ::
@@ -2061,7 +2057,10 @@
       ?>  ?=([* ~ ~] loc.gen)
       q.n.loc.gen
     ::
-    =/  meme=meme-args  [b sock.prod map args (uni-args args args-capture)]
+    =/  arg-with-captured
+      (subtract-cape-args-final (uni-args args args-capture) cape.bus.b)
+    ::
+    =/  meme=meme-args  [b sock.prod map args arg-with-captured]
     ?:  (~(has by sccs) b)
       =.  memo.gen  (~(put by memo.gen) b meme)
       =.  memo.gen  (~(uni by memo.gen) melo.gen)
@@ -2186,17 +2185,7 @@
   ::
       [%6 *]
     =^  c  gen  nomm-loop(n p.n)
-    ::  XX We take a union of argument requirements of branches, which is
-    ::  actually a guess. We cannot know for sure if the argument in one branch
-    ::  is supposed to be present in the other. So the question is, what kind
-    ::  of pessimization to choose: either the argument will be overfit on one
-    ::  branch, or the argument will be some sort of common denominator
-    ::  (currently the first option is chosen). 
-    ::
-    ::  We don't have union args. Should we? Something like:
-    ::    {+12 = %foo} V {+12 = %bar, +13 = arg} for $%([%foo ~] [%bar p=*])
-    ::
-    ::  This would basically be type discovery in Nock
+    ::  XX We take a union of argument requirements of branches
     ::
     =^  y  gen  nomm-loop(n q.n)
     =^  n  gen  nomm-loop(n r.n)

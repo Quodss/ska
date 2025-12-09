@@ -179,7 +179,25 @@
     [%hole ~ r]
   [%hole l r]
 ::
-++  subtract-cape-args
+++  max-args
+  |=  [a=args b=args]
+  ^-  (unit ?(%arg %look))
+  =/  a-out=(unit ?(%arg %look))
+    ?~  a  ~
+    ?.  ?=(%hole n.a)  `n.a
+    (max-args l.a r.a)
+  ::
+  =/  b-out=(unit ?(%arg %look))
+    ?~  b  ~
+    ?.  ?=(%hole n.b)  `n.b
+    (max-args l.b r.b)
+  ::
+  ?~  a-out  b-out
+  ?~  b-out  a-out
+  ?:  |(?=(%arg u.a-out) ?=(%arg u.b-out))  `%arg
+  `%look
+::
+++  subtract-cape-args-final
   |=  [a=args c=cape]
   ^-  args
   =-  ?:  =(- (normalize-args -))  -
@@ -187,7 +205,13 @@
       ~|  `*`(normalize-args -)
       !!
   ^-  args
-  ?@  c  ?:(c ~ a)
+  ?@  c
+    ?:  c  ~
+    ?~  a  ~
+    ?:  ?=(?(%arg %look) n.a)  a
+    ~&  [%max l.a r.a]
+    ~&  (max-args l.a r.a)
+    [(need (max-args l.a r.a)) ~ ~]
   ?~  a  ~
   ?-    n.a
       %hole
@@ -200,32 +224,35 @@
     (blind l r)
   ::
       %arg  [%arg ~ ~]
-    :: =-  ?:  =(- (normalize-args -))  -
-    ::     ~|  `*`-
-    ::     ~|  `*`(normalize-args -)
-    ::     !!
-    :: ?>  =(~ l.a)
-    :: ?>  =(~ r.a)
-    :: =/  l=args  $(c -.c)
-    :: =/  r=args  $(c +.c)
-    :: ?:  &(?=(~ l) ?=(~ r))  ~
-    :: ?:  |(?=(~ l) ?=(~ r))  [%hole l r]
-    :: ?:  &(?=(%arg n.l) ?=(%arg n.r))  [%arg ~ ~]
-    :: [%hole l r]
   ::
       %look  ~
-    :: =-  ?:  =(- (normalize-args -))  -
-    ::     ~|  `*`-
-    ::     ~|  `*`(normalize-args -)
-    ::     !!
-    :: ?>  =(~ l.a)
-    :: ?>  =(~ r.a)
-    :: =/  l=args  $(c -.c)
-    :: =/  r=args  $(c +.c)
-    :: ?:  &(?=(~ l) ?=(~ r))  ~
-    :: ?:  |(?=(~ l) ?=(~ r))  (blind l r)
-    :: ?:  &(?=(%look n.l) ?=(%look n.r))  [%look ~ ~]
-    :: (blind l r)
+  ==
+::
+++  subtract-cape-args
+  |=  [a=args c=cape]
+  ^-  args
+  =-  ?:  =(- (normalize-args -))  -
+      ~|  `*`-
+      ~|  `*`(normalize-args -)
+      !!
+  ^-  args
+  ?@  c
+    ?:  c  ~
+    a
+  ?~  a  ~
+  ?-    n.a
+      %hole
+    =-  ?:  =(- (normalize-args -))  -
+        ~|  `*`-
+        ~|  `*`(normalize-args -)
+        !!
+    =/  l=args  $(a l.a, c -.c)
+    =/  r=args  $(a r.a, c +.c)
+    (blind l r)
+  ::
+      %arg  [%arg ~ ~]
+  ::
+      %look  ~
   ==
 ::
 ++  normalize-args
