@@ -2637,7 +2637,7 @@
         (~(uni in w-new) (~(get ju rev) b))
     %+  ~(put by map-local)  b
     ?:  =(need-pessimized need.s)  s
-    =^  coerced=next-resolved  gen  (~(coerce comp gen) need-pessimized nex)
+    =^  coerced=next-resolved  gen  (~(coerce-ord comp gen) need-pessimized nex)
     (~(to-straight comp gen) coerced)
   ::
   =/  [nex=next gen=line-short]
@@ -2743,27 +2743,8 @@
         (compile-scc new-scc rev long-ska scc-map jets-hot)
       ::  allocate registers
       ::
-      =^  [sub-ned=need sub-v=(list @uvre)]  gen
-        =;  [sub-ned=need gen1=_gen]  [[sub-ned (flatten-need sub-ned)] gen1]
-        |-  ^-  [need _gen]
-        ?-    -.b-ned
-            %none  [[%none ~] gen]
-        ::
-            %this
-          =^  r  gen  re
-          [[%this r] gen]
-        ::
-            ^
-          =^  hed  gen  $(b-ned -.b-ned)
-          =^  tel  gen  $(b-ned +.b-ned)
-          [[hed tel] gen]
-        ::
-            %both
-          =^  r  gen  re
-          =^  hed  gen  $(b-ned h.b-ned)
-          =^  tel  gen  $(b-ned t.b-ned)
-          [[%both r hed tel] gen]
-        ==
+      =^  sub-ned=need  gen  (need-ord-alloc-regs b-ned)
+      =/  sub-v=(list @uvre)  (flatten-need sub-ned)
       ::  emit call: memoized, or tail call, or head call (w/ or w/out a jet)
       ::
       =^  o=@uwoo  gen
@@ -3604,7 +3585,7 @@
     ::
     $(sin [|+[p.l h.r] |+[q.l t.r] &+`[r.r] t.sin])
   ::
-  ++  coerce
+  ++  coerce-ord
     |=  [need-pessimized=need-ordered nex=next-resolved]
     ^-  [next-resolved _gen]
     =;  [ned=need gen1=_gen]  [[%next [ned ~ ~] [~ then.nex]] gen1]
@@ -3633,28 +3614,92 @@
       =^  r  gen  (kern-r-need then.nex ned.nex)
       [[%this r] gen]
     ==
-  ::  Bonds do not matter when it comes to figuring out the shape of the need
-  ::  but they do matter when it comes to emitting the disassembly code from a
-  ::  branch combination to a specific branch - into which block to emit the
-  ::  disassembly code
-  ::
-  ::  1. Get regless laz1, each layer containing the parent
-  ::  2. Collapse laz1 recursively, putting collapsed needs of children and
-  ::     combined branches alongside the other data in laz1
-  ::  3. Walk laz and laz1 simultaneously, coercing the needs of blocks to the 
-  ::     ones in laz1
-  ::  
-  ++  need-lazy-collapse
-    |=  [o=@uwoo laz=need-lazy]
+  ++  need-ord-alloc-regs
+    |=  ord=need-ordered
     ^-  [need _gen]
-    stub
+    ?-    -.ord
+        %none  [[%none ~] gen]
+    ::
+        %this
+      =^  r  gen  re
+      [[%this r] gen]
+    ::
+        ^
+      =^  hed  gen  $(ord -.ord)
+      =^  tel  gen  $(ord +.ord)
+      [[hed tel] gen]
+    ::
+        %both
+      =^  r  gen  re
+      =^  hed  gen  $(ord h.ord)
+      =^  tel  gen  $(ord t.ord)
+      [[%both r hed tel] gen]
+    ==
+  ::  With the top level need finally known, emit noun splitting code into
+  ::  appropriate BBs
+  ::
+  ++  coerce-lazy
+    |=  [ned=need o=@uwoo laz=need-lazy]
+    ^+  gen
+    =*  coerce-lazy  .
+    =.  gen
+      |-  ^+  gen
+      =*  sure-loop  $
+      ?-    -.ned
+          %none
+        ?>  ?=(%none -.sure.laz)
+        gen
+      ::
+          %this
+        =^  ops  gen  (kern-need r.ned sure.laz)
+        (add-ops o ops)
+      ::
+          ^
+        ?:  ?=(%none -.sure.laz)  gen
+        ?@  -.sure.laz  !!
+        =.  gen  sure-loop(ned -.ned, sure.laz -.sure.laz)
+        sure-loop(ned +.ned, sure.laz +.sure.laz)
+      ::
+          %both
+        ?-    -.sure.laz
+            %none  gen
+            %this  (add-ops o [%mov r.ned r.sure.laz]~)
+        ::
+            ^
+          =.  gen  sure-loop(ned h.ned, sure.laz -.sure.laz)
+          sure-loop(ned t.ned, sure.laz +.sure.laz)
+        ::
+            %both
+          =.  gen  (add-ops o [%mov r.ned r.sure.laz]~)
+          =.  gen  sure-loop(ned h.ned, sure.laz h.sure.laz)
+          sure-loop(ned t.ned, sure.laz t.sure.laz)
+        ==
+      ==
+    ::
+    =.  gen
+      %+  roll  bond.laz
+      |=  [[o=@uwoo laz=need-lazy] gen-acc=_gen]
+      =.  gen  gen-acc
+      (coerce-lazy ned o laz)
+    ::
+    %+  roll  fork.laz
+    |=  [[y=[o=@uwoo laz=need-lazy] n=[o=@uwoo laz=need-lazy]] gen-acc=_gen]
+    =.  gen  gen-acc
+    =.  gen  (coerce-lazy ned y)
+    (coerce-lazy ned n)
+  ::
+  ::  NB: bonds do not matter when it comes to figuring out the shape of the
+  ::  need but they do matter when it comes to emitting the disassembly code
+  ::  from a branch combination to a specific branch - into which block to emit
+  ::  the disassembly code
   ::
   ++  next-lazy-collapse
     |=  nex=next
     ^-  [next-resolved _gen]
     ?>  =(~ args.then.nex)
-    =^  ned=need  gen  (need-lazy-collapse there.then.nex laz.nex)
-    [[%next [ned ~ ~] ~ there.then.nex] gen]
+    =^  ned-final=need  gen  (need-ord-alloc-regs (shape-collapse laz.nex))
+    :-  [%next [ned-final ~ ~] ~ there.then.nex]
+    (coerce-lazy ned-final there.then.nex laz.nex)
   ::
   ::  Renumber the registers so that the input registers are 0-N, set the starting
   ::  block index to 0w0
@@ -3893,6 +3938,7 @@
 ++  need-to-ordered
   |=  ned=need
   ^-  need-ordered
+  ~+
   =*  this  .
   ?-  -.ned
     %none  [%none ~]
@@ -3901,31 +3947,156 @@
     %both  [%both (this h.ned) (this t.ned)]
   ==
 ::
-++  dif-need-ord
-  |=  [a=need-ordered b=need-ordered]
-  ^-  need-ordered
-  ?:  =(a b)  [%none ~]
-  ?:  ?=(%none -.a)  [%none ~]
-  ?:  ?=(%none -.b)  a
-  ?:  ?=(%this -.a)  [%this ~]
-  ?:  ?=(^ -.a)
-    ?:  ?=(%this -.b)  a
-    =/  hed  $(a -.a, b ?^(-.b -.b h.b))
-    =/  tel  $(a +.a, b ?^(-.b +.b t.b))
-    [hed tel]
-  ::  a is %both
-  ::
-  ?:  ?=(%this -.b)  [h t]:a
-  ?:  ?=(^ -.b)
-    =/  hed  $(a h.a, b -.b)
-    =/  tel  $(a t.a, b +.b)
-    [%both hed tel]
-  =/  hed=need-ordered  $(a h.a, b h.b)
-  =/  tel=need-ordered  $(a t.a, b t.b)
-  (cons-need hed tel)
-::
 ++  cons-need  ::  XX review all need conses for normalization
   |*  [a=?([%none ~] ^) b=?([%none ~] ^)]
   ?:  &(?=(%none -.a) ?=(%none -.b))  [%none ~]
   [a b]
+::
+++  uni-need-ord
+  |=  [a=need-ordered b=need-ordered]
+  ^-  need-ordered
+  ?:  =(a b)  a
+  ?:  ?=(%none -.a)  b
+  ?:  ?=(%none -.b)  a
+  ?:  ?=(%this -.a)
+    ?:  ?=(%both -.b)  b
+    ?>  ?=(^ -.b)
+    [%both b]
+  ?:  ?=(%this -.b)
+    ?:  ?=(%both -.a)  a
+    ?>  ?=(^ -.a)
+    [%both a]
+  ?:  &(?=(^ -.a) ?=(^ -.b))
+    (cons-need $(a -.a, b -.b) $(a +.a, b +.b))
+  ?>  |(?=(%both -.a) ?=(%both -.b))
+  =/  [h-a=need-ordered t-a=need-ordered]
+    ?:  ?=(%both -.a)  [h t]:a
+    ?>  ?=(^ -.a)
+    a
+  ::
+  =/  [h-b=need-ordered t-b=need-ordered]
+    ?:  ?=(%both -.b)  [h t]:b
+    ?>  ?=(^ -.b)
+    b
+  ::
+  =/  x=need-ordered  (cons-need $(a h-a, b h-b) $(a t-a, b t-b))
+  ?:  |(?=(%none -.x) ?=(%this -.x))  [%this ~]
+  :-  %both
+  ?:  ?=(^ -.x)  x
+  [h t]:x
+::  Given a final need-lazy, produce the shape of the input subject.
+::
+::  Some facts first, then the descripion of the algorithm:
+::
+::  Fork collapsing is order-sensitive. If one fork used +2 in both branches,
+::  and the other used +2 only in one branch, the desired result should contain
+::  +2. But if we finalized the second fork first and simply unified the results
+::  of all fork collapses, we would have either lost +2 or kept both the root
+::  noun and +2 in %both. So we have to have a fixed point loop to refine the
+::  final shape iteratively.
+::
+::  For the fixed point loop to converge the shape needs to grow monotonically.
+::  However, if we captured the root noun once, like in the example above, we
+::  want to be able to subtract it once we learn that the root is not needed.
+::  For this reason we will keep track of two shapes:
+::    orig: this is the shape that we want to return. It contains sure.laz on
+::          the current level of the lazy tree, plus all the collapsed stuff
+::    fix: the shape we accumulate in the fixed point loop. It contains all the
+::         axes that were available to us, including in the prior iterations.
+:: 
+++  shape-collapse
+  |=  laz=need-lazy
+  ^-  need-ordered
+  =/  sures=[orig=need-ordered fix=need-ordered]
+    [. .]:(need-to-ordered sure.laz)
+  ::
+  =<  orig
+  |-  ^+  sures
+  =*  sures-loop  $
+  =;  sures1=_sures
+    ?:  =(fix.sures1 fix.sures)  sures
+    $(fix.sures fix.sures1)
+  ::  We propagate fix.sures deeper for correct MSG computations. We don't
+  ::  do the same for orig.sures to avoid adding extra information we would like
+  ::  to drop.
+  ::
+  =.  sures
+    %+  roll  bond.laz
+    |=  [[* laz-bond=need-lazy] =_sures]
+    =/  sure-orig-ord-bond  (need-to-ordered sure.laz-bond)
+    =.  sures
+      %=  sures-loop
+        orig.sures  sure-orig-ord-bond
+        fix.sures   (uni-need-ord fix.sures sure-orig-ord-bond)
+        laz         laz-bond
+      ==
+    ::
+    sures(orig (uni-need-ord orig.sures sure-orig-ord-bond))
+  ::
+  %+  roll  fork.laz
+  |=  [[y=[* laz=need-lazy] n=[* laz=need-lazy]] =_sures]
+  =/  sures-y=_sures
+    =/  sure-orig-ord-y  (need-to-ordered sure.laz.y)
+    %=  sures-loop
+      orig.sures  sure-orig-ord-y
+      fix.sures   (uni-need-ord fix.sures sure-orig-ord-y)
+      laz         laz.y
+    ==
+  ::
+  =/  sures-n=_sures
+    =/  sure-orig-ord-n  (need-to-ordered sure.laz.n)
+    %=  sures-loop
+      orig.sures  sure-orig-ord-n
+      fix.sures   (uni-need-ord fix.sures sure-orig-ord-n)
+      laz         laz.n
+    ==
+  ::  We compute simple MSG of fix.sures-y/n as they contain the totality of 
+  ::  the shape info. We compute special MSG of orig.sures-y/n that takes
+  ::  fix.sures into account without adding it to orig.sures-y/n
+  ::
+  =.  fix.sures  (uni-need-ord fix.sures (msg-need-ord fix.sures-y fix.sures-n))
+  sures(orig (msg-need-ord-fix-aware orig.sures-y orig.sures-n fix.sures))
+::
+++  hed-need-ord
+  |=  a=need-ordered
+  ^-  need-ordered
+  ?-  -.a
+    %none  [%none ~]
+    %this  [%none ~]
+    %both  h.a
+    ^      -.a
+  ==
+::
+++  tel-need-ord
+  |=  a=need-ordered
+  ^-  need-ordered
+  ?-  -.a
+    %none  [%none ~]
+    %this  [%none ~]
+    %both  t.a
+    ^      +.a
+  ==
+::
+::  MSG of `a` and `b` while knowing that axes in `fix` exist
+::
+++  msg-need-ord-fix-aware
+  |=  [a=need-ordered b=need-ordered fix=need-ordered]
+  ^-  need-ordered
+  ~+
+  =*  msg  .
+  ?:  =(a b)  a
+  ?:  |(?=(%this -.fix) ?=(%none -.fix))
+    (msg-need-ord a b)
+  ?:  &(?=(%none -.a) =(b fix))  b
+  ?:  &(?=(%none -.b) =(a fix))  a
+  =/  need-here=?  |(?=(%this -.a) ?=(%this -.b) ?=(%both -.a) ?=(%both -.b))
+  =/  x
+    %+  cons-need
+      (msg (hed-need-ord a) (hed-need-ord b) (hed-need-ord fix))
+    (msg (tel-need-ord a) (tel-need-ord b) (tel-need-ord fix))
+  ::
+  ?-  -.x
+    %none  ?:(need-here [%this ~] [%none ~])
+    ^      ?:(need-here [%both x] x)
+  ==
 --
