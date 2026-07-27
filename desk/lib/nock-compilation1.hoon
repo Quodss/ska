@@ -550,14 +550,15 @@
 ?>  =(| *cape)
 ?>  =(~ *spring)
 |%
-+$  identity  [more=sock fol=^]  ::  max subject
-+$  bell      [less=sock fol=^]   ::  minimized subject
++$  identity  [more=sock fol=^]     ::  max subject
++$  bell      [less=sock fol=^]     ::  minimized subject
++$  info-2    [b=bell k=(unit *)]   ::  callee, maybe memoization key
 +$  nomm
   $~  [%0 0]
   $^  [nomm nomm]
   $%  [%0 p=@]
       [%1 p=*]
-      [%2 p=nomm q=nomm info=(unit [b=bell k=(unit *)])]
+      [%2 p=nomm q=nomm info=(unit info-2)]
       [%3 p=nomm]
       [%4 p=nomm]
       [%5 p=nomm q=nomm]
@@ -2539,6 +2540,9 @@
       [%cal a=bell v=(list @uvre) d=@uvre]        ::  a(v) -> d
       [%caf a=bell v=(list @uvre) d=@uvre n=ring] ::  %cal but maybe jetted
       [%cam a=bell v=(list @uvre) d=@uvre n=*]    ::  %cal but memoized
+      [%csl a=bell s=@uvre d=@uvre]               ::  %cal but sub is in one reg
+      [%csf a=bell s=@uvre d=@uvre n=ring]        ::  %caf but sub is in one reg
+      [%csm a=bell s=@uvre d=@uvre n=*]           ::  %cam but sub is in one reg
   ==
 ::
 +$  termin
@@ -2548,6 +2552,8 @@
       [%hop t=jmp]                          ::  unconditional block jump
       [%jmp a=bell v=(list @uvre)]          ::  %cal but in tail position
       [%jmf a=bell v=(list @uvre) n=ring]   ::  %caf but in tail position
+      [%jsp a=bell s=@uvre]                 ::  %jmp but sub is in one reg
+      [%jsf a=bell s=@uvre n=ring]          ::  %jmf but sub is in one reg
       [%don s=@uvre]                        ::  return s
       [%bom ~]                              ::  boom! crash
   ==
@@ -2573,12 +2579,17 @@
     %cal  [d v]
     %caf  [d v]
     %cam  [d v]
+    %csl  ~[s d]
+    %csf  ~[s d]
+    %csm  ~[s d]
     %clq  ~[s]
     %eqq  ~[l r]
     %brn  ~[s]
     %hop  ~
     %jmp  v
     %jmf  v
+    %jsp  ~[s]
+    %jsf  ~[s]
     %don  ~[s]
     %bom  ~
   ==
@@ -2594,6 +2605,8 @@
     %hop  ~[t]
     %jmp  ~
     %jmf  ~
+    %jsp  ~
+    %jsf  ~
     %don  ~
     %bom  ~
   ==
@@ -2604,6 +2617,30 @@
 =>  +
 ::
 |%
+::  compiles `func` with the root subject as a sole argument, plus its SCC
+::  including itself as N-ary functions
+::
+++  compile-unary
+  |=  $:  func=bell
+          scc=(set bell)
+          rev=(jug bell bell)
+          =long-ska
+          scc-map=(map bell (set bell))
+          jets-hot=(map ring need-ordered)
+      ==
+  ^-  [straight (map bell straight)]
+  ~+
+  =*  args  +<
+  =/  n-ary-map=(map bell straight)  (compile-scc +.args)
+  :_  n-ary-map
+  ^-  straight
+  =/  comp  (comp scc rev long-ska scc-map jets-hot n-ary-map)
+  =/  [nex=next gen=line-short]
+    (~(run comp *line-short) & nomm:(~(got by code.long-ska) func) [%done ~])
+  ::
+  =^  [o=@uwoo sub=@uvre]  gen  (~(kerf comp gen) nex)
+  (~(to-straight comp gen) [%next [this+sub ~ ~] ~ o])
+::
 ++  compile-scc
   |=  $:  scc=(set bell)
           rev=(jug bell bell)
@@ -2641,7 +2678,7 @@
     (~(to-straight comp gen) coerced)
   ::
   =/  [nex=next gen=line-short]
-    (~(run comp *line-short) nomm:(~(got by code.long-ska) b) [%done ~])
+    (~(run comp *line-short) | nomm:(~(got by code.long-ska) b) [%done ~])
   ::
   =^  res  gen  (~(next-lazy-collapse comp gen) nex)
   [(~(to-straight comp gen) res) res gen]
@@ -2656,7 +2693,7 @@
       ==
   |_  gen=line-short
   ++  run
-    |=  [=nomm =goal]
+    |=  [mono=? =nomm =goal]
     |^  ^-  [next _gen]
     ?-    nomm
         [^ *]
@@ -2747,22 +2784,40 @@
       =/  sub-v=(list @uvre)  (flatten-need sub-ned)
       ::  emit call: memoized, or tail call, or head call (w/ or w/out a jet)
       ::
-      =^  o=@uwoo  gen
+      =*  call-op  $>(?(%cal %cam %caf %jmp %jmf) $%(pole termin))
+      =^  [op=call-op o=@uwoo o-hop=@uwoo]  gen
         ?^  k.u.info.nomm
           =/  key  u.k.u.info.nomm
           =^  next  gen  simple-next
           =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
-          (emit ~ [%cam b-callee sub-v pro key]~ %hop then.next)
+          =/  op  [%cam b-callee sub-v pro key]
+          =^  o  gen  (emit ~ ~[op] %hop then.next)
+          [[op o there.then.next] gen]
         ?:  ?=(%done -.goal)
-          %^  emit  ~  ~
-          ?~  rin  [%jmp b-callee sub-v]
-          [%jmf b-callee sub-v u.rin]
+          =/  op
+            ?~  rin  [%jmp b-callee sub-v]
+            [%jmf b-callee sub-v u.rin]
+          ::
+          =^  o  gen  (emit ~ ~ op)
+          [[op o `@uwoo`%invalid] gen]
         =^  next  gen  simple-next
         =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
-        =-  (emit ~ ~[-] %hop then.next)
-        ^-  pole
-        ?~  rin  [%cal b-callee sub-v pro]
-        [%caf b-callee sub-v pro u.rin]
+        =/  op
+          ?~  rin  [%cal b-callee sub-v pro]
+          [%caf b-callee sub-v pro u.rin]
+        ::
+        =^  o  gen  (emit ~ ~[op] %hop then.next)
+        [[op o there.then.next] gen]
+      ::  if mono, change `sub-ned` to %this, emit branches to try to decons
+      ::  input subject, and change `o` to point to the beginning of the decons
+      ::  process
+      ::
+      =>  =*  dot  .
+          ?.  mono  dot
+          =^  [o-new=@uwoo s=@uvre]  gen
+            (mono-try-call u.info.nomm rin sub-ned o op o-hop)
+          ::
+          dot(sub-ned [%this s], o o-new)
       ::
       =^  nex-fol=next  gen
         ?:  (safe-fol-fol q.nomm)  [[%next [none+~ ~ ~] ~ o] gen]
@@ -3512,7 +3567,7 @@
     |=  [o=@uwoo ops=(list pole)]
     ^+  gen
     =/  =blob  (~(got by blocks.gen) o)
-    =.  body.blob  (weld body.blob ops)
+    =.  body.blob  (weld ops body.blob)
     gen(blocks (~(put by blocks.gen) o blob))
   ::
   ++  emir
@@ -3852,6 +3907,21 @@
         =^  v1  gen  (rewrite-par v.op)
         =^  d1  gen  (rer d.op)
         [op(v v1, d d1) gen]
+      ::
+          %csl
+        =^  s1  gen  (rer s.op)
+        =^  d1  gen  (rer d.op)
+        [op(s s1, d d1) gen]
+      ::
+          %csf
+        =^  s1  gen  (rer s.op)
+        =^  d1  gen  (rer d.op)
+        [op(s s1, d d1) gen]
+      ::
+          %csm
+        =^  s1  gen  (rer s.op)
+        =^  d1  gen  (rer d.op)
+        [op(s s1, d d1) gen]
       ==
     ::
     ++  rewrite-fin
@@ -3889,6 +3959,14 @@
         =^  v1  gen  (rewrite-par v.fin)
         [fin(v v1) gen]
       ::
+          %jsp
+        =^  s1  gen  (rer s.fin)
+        [fin(s s1) gen]
+      ::
+          %jsf
+        =^  s1  gen  (rer s.fin)
+        [fin(s s1) gen]
+      ::
           %don
         =^  s1  gen  (rer s.fin)
         [fin(s s1) gen]
@@ -3903,6 +3981,62 @@
       =^  args1  gen  (rewrite-par args.j)
       [j(args args1) gen]
     --
+  ::  
+  ++  mono-try-call
+    |=  $:  [b=bell key=(unit *)]
+            rin=(unit ring)
+            ned=need
+            o=@uwoo  ::  BB with succesfull call
+            op=$>(?(%cal %cam %caf %jmp %jmf) $%(pole termin))
+            o-hop=@uwoo  ::  BB after succesfull call if not tail
+        ==
+    ^-  [[@uwoo @uvre] _gen]
+    =^  r  gen  re
+    =^  fail=@uwoo  gen
+      ?-    -.op
+          %jmp
+        (emit ~ ~ %jsp b r)
+      ::
+          %jmf
+        (emit ~ ~ %jsf b r n.op)
+      ::
+          %cal
+        (emit ~ [%csl b r d.op]~ [%hop ~ o-hop])
+      ::
+          %cam
+        (emit ~ [%csm b r d.op n.op]~ %hop ~ o-hop)
+      ::
+          %caf
+        (emit ~ [%csf b r d.op n.op]~ %hop ~ o-hop)
+      ==
+    ::
+    =;  [o=@uwoo gen=_gen]  [[o r] gen]
+    |-  ^-  [@uwoo _gen]
+    ?-    -.ned
+        %none
+      [o gen]
+    ::
+        %this
+      (emit ~ [%mov r r.ned]~ %hop ~ o)
+    ::
+        ^
+      =^  r-t  gen  re
+      =^  r-h  gen  re
+      =^  o-t=@uwoo  gen  $(ned +.ned, r r-t)
+      =^  o-h=@uwoo  gen  $(ned -.ned, o o-t, r r-h)
+      =^  o-split  gen  (emit ~ ~[[%hed r r-h] [%tal r r-t]] %hop ~ o-h)
+      (emit ~ ~ [%clq r ~^o-split ~^fail])
+    ::
+        %both
+      =^  r-t  gen  re
+      =^  r-h  gen  re
+      =^  o-t=@uwoo  gen  $(ned t.ned, r r-t)
+      =^  o-h=@uwoo  gen  $(ned h.ned, o o-t, r r-h)
+      =^  o-split  gen
+        (emit ~ ~[[%hed r r-h] [%tal r r-t] [%mov r r.ned]] %hop ~ o-h)
+      ::
+      (emit ~ ~ [%clq r ~^o-split ~^fail])
+    ==
   --
 ::
 ::
