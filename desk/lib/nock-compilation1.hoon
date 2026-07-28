@@ -45,22 +45,18 @@
 ::    operations, including raw Nock 2 when *[a c] could not be deduced (an
 ::    indirect Nock call), but it can also call other SKA functions.
 ::
-::    Once the function call graph is obtained with partial evaluation of the
-::    given subject/formula pair, the next step is to discover which parts of
-::    the subject are actually used as data by each function.  Without it each
-::    function can only be thought of as a function (noun -> noun), which leads
-::    to unnecessary busywork when it comes to function calls - the entire
-::    subject of a callee would have to be consed up, for it to be deconstructed
-::    later by the callee.
-::
-::    Finally, when the functions and their subject axis usages are known,
-::    each function can be compiled to a linear SSA form, allowing further
-::    optimizations and eventually efficient execution.
+::    When the call graph is known, each function can be compiled to a linear
+::    SSA form, allowing further optimizations and eventually efficient
+::    execution.  The compilation also performs data flow analysis, discovering
+::    which axes of the input subject are used by a function, allowing us to get
+::    rid of core consing-deconsing busywork that usually happens with gate
+::    slamming.  Since we need to know the subject split for callee functions to
+::    compile a SKA-function, we will have to perform linearization in a fixed
+::    point loop for callees that are in the same SCC as the caller.
 ::
 ::  Table of contents:
-::    Call graph construction:  line 511
-::    Axis usage analysis:      line 2127
-::    Compilation:              line 2471
+::    Call graph construction:  line 507
+::    Compilation:              line 2124
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
@@ -2125,357 +2121,77 @@
 --
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
-::  Axis usage analysis
-::
-::    Once we have the callgraph, but before we can start compiling SKA func-
-::    tions, we need to establish which parts of the subject a function will use
-::    as the data.  With that information we will be able to compile functions
-::    in any order, including lazily.
-::
-::    To get axis usage data we start off with the cold state: we know axis
-::    usage of the jetted functions.  Then, starting with the root function:
-::      - if the function has a jet, immediately return the registerization;
-::      - else get the SCC to which this function belongs, and start the
-::        fixpoint search:
-::        - initialize all registerizations of functions in the SCC to empty;
-::        - iterate over functions with a worklist algorithm similar to
-::          +ska-callgraph;
-::        - on a call within SCC get the current guess, else get the
-::          registerization recursively. This will make sure we don't do extra
-::          work registerizing exclusive callees of jetted functions.
-::
-::    Additional attention needs to be payed to Nock 6 to prevent from pessimi-
-::    zing, both here and in the compiler. Subject usage of a computation with
-::    a branch consists of a union of subject usages before and after a branch
-::    with the most specific generalization of the exclusive subject usages
-::    of branches. This applies recursively to branches within branches
-::
-::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-|%
-+$  long-args
-  $+  long-args
-  $:
-  ::::  hot state: subject usage by jetted arms
-    ::
-    jets=(map ring cape)
-    code=(map bell cape)
-  ==
-::
-+$  worklist  (set bell)
-++  axes-lazy
-  |-
-  $+  axes-lazy
-  $:  sure=cape
-      fork=(list [y=$ n=$])
-  ==
---
-::
-|%
-++  axes-lazy-fmap
-  |=  [laz=axes-lazy gat=$-(cape cape)]
-  ^-  axes-lazy
-  =*  fmap  $
-  :-  (gat sure.laz)
-  %+  turn  fork.laz
-  |=  [y=axes-lazy n=axes-lazy]
-  [fmap(laz y) fmap(laz n)]
-::
-++  collapse-axes-lazy
-  |=  laz=axes-lazy
-  ^-  cape
-  =*  collapse  .
-  ?:  =(~ fork.laz)  sure.laz
-  %+  roll  fork.laz
-  |=  [[y=axes-lazy n=axes-lazy] acc=cape]
-  %+  uni:ca  acc
-  %-  msg-ca
-  [ (uni:ca sure.laz (collapse y(sure (uni:ca sure.y sure.laz))))
-    (uni:ca sure.laz (collapse n(sure (uni:ca sure.n sure.laz))))
-  ]
-::
-++  unify-lazy-usage
-  |=  [a=axes-lazy b=axes-lazy]
-  ^-  axes-lazy
-  :-  (uni:ca sure.a sure.b)
-  (weld fork.a fork.b)
-::  curry right. no inner wetness
-::
-++  curr
-  |*  [a=$-(^ *) c=*]
-  |=  b=_,.+<-.a
-  (a b c)
-::
-++  into
-  ::  split lazy goal for edit: donor, then recipient
-  ::
-  |=  [axe=@ laz=axes-lazy]
-  ^-  [axes-lazy axes-lazy]
-  ?<  =(0 axe)
-  ?:  =(1 axe)  [laz *axes-lazy]
-  :-  (axes-lazy-fmap laz (curr lot:ca axe))
-  %+  axes-lazy-fmap  laz
-  |=  c=cape
-  ^-  cape
-  ::  poke a hole in c at axe
-  ::
-  ?:  ?=(%| c)  |
-  ?:  =(1 axe)  |
-  ?-  (cap axe)
-    %2  (con:ca $(c (hed:ca c), axe (mas axe)) (tel:ca c))
-    %3  (con:ca (hed:ca c) $(c (tel:ca c), axe (mas axe)))
-  ==
-::
-++  axis-poke
-  |=  [root=bell =long-ska lon=long-args]
-  ^-  long-args
-  =/  [bell-graph=(jug bell bell) bell-graph-reversed=(jug bell bell)]
-    (simple-bell-graph-and-reversed graph.final.long-ska)
-  ::
-  =/  sccs=(list (set bell))  (tarjan bell-graph)
-  =/  scc-map=(map bell (set bell))
-    %+  roll  sccs
-    |=  [scc=(set bell) acc=(map bell (set bell))]
-    %-  ~(rep in scc)
-    |=  [b=bell acc=_acc]
-    (~(put by acc) b scc)
-  ::
-  (axis-find (~(got by scc-map) root) bell-graph-reversed long-ska lon scc-map)
-::
-++  axis-find
-  |=  $:  scc=(set bell)
-          rev=(jug bell bell)
-          =long-ska
-          lon=long-args
-          scc-map=(map bell (set bell))
-      ==
-  ^-  long-args
-  =*  axis-find  .
-  =;  [new=(map bell cape) lon1=long-args]
-    =.  lon  lon1
-    lon(code (~(uni by code.lon) new))
-  ::
-  ^-  [(map bell cape) long-args]
-  =|  functions-axes=(map bell cape)
-  =/  w=worklist  scc
-  |-  ^-  [(map bell cape) long-args]
-  =*  fixpoint-axis  $
-  =;  [[w-new=worklist functions-axes1=(map bell cape)] lon1=long-args]
-    =.  functions-axes  functions-axes1
-    =.  lon  lon1
-    ::  we only care about the SCC we are focused on, don't enqueue other
-    ::  callers
-    ::
-    =.  w-new  (~(int in w-new) scc)
-    ?:  =(~ w-new)  [functions-axes lon]
-    fixpoint-axis(w w-new)
-  ::
-  %-  ~(rep in w)
-  |=  [b=bell [w-new=worklist =_functions-axes] =_lon]
-  ^-  [[worklist (map bell cape)] long-args]
-  =;  [[axes-data=cape axes-look=cape] lon1=long-args]
-    =.  lon  lon1
-    =/  axes=cape
-      %+  uni:ca  axes-data
-      =/  sub=sock  less.b
-      |-  ^-  cape
-      ?@  axes-look  |
-      ?:  &(|(=(| cape.sub) ?=(@ data.sub)) ?=(@ axes-data))
-        axes-look
-      %-  con:ca
-      [ $(sub (hed:so sub), axes-look -.axes-look, axes-data (hed:ca axes-data))
-        $(sub (tel:so sub), axes-look +.axes-look, axes-data (tel:ca axes-data))
-      ]
-    ::
-    :_  lon
-    =/  axes-old=(unit cape)  (~(get by functions-axes) b)
-    ?~  axes-old
-      :-  ?:  =(axes |)  w-new
-          (~(uni in w-new) (~(get ju rev) b))
-      (~(put by functions-axes) b axes)
-    ::  this is not the first iteration, get MSG of the old and the new value
-    ::  to prevent divergence
-    ::
-    =.  axes  (msg-ca axes u.axes-old)
-    ?:  =(axes u.axes-old)
-      [w-new functions-axes]
-    :-  (~(uni in w-new) (~(get ju rev) b))
-    (~(put by functions-axes) b axes)
-  ::
-  =;  [[dat=axes-lazy lok=axes-lazy] lon1=long-args]
-    [[(collapse-axes-lazy dat) (collapse-axes-lazy lok)] lon1]
-  ::
-  =/  =nomm  nomm:(~(got by code.long-ska) b)
-  ::  "dat" is equivalent to "goal" in SSA compilation. It means "what parts of
-  ::  the result of this computation will be used in the next computation".
-  ::  In tail position we need the whole thing.
-  ::
-  ::  "lok" is axis usage caused by sterile Nock 0 lookups, i.e. Nock 0's whose
-  ::  products are dropped
-  ::
-  =/  need-it  [[& ~] *axes-lazy]
-  =/  drop-it  [*axes-lazy *axes-lazy]
-  =/  goal=[dat=axes-lazy lok=axes-lazy]  need-it
-  |^  ^-  [_goal long-args]
-  =*  nomm-loop  $
-  ?-    nomm
-      [p=^ q=*]
-    =^  p  lon  $(nomm p.nomm, goal (app-goal (curr axes-lazy-fmap hed:ca)))
-    =^  q  lon  $(nomm q.nomm, goal (app-goal (curr axes-lazy-fmap tel:ca)))
-    :_  lon
-    (unify-goals p q)
-  ::
-      [%0 @]
-    :_  lon
-    ?:  =(0 p.nomm)  drop-it
-    ?:  =(1 p.nomm)  goal
-    ::  lok.goal keeps track of sterile Nock 0's here by turning empty goals
-    ::  to [& ~]
-    ::
-    :-  (axes-lazy-fmap dat.goal (curr pat:ca p.nomm))
-    %+  axes-lazy-fmap
-      ?:  =(*axes-lazy lok.goal)  [& ~]
-      lok.goal
-    (curr pat:ca p.nomm)
-  ::
-      [%1 *]  [drop-it lon]
-  ::
-      [%2 *]
-    ?~  info.nomm
-      =^  p  lon  $(nomm p.nomm, goal need-it)
-      =^  q  lon  $(nomm q.nomm, goal need-it)
-      :_  lon
-      (unify-goals p q)
-    =*  b-callee  b.u.info.nomm
-    =/  callee-pure=?  pure:(~(got by code.long-ska) b-callee)
-    =^  q=_goal  lon
-      ?:  (safe-fol-fol q.nomm)  [drop-it lon]
-      $(nomm q.nomm, goal drop-it)
-    ?:  &(callee-pure (drop-it-equivalent goal))
-      =^  p  lon  $(nomm p.nomm, goal drop-it)
-      :_  lon
-      (unify-goals p q)
-    =^  callee-usage=cape  lon
-      ::  first try to get subject split by jets, then check if in the current
-      ::  SCC, getting current assumption if yes, then look among finalized,
-      ::  finally recur into the new SCC and get the result
-      ::
-      =*  call-cole  call.cole.jets.long-ska
-      ?^  j=(biff (~(get by call-cole) b-callee) ~(get by jets.lon))
-        [u.j lon]
-      ?:  (~(has in scc) b-callee)
-        [(~(gut by functions-axes) b-callee |) lon]
-      ?^  c=(~(get by code.lon) b-callee)
-        [u.c lon]
-      =.  lon  (axis-find (~(got by scc-map) b-callee) rev long-ska lon scc-map)
-      :_  lon
-      (~(got by code.lon) b-callee)
-    ::
-    =^  p  lon  $(nomm p.nomm, goal [. .]:[callee-usage ~])
-    :_  lon
-    (unify-goals p q)
-  ::
-      [%3 *]  $(nomm p.nomm, goal need-it)
-      [%4 *]  $(nomm p.nomm, goal need-it)
-      [%5 *]
-    =^  p  lon  $(nomm p.nomm, goal need-it)
-    =^  q  lon  $(nomm q.nomm, goal need-it)
-    :_  lon
-    (unify-goals p q)
-  ::
-      [%6 *]
-    =^  p  lon  $(nomm p.nomm, goal need-it)
-    =^  q  lon  $(nomm q.nomm)
-    =^  r  lon  $(nomm r.nomm)
-    :_  lon
-    :-  [sure.dat.p [[dat.q dat.r] fork.dat.p]]
-    [sure.lok.p [[lok.q lok.r] fork.lok.p]]
-  ::
-      [%7 *]
-    =^  q  lon  $(nomm q.nomm)
-    $(nomm p.nomm, goal q)
-  ::
-      [%10 *]
-    =/  [don-dat=axes-lazy rec-dat=axes-lazy]  (into p.p.nomm dat.goal)
-    =/  [don-lok=axes-lazy rec-lok=axes-lazy]  (into p.p.nomm lok.goal)
-    =^  qp  lon  $(nomm q.p.nomm, goal [don-dat don-lok])
-    =^  q   lon  $(nomm q.nomm, goal [rec-dat rec-lok])
-    :_  lon
-    (unify-goals qp q)
-  ::
-      [%11 *]
-    ?@  p.nomm   $(nomm q.nomm)
-    =^  qp  lon  $(nomm q.p.nomm, goal need-it)
-    =^  q   lon  $(nomm q.nomm)
-    :_  lon
-    (unify-goals q qp)
-  ::
-      [%12 *]
-    =^  p  lon  $(nomm p.nomm, goal need-it)
-    =^  q  lon  $(nomm q.nomm, goal need-it)
-    :_  lon
-    (unify-goals p q)
-  ==
-  ::
-  ++  unify-goals
-    |=  [a=_goal b=_goal]
-    ^+  goal
-    :-  (unify-lazy-usage dat.a dat.b)
-    :_  (weld fork.lok.a fork.lok.b)
-    ::  get deepest axes
-    ::  XX maybe best to leave it a regular union for easier sync with
-    ::  compilation?
-    ::
-    =/  a=cape  sure.lok.a
-    =/  b=cape  sure.lok.b
-    |-  ^-  cape
-    ?@  a
-      ?^  b  b
-      |(a b)
-    ?@  b  a
-    (con:ca $(a -.a, b -.b) $(a +.a, b +.b))
-  ::
-  ++  app-goal
-    |=  g=$-(axes-lazy axes-lazy)
-    ^+  goal
-    [(g dat.goal) (g lok.goal)]
-  ::
-  ++  drop-it-equivalent
-    |=  g=_goal
-    ^-  ?
-    &((no-equivalent dat.g) (no-or-all-equivalent lok.g))
-  ::
-  ++  no-equivalent
-    |=  laz=axes-lazy
-    ^-  ?
-    =*  this  .
-    ?&  ?=(%| sure.laz)
-    ::
-        %+  levy  fork.laz
-        |=  [y=axes-lazy n=axes-lazy]
-        &((this y) (this n))
-    ==
-  ::
-  ++  no-or-all-equivalent
-    |=  laz=axes-lazy
-    ^-  ?
-    =*  this  .
-    ?&  ?=(@ sure.laz)
-    ::
-        %+  levy  fork.laz
-        |=  [y=axes-lazy n=axes-lazy]
-        &((this y) (this n))
-    ==
-  --
---
-::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::
 ::  Compilation
+::
+::    Previous iterations of SKA pipeline design included a data-flow analysis
+::    step between call graph construction and compilation.  The motivation for
+::    that was the reduction of work performed to compile a given function,
+::    since the data-flow analysis required a fixed point iteration for a given
+::    SCC.  Once data-flow analysis was complete the compilation itself could
+::    have been done lazily per each function.  In the current approach the
+::    compilation and the data-flow analysis are performed together, to avoid
+::    having to sync these two steps together, reducing the complexity of the
+::    algorithm. Maybe there is a way to add the intermediate step without too
+::    much headache, but one would have to take into account register allocation
+::    and code emission for branches and hints, which would have to be synced
+::    with the subject shape prescribed by that intermediate step.
+::
+::    Here we compile a SKA-function with a destination-driven code generation
+::    (DDCG) approach, except that for Nock 6 forks and some hints we produce
+::    a lazy destination, which is collapsed when we satisfy it, either with a
+::    Nock 1 literal, or Nock 2/12 product, or with the input subject, once the
+::    goal bubbled up all the way to the root Nock formula of the SKA-function.
+::
+::    The motivation for the lazy destination approach here, is the same as the
+::    motivation for the poisoned register semantics and later %cel assertions
+::    in `sword` implementation: preventing crash relocation.  For the compiler
+::    output to be at least correct, +mink semantics have to be preserved, and
+::    +mink materializes the stack trace as a product of the computation.  This
+::    means that, if a function is called with a subject that does not fit its
+::    argument shape, we can't just crash in the caller or somewhere in the
+::    callee: we have to match the stack trace that we would have had if we ran
+::    +mink unjetted. In the general case of %mean hints with traps that capture
+::    the subject inside of the callee, it would mean entering the callee and
+::    crashing in the right place.
+::
+::    Further, for better UX it would make sense to prevent crash relocation
+::    for other hints as well that are used in debugging. If I put a ~& before
+::    a crash site, I would like to see the printout even though it would be
+::    formally correct to relocate the crash before the hint, as %slog hints
+::    are not recognised by +mink.
+::
+::    This implementation achieves crash correctness by carrying basic block
+::    labels together with the data requirements, represented with $need type,
+::    inside of a recursive data structure $need-lazy. Whenever the lazy need
+::    is collapsed, the splitting code is emitted into the relevant labels.
+::
+::    Collapsing needs to a single atom (Nock 3/4/5, via +collapse-lazy-atom) or
+::    to an arbitrary noun (Nock 2/12, via +kern and friends) is easy. Doing the
+::    same for the top-level subject is a lot more harder since we also want to
+::    find the shape of the argument subject without pessimizing it too much.
+::    This is why we accumulate needs of branches lazily: collapsing them pro-
+::    perly requires knowing what data got accessed by the code before and after
+::    the fork. Futhermore, branch collapsing is order sensitive, so we do it in
+::    a fixed point loop, retrying shape collapses while accumulating knowledge
+::    about the axes available outside of the branches.
+::
+::    Compiling a pessimized version of a function. with the entire subject as a
+::    sinlge argument, requires compiling the function normally, then compiling
+::    that function in a pessimized mode, where code is emitted to try to split
+::    the input subject for callees and call the optimizied version, and the
+::    pessimized version of the callee is called if any of the checks failed.
+::    That way optimized functions are only calling optimized functions, and
+::    pessimized functions try to enter optimized functions.
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 |%
 +$  hint-static  ?(%bout %xray)
 +$  hint-dynamic  ?(%bout %xray %spin %loop %jinx %live hint-dynamic-stop)
-+$  hint-dynamic-stop  ?(%mean %spot %slog)
++$  hint-dynamic-stop  ?(%hunk %hand %lose %mean %spot %slog)
+::  Data requirement of a computation. %both means both the root noun and some
+::  of its descendants.
+::  Normalizations: [[%none ~] [%none ~]] --> [%none ~]
+::                  [%both x [%none ~] [%none ~]] --> [%this x]
 +$  need
   $~  [%none ~]
   $^  [p=need q=need]
@@ -2483,6 +2199,7 @@
       [%this r=@uvre]
       [%none ~]
   ==
+::  Same as $need but no registers allocated, pure shape.
 ::
 +$  need-ordered
   $~  [%none ~]
@@ -2491,6 +2208,8 @@
       [%this ~]
       [%none ~]
   ==
+::  Lazy data requirement, with needs of Nock 6 forks and Nock 11 crash relo-
+::  cation boundaries.
 ::
 +$  need-lazy
   $+  need-lazy
@@ -2501,27 +2220,45 @@
   ==
 ::  there - target basic block
 ::  args  - arguments for that basic block
-::  BBs with arguments: control flow merges (instead of phi nodes) and maybe
-::  entry point block
+::  BBs with arguments: control flow merges (instead of phi nodes)
+::  everywhere else args are empty, and there are assertions for that littered
+::  around when we use there.jmp alone.
 ::
 +$  jmp  [args=(list @uvre) there=@uwoo]
+::  goal of a computation.
+::  %done: return the product of the computation, tail position. Used for TCO.
+::  %pick: the product is used as a conditional in Nock 6: if 0 go to z, if 1
+::         go to 1, else crash
+::  %next: the most common goal. Put the product into registers in laz, then go
+::  to `then`
+::
 +$  goal
   $%  [%pick z=jmp o=jmp]
       [%done ~]
       [%next laz=need-lazy then=jmp]
   ==
+::  Compiler takes a goal and a Nomm formula and produces a $next for it.
 ::
 +$  next  $>(%next goal)
+::  $next but no lazy stuff
+::
 +$  next-resolved  [%next [ned=need ~ ~] [~ then=@uwoo]]
-::  basic block
+::  basic block: arguments if merge block, list of ops, lastly control flow ter-
+::  minating op.
 ::
 +$  blob  [par=(list @uvre) body=(list pole) fin=termin]
+::  Linearized SKA-function: desired shape of its subject, number of registers
+::  in that shape and the basic blocks, with the entry block having an index 0.
+::
 +$  straight  [need=need-ordered n-args=@ud blocks=(map @uwoo blob)]
+::  Inner state for the linearizer
+::
 +$  line-short
   $:  re-gen=@uvre
       bo-gen=_`@uwoo`1  ::  0 is reserved for the entry point
       blocks=(map @uwoo blob)
   ==
+::  Non-control-flow ops
 ::
 +$  pole
   $%  [%imm n=* d=@uvre]                          ::  n -> d
@@ -2544,6 +2281,7 @@
       [%csf a=bell s=@uvre d=@uvre n=ring]        ::  %caf but sub is in one reg
       [%csm a=bell s=@uvre d=@uvre n=*]           ::  %cam but sub is in one reg
   ==
+::  Control-flow ops
 ::
 +$  termin
   $%  [%clq s=@uvre z=jmp o=jmp]            ::  ?^  s
@@ -2611,32 +2349,37 @@
     %bom  ~
   ==
 --
-::  Check that $next-resolved nests under next
+::  Check that $next-resolved nests under $next
 ::
 =+  `next`*next-resolved
 =>  +
 ::
 |%
-::  compiles `func` with the root subject as a sole argument, plus its SCC
+::  Compiles `func` with the root subject as a sole argument, plus its SCC
 ::  including itself as N-ary functions
 ::
 ++  compile-unary
   |=  $:  func=bell
           scc=(set bell)
-          rev=(jug bell bell)
-          =long-ska
+          rev=(jug bell bell)  ::  reversed call graph
+          long-ska=_[=_code =_jets]:*long-ska
           scc-map=(map bell (set bell))
           jets-hot=(map ring need-ordered)
       ==
   ^-  [straight (map bell straight)]
   ~+
   =*  args  +<
+  ::  Compile normally
+  ::
   =/  n-ary-map=(map bell straight)  (compile-scc +.args)
   :_  n-ary-map
   ^-  straight
   =/  comp  (comp scc rev long-ska scc-map jets-hot n-ary-map)
+  ::  Compile the pessimized version
+  ::
   =/  [nex=next gen=line-short]
     (~(run comp *line-short) & nomm:(~(got by code.long-ska) func) [%done ~])
+  ::  Collapse the subject need to a single noun, finalize
   ::
   =^  [o=@uwoo sub=@uvre]  gen  (~(kerf comp gen) nex)
   (~(to-straight comp gen) [%next [this+sub ~ ~] ~ o])
@@ -2644,27 +2387,31 @@
 ++  compile-scc
   |=  $:  scc=(set bell)
           rev=(jug bell bell)
-          =long-ska
+          long-ska=_[=_code =_jets]:*long-ska
           scc-map=(map bell (set bell))
           jets-hot=(map ring need-ordered)
       ==
   ^-  (map bell straight)
   ~+
   =|  map-local=(map bell straight)
+  ::  Fixed-point loop with a worklist
+  ::
   =/  w=worklist  scc
   |-  ^+  map-local
   =*  fixpoint-compilation  $
   =;  [w-new=worklist map-local1=(map bell straight)]
-    =.  map-local  map-local1
     =.  w-new  (~(int in w-new) scc)
-    ?:  =(~ w-new)  map-local
-    fixpoint-compilation(w w-new)
+    ?:  =(~ w-new)  map-local1
+    fixpoint-compilation(w w-new, map-local map-local1)
   ::
   %-  ~(rep in w)
   |=  [b=bell w-new=worklist =_map-local]
   ^+  [w-new map-local]
   =/  comp  (comp scc rev long-ska scc-map jets-hot map-local)
   =;  [s=straight nex=next-resolved gen=line-short]
+    ::  With a compiled function candidate, requeue callers if the subject split
+    ::  did not converge yet, taking MSG of subject splits to avoid divergence.
+    ::
     ?~  s-previous=(~(get by map-local) b)
       :-  ?:  ?=([%none ~] need.s)  w-new
           (~(uni in w-new) (~(get ju rev) b))
@@ -2676,6 +2423,7 @@
     ?:  =(need-pessimized need.s)  s
     =^  coerced=next-resolved  gen  (~(coerce-ord comp gen) need-pessimized nex)
     (~(to-straight comp gen) coerced)
+  ::  Compile the function normally, collapse lazy needs, finalize
   ::
   =/  [nex=next gen=line-short]
     (~(run comp *line-short) | nomm:(~(got by code.long-ska) b) [%done ~])
@@ -2686,7 +2434,7 @@
 ++  comp
   |=  $:  scc=(set bell)
           rev=(jug bell bell)
-          =long-ska
+          long-ska=_[=_code =_jets]:*long-ska
           scc-map=(map bell (set bell))
           jets-hot=(map ring need-ordered)
           map-local=(map bell straight)
@@ -2697,16 +2445,24 @@
     |^  ^-  [next _gen]
     ?-    nomm
         [^ *]
-      ?-    -.goal
-          %done
-        =^  r  gen  re
-        =^  o  gen  (emit ~ ~ [%don r])
-        $(goal [%next [[%this r] ~ ~] ~ o])
+      =>  =*  dot  .
+          ?.  ?=(%done -.goal)  dot
+          =^  r  gen  re
+          =^  o  gen  (emit ~ ~ [%don r])
+          dot(goal [%next [[%this r] ~ ~] ~ o])
       ::
+      ?-    -.goal
           %pick
+        ::  Autocons product is used as a conditional: it will crash and we
+        ::  don't care about the particular values of the consed formulas,
+        ::  though we still need to compile them for crash correctness
+        ::
         =^  o  gen  (emit ~ ~ [%bom ~])
         =^  next-2  gen  $(nomm +.nomm, goal [%next *need-lazy ~ o])
         =^  next-1  gen  $(nomm -.nomm, goal [%next *need-lazy then.next-2])
+        ::  Here and later +copy is used to combine together two needs for one
+        ::  subject
+        ::
         (copy next-1 laz.next-2)
       ::
           %next
@@ -2745,6 +2501,13 @@
         ::  indirect call
         ::
         =^  next  gen  simple-next
+        ::  Here and later +kerf and friends are used to collapse a need for
+        ::  a noun into a single registers, i.e. to emit deconsing code that
+        ::  splits the product of whatever computation (here it's indirect %2)
+        ::  into the registers for a following computation.
+        ::
+        ::  Indirect %2 is never TCO'd
+        ::
         =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
         =^  r-sub  gen  re
         =^  r-fol  gen  re
@@ -2758,7 +2521,7 @@
       =*  b-callee  b.u.info.nomm
       =/  callee-pure=?  pure:(~(got by code.long-ska) b-callee)
       ?:  &(callee-pure ?=(%next -.goal) (none-equivalent laz.goal))
-        ::  the product is not used and the function is pure: drop
+        ::  The product is not used and the function is pure: drop
         ::
         =^  nex-fol=next  gen
           ?:  (safe-fol-fol q.nomm)  [[%next [none+~ ~ ~] then.goal] gen]
@@ -2788,6 +2551,8 @@
       =^  [op=call-op o=@uwoo o-hop=@uwoo]  gen
         ?^  k.u.info.nomm
           =/  key  u.k.u.info.nomm
+          ::  Memoized calls are never TCO'd
+          ::
           =^  next  gen  simple-next
           =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
           =/  op  [%cam b-callee sub-v pro key]
@@ -2827,26 +2592,31 @@
       (copy nex-sub laz.nex-fol)
     ::
         [%3 *]
-      |-  ::  reenter with edited goal
-      ?-    -.goal
-          %done
-        =^  r-0  gen  re
-        =^  r-1  gen  re
-        =^  o-0  gen  (emit ~ [%imm 0 r-0]~ %don r-0)
-        =^  o-1  gen  (emit ~ [%imm 1 r-1]~ %don r-1)
-        $(goal [%pick ~^o-0 ~^o-1])
+      ?:  &(?=(%next -.goal) (none-equivalent laz.goal))
+        ::  Don't care about the product
+        ::
+        $(nomm p.nomm)
+      =>  =*  dot  .
+          ?-    -.goal
+              %pick  dot
+          ::
+              %done
+            =^  r-0  gen  re
+            =^  r-1  gen  re
+            =^  o-0  gen  (emit ~ [%imm 0 r-0]~ %don r-0)
+            =^  o-1  gen  (emit ~ [%imm 1 r-1]~ %don r-1)
+            dot(goal `$>(%pick ^goal)`[%pick ~^o-0 ~^o-1])
+          ::
+              %next
+            =^  a=(unit [r=@uvre o=@uwoo])  gen  (collapse-lazy-atom goal)
+            ?~  a  !!
+            =^  [z=@uwoo o=@uwoo]  gen  (forl r.u.a o.u.a)
+            dot(goal `$>(%pick ^goal)`[%pick ~^z ~^o])
+          ==
       ::
-          %next
-        =^  a=(unit [r=@uvre o=@uwoo])  gen  (collapse-lazy-atom goal)
-        ?~  a  ^$(nomm p.nomm)
-        =^  [z=@uwoo o=@uwoo]  gen  (forl r.u.a o.u.a)
-        $(goal [%pick ~^z ~^o])
-      ::
-          %pick
-        =^  r  gen  re
-        =^  o  gen  (emit ~ ~ clq+[r [z o]:goal])
-        ^$(nomm p.nomm, goal [%next [this+r ~ ~] ~ o])
-      ==
+      =^  r  gen  re
+      =^  o  gen  (emit ~ ~ clq+[r [z o]:goal])
+      $(nomm p.nomm, goal [%next [this+r ~ ~] ~ o])
     ::
         [%4 *]
       ?-    -.goal
@@ -2876,35 +2646,37 @@
       ==
     ::
         [%5 *]
-      |-  ::  reenter
-      ?-    -.goal
-          %done
-        =^  r-0  gen  re
-        =^  r-1  gen  re
-        =^  o-0  gen  (emit ~ [%imm 0 r-0]~ %don r-0)
-        =^  o-1  gen  (emit ~ [%imm 1 r-1]~ %don r-1)
-        $(goal [%pick ~^o-0 ~^o-1])
+      =>  =*  dot  .
+          ?-    -.goal
+              %pick  dot
+          ::
+              %done
+            =^  r-0  gen  re
+            =^  r-1  gen  re
+            =^  o-0  gen  (emit ~ [%imm 0 r-0]~ %don r-0)
+            =^  o-1  gen  (emit ~ [%imm 1 r-1]~ %don r-1)
+            dot(goal `$>(%pick ^goal)`[%pick ~^o-0 ~^o-1])
+          ::
+              %next
+            =^  a=(unit [r=@uvre o=@uwoo])  gen  (collapse-lazy-atom goal)
+            ?~  a
+              ::  Compare for the sideeffect only
+              ::
+              ?>  =(~ args.then.goal)
+              dot(goal `$>(%pick ^goal)`[%pick [. .]:~^there.then.goal])
+            =^  [z=@uwoo o=@uwoo]  gen  (forl r.u.a o.u.a)
+            dot(goal `$>(%pick ^goal)`[%pick ~^z ~^o])
+          ==
       ::
-          %next
-        =^  a=(unit [r=@uvre o=@uwoo])  gen  (collapse-lazy-atom goal)
-        ?~  a
-          =^  next-q  gen  ^$(nomm q.nomm)
-          =^  next-p  gen  ^$(nomm p.nomm, then.goal then.next-q)
-          (copy next-p laz.next-q)
-        =^  [z=@uwoo o=@uwoo]  gen  (forl r.u.a o.u.a)
-        $(goal [%pick ~^z ~^o])
+      =^  r-p  gen  re
+      =^  r-q  gen  re
+      =^  o    gen  (emit ~ ~ eqq+[r-p r-q [z o]:goal])
       ::
-          %pick
-        =^  r-p  gen  re
-        =^  r-q  gen  re
-        =^  o    gen  (emit ~ ~ eqq+[r-p r-q [z o]:goal])
-        ::
-        =^  next-q  gen  ^$(nomm q.nomm, goal [%next [[%this r-q] ~ ~] ~ o])
-        =^  next-p  gen
-          ^$(nomm p.nomm, goal [%next [[%this r-p] ~ ~] then.next-q])
-        ::
-        (copy next-p laz.next-q)
-      ==
+      =^  next-q  gen  $(nomm q.nomm, goal [%next [[%this r-q] ~ ~] ~ o])
+      =^  next-p  gen
+        $(nomm p.nomm, goal [%next [[%this r-p] ~ ~] then.next-q])
+      ::
+      (copy next-p laz.next-q)
     ::
         [%6 *]
       ?.  ?|  ?=(%done -.goal)
@@ -2920,7 +2692,6 @@
         =^  cond  gen  $(nomm p.nomm, goal [%next [this+r-cond ~ ~] ~ o])
         (copy cond lazy)
       =^  [goal-0=^goal goal-1=^goal]  gen
-        |-  ^-  [[^goal ^goal] _gen]
         ?-    -.goal
             %done  [[done+~ done+~] gen]
         ::
@@ -3256,11 +3027,12 @@
       (fork-sure sure.laz o o-0 o-1)
     ::
     =*  fork  ,(list [[@uwoo need-lazy] [@uwoo need-lazy]])
-    ::
     =^  [fork-0=fork fork-1=fork]  gen
-      |-  ^-  [[fork fork] _gen]
-      =*  fork-smol-loop  $  ::  pay attention to equivocation
-      ?~  fork.laz  [[~ ~] gen]
+      %^  spin-split  fork.laz  gen
+      |=  [[y=[o=@uwoo laz=need-lazy] n=[o=@uwoo laz=need-lazy]] gen-acc=_gen]
+      =*  i  ,[[@uwoo need-lazy] [@uwoo need-lazy]]
+      ^-  [[i i] _gen]
+      =.  gen  gen-acc
       =^  o-0-kid-y    gen  oo
       =^  o-1-kid-y    gen  oo
       =^  o-0-kid-n    gen  oo
@@ -3269,7 +3041,7 @@
       =^  o-insert2-n  gen  oo
       =^  [laz-y-0=need-lazy laz-y-1=need-lazy]  gen
         %=  fork-loop
-          laz  laz.y.i.fork.laz
+          laz  laz.y
           o    o-insert2-y
           o-0  o-0-kid-y
           o-1  o-1-kid-y
@@ -3277,7 +3049,7 @@
       ::
       =^  [laz-n-0=need-lazy laz-n-1=need-lazy]  gen
         %=  fork-loop
-          laz  laz.n.i.fork.laz
+          laz  laz.n
           o    o-insert2-n
           o-0  o-0-kid-n
           o-1  o-1-kid-n
@@ -3289,41 +3061,32 @@
       =^  o-insert1-n=@uwoo  gen
         (emit ~ ~ [%brn r-cond ~^o-0-kid-n ~^o-1-kid-n])
       ::
-      =.  gen  (insert-hop o.y.i.fork.laz o-insert1-y o-insert2-y)
-      =.  gen  (insert-hop o.n.i.fork.laz o-insert1-n o-insert2-n)
-      =^  [fork-0-rest=fork fork-1-rest=fork]  gen  
-        fork-smol-loop(fork.laz t.fork.laz)
-      ::
+      =.  gen  (insert-hop o.y o-insert1-y o-insert2-y)
+      =.  gen  (insert-hop o.n o-insert1-n o-insert2-n)
       :_  gen
-      :-  :_  fork-0-rest
-          [[o-0-kid-y laz-y-0] [o-0-kid-n laz-n-0]]
-      :_  fork-1-rest
+      :-  [[o-0-kid-y laz-y-0] [o-0-kid-n laz-n-0]]
       [[o-1-kid-y laz-y-1] [o-1-kid-n laz-n-1]]
     ::
     =*  bond  ,(list [o=@uwoo laz=need-lazy])
     =^  [bond-0=bond bond-1=bond]  gen
-      |-  ^-  [[bond bond] _gen]
-      =*  bond-loop  $
-      ?~  bond.laz  [[~ ~] gen]
+      %^  spin-split  bond.laz  gen
+      |=  [[o-bond=@uwoo laz-bond=need-lazy] gen-acc=_gen]
+      ^-  [[[@uwoo need-lazy] [@uwoo need-lazy]] _gen]
+      =.  gen  gen-acc
       =^  o-0-kid    gen  oo
       =^  o-1-kid    gen  oo
       =^  o-insert2  gen  oo
       =^  [laz-0=need-lazy laz-1=need-lazy]  gen
         %=  fork-loop
-          laz  laz.i.bond.laz
+          laz  laz-bond
           o    o-insert2
           o-0  o-0-kid
           o-1  o-1-kid
         ==
       ::
       =^  o-insert1=@uwoo  gen  (emit ~ ~ [%brn r-cond ~^o-0-kid ~^o-1-kid])
-      =.  gen  (insert-hop o.i.bond.laz o-insert1 o-insert2)
-      =^  [bond-0-rest=bond bond-1-rest=bond]  gen
-        bond-loop(bond.laz t.bond.laz)
-      ::
-      :_  gen
-      :-  [[o-0-kid laz-0] bond-0-rest]
-      [[o-1-kid laz-1] bond-1-rest]
+      =.  gen  (insert-hop o-bond o-insert1 o-insert2)
+      [[[o-0-kid laz-0] [o-1-kid laz-1]] gen]
     ::
     :_  gen
     :-  [sure-0 fork-0 bond-0]
@@ -3445,38 +3208,31 @@
     =^  [sure-don=need sure-rec=need]  gen  (into-need axe sure.laz o)
     =*  fork  ,(list [[@uwoo need-lazy] [@uwoo need-lazy]])
     =^  [fork-don=fork fork-rec=fork]  gen
-      |-  ^-  [[fork fork] _gen]
-      =*  fork-loop  $
-      ?~  fork.laz  [[~ ~] gen]
+      %^  spin-split  fork.laz  gen
+      |=  [[y=[o=@uwoo laz=need-lazy] n=[o=@uwoo laz=need-lazy]] gen-acc=_gen]
+      =*  i  ,[[@uwoo need-lazy] [@uwoo need-lazy]]
+      ^-  [[i i] _gen]
+      =.  gen  gen-acc
       =^  [laz-y-don=need-lazy laz-y-rec=need-lazy]  gen
-        split-loop(laz laz.y.i.fork.laz, o o.y.i.fork.laz)
+        split-loop(laz laz.y, o o.y)
       ::
       =^  [laz-n-don=need-lazy laz-n-rec=need-lazy]  gen
-        split-loop(laz laz.n.i.fork.laz, o o.n.i.fork.laz)
-      ::
-      =^  [fork-don-rest=fork fork-rec-rest=fork]  gen  
-        fork-loop(fork.laz t.fork.laz)
+        split-loop(laz laz.n, o o.n)
       ::
       :_  gen
-      :-  :_  fork-don-rest
-          [[o.y.i.fork.laz laz-y-don] [o.n.i.fork.laz laz-n-don]]
-      :_  fork-rec-rest
-      [[o.y.i.fork.laz laz-y-rec] [o.n.i.fork.laz laz-n-rec]]
+      :-  [[o.y laz-y-don] [o.n laz-n-don]]
+      [[o.y laz-y-rec] [o.n laz-n-rec]]
     ::
     =*  bond  ,(list [o=@uwoo laz=need-lazy])
     =^  [bond-don=bond bond-rec=bond]  gen
-      |-  ^-  [[bond bond] _gen]
-      =*  bond-loop  $
-      ?~  bond.laz  [[~ ~] gen]
+      %^  spin-split  bond.laz  gen
+      |=  [[o-bond=@uwoo laz-bond=need-lazy] gen-acc=_gen]
+      ^-  [[[@uwoo need-lazy] [@uwoo need-lazy]] _gen]
+      =.  gen  gen-acc
       =^  [laz-don=need-lazy laz-rec=need-lazy]  gen
-        split-loop(laz laz.i.bond.laz, o o.i.bond.laz)
+        split-loop(laz laz-bond, o o-bond)
       ::
-      =^  [bond-don-rest=bond bond-rec-rest=bond]  gen
-        bond-loop(bond.laz t.bond.laz)
-      ::
-      :_  gen
-      :-  [[o.i.bond.laz laz-don] bond-don-rest]
-      [[o.i.bond.laz laz-rec] bond-rec-rest]
+      [[[o-bond laz-don] [o-bond laz-rec]] gen]
     ::
     :_  gen
     :-  [sure-don fork-don bond-don]
@@ -3512,7 +3268,7 @@
       %none  =^(r gen re [[r %this r] gen])
     ==
   ::
-  ++  split  ::  XX  +spin but for a pair of lists
+  ++  split
     |=  nex=next
     ^-  [[need-lazy need-lazy @uwoo] _gen]
     ::  emit an empty basic block
@@ -3526,38 +3282,31 @@
     =^  [sure-h=need sure-t=need]  gen  (split-need sure.laz o)
     =*  fork  ,(list [[@uwoo need-lazy] [@uwoo need-lazy]])
     =^  [fork-h=fork fork-t=fork]  gen
-      |-  ^-  [[fork fork] _gen]
-      =*  fork-loop  $
-      ?~  fork.laz  [[~ ~] gen]
+      %^  spin-split  fork.laz  gen
+      |=  [[y=[o=@uwoo laz=need-lazy] n=[o=@uwoo laz=need-lazy]] gen-acc=_gen]
+      =*  i  ,[[@uwoo need-lazy] [@uwoo need-lazy]]
+      ^-  [[i i] _gen]
+      =.  gen  gen-acc
       =^  [laz-y-h=need-lazy laz-y-t=need-lazy]  gen
-        split-loop(laz laz.y.i.fork.laz, o o.y.i.fork.laz)
+        split-loop(laz laz.y, o o.y)
       ::
       =^  [laz-n-h=need-lazy laz-n-t=need-lazy]  gen
-        split-loop(laz laz.n.i.fork.laz, o o.n.i.fork.laz)
-      ::
-      =^  [fork-h-rest=fork fork-t-rest=fork]  gen  
-        fork-loop(fork.laz t.fork.laz)
+        split-loop(laz laz.n, o o.n)
       ::
       :_  gen
-      :-  :_  fork-h-rest
-          [[o.y.i.fork.laz laz-y-h] [o.n.i.fork.laz laz-n-h]]
-      :_  fork-t-rest
-      [[o.y.i.fork.laz laz-y-t] [o.n.i.fork.laz laz-n-t]]
+      :-  [[o.y laz-y-h] [o.n laz-n-h]]
+      [[o.y laz-y-t] [o.n laz-n-t]]
     ::
     =*  bond  ,(list [o=@uwoo laz=need-lazy])
     =^  [bond-h=bond bond-t=bond]  gen
-      |-  ^-  [[bond bond] _gen]
-      =*  bond-loop  $
-      ?~  bond.laz  [[~ ~] gen]
+      %^  spin-split  bond.laz  gen
+      |=  [[o-bond=@uwoo laz-bond=need-lazy] gen-acc=_gen]
+      ^-  [[[@uwoo need-lazy] [@uwoo need-lazy]] _gen]
+      =.  gen  gen-acc
       =^  [laz-h=need-lazy laz-t=need-lazy]  gen
-        split-loop(laz laz.i.bond.laz, o o.i.bond.laz)
+        split-loop(laz laz-bond, o o-bond)
       ::
-      =^  [bond-h-rest=bond bond-t-rest=bond]  gen
-        bond-loop(bond.laz t.bond.laz)
-      ::
-      :_  gen
-      :-  [[o.i.bond.laz laz-h] bond-h-rest]
-      [[o.i.bond.laz laz-t] bond-t-rest]
+      [[[o-bond laz-h] [o-bond laz-t]] gen]
     ::
     :_  gen
     :-  [sure-h fork-h bond-h]
@@ -4233,4 +3982,13 @@
     %none  ?:(need-here [%this ~] [%none ~])
     ^      ?:(need-here [%both x] x)
   ==
+::
+++  spin-split
+  |*  [a=(list) b=* c=_|=(^ [*^ +<+])]
+  =>  .(c `$-([_?>(?=(^ a) i.a) _b] [_-:(c) _b])`c)
+  =/  acc=[p=(list _-<:(c)) q=(list _->:(c))]  [~ ~]
+  |-  ^-  (pair _acc _b)
+  ?~  a  [[(flop p.acc) (flop q.acc)] b]
+  =^  res  b  (c i.a b)
+  $(acc [[-.res p.acc] [+.res q.acc]], a t.a)
 --
