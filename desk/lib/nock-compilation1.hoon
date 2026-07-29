@@ -2679,10 +2679,12 @@
       (copy next-p laz.next-q)
     ::
         [%6 *]
-      ?.  ?|  ?=(%done -.goal)
-              ?=(%pick -.goal)
-              &(=(~ fork.laz.goal) =(~ bond.laz.goal))
+      ?:  ?&  ?=(%next -.goal)
+              |(?=(^ fork.laz.goal) ?=(^ bond.laz.goal))
           ==
+        ::  In general case we have to materialize the conditional to handle
+        ::  lazy needs. So we check if we really have to do this.
+        ::
         =^  r-cond  gen  re
         =^  [goal-0=^goal goal-1=^goal]  gen  (fork goal r-cond)
         =^  next-1  gen  $(nomm r.nomm, goal goal-1)
@@ -2692,20 +2694,16 @@
         =^  cond  gen  $(nomm p.nomm, goal [%next [this+r-cond ~ ~] ~ o])
         (copy cond lazy)
       =^  [goal-0=^goal goal-1=^goal]  gen
-        ?-    -.goal
-            %done  [[done+~ done+~] gen]
+        ?.  ?=(%next -.goal)  [[goal goal] gen]
+        ?>  &(?=(~ fork.laz.goal) ?=(~ bond.laz.goal))
+        =^  o-0  gen  oo
+        =^  o-1  gen  oo
+        =^  [ned-0=need ned-1=need]  gen
+          (fork-sure sure.laz.goal there.then.goal o-0 o-1)
         ::
-            %next
-          =^  o-0  gen  oo
-          =^  o-1  gen  oo
-          =^  [ned-0=need ned-1=need]  gen
-            (fork-sure sure.laz.goal there.then.goal o-0 o-1)
-          ::
-          :_  gen
-          [[%next [ned-0 ~ ~] ~ o-0] [%next [ned-1 ~ ~] ~ o-1]]
-        ::
-            %pick  [[goal goal] gen]
-        ==
+        :_  gen
+        [[%next [ned-0 ~ ~] ~ o-0] [%next [ned-1 ~ ~] ~ o-1]]
+      ::
       =^  next-1  gen  $(nomm r.nomm, goal goal-1)
       =^  next-0  gen  $(nomm q.nomm, goal goal-0)
       =^  [lazy=need-lazy yes=@uwoo nuh=@uwoo]  gen  (sect next-0 next-1)
@@ -2944,11 +2942,12 @@
   ++  flatten-need
     |=  ned=need
     ^-  (list @uvre)
+    =*  flat  .
     ?-  -.ned
       %none  ~
       %this  ~[r.ned]
-      ^      (weld $(ned -.ned) $(ned +.ned))
-      %both  [r.ned (weld $(ned h.ned) $(ned t.ned))]
+      ^      (weld (flat -.ned) (flat +.ned))
+      %both  [r.ned (weld (flat h.ned) (flat t.ned))]
     ==
   ::  fork CFG
   ::
@@ -2982,6 +2981,8 @@
       =^  [hed-0=need hed-1=need]  gen  $(ned -.ned)
       =^  [tel-0=need tel-1=need]  gen  $(ned +.ned)
       :_  gen
+      ::  no need to normalize, shapes are preserved
+      ::
       [[hed-0 tel-0] [hed-1 tel-1]]
     ::
         %both
@@ -2995,18 +2996,23 @@
   ::  o2 is empty
   ::  a -> b  ==>  a -> o' ... o'' -> b
   ::
+  ::  o' and o'' are assumed to be linked somehow. Right now they are linked
+  ::  with a control flow fork and join.
+  ::
   ++  insert-hop
     |=  [a=@uwoo o1=@uwoo o2=@uwoo]
     ^+  gen
     =/  blob-from=blob  (~(got by blocks.gen) a)
     ?>  ?=(%hop -.fin.blob-from)
-    :: ?>  =(~ body.blob-from)
     ?>  =(~ par.blob-from)
     ?>  =(~ args.t.fin.blob-from)
     =/  b=@uwoo  there.t.fin.blob-from
     =.  gen  (emir o2 ~ ~ %hop ~ b)
-    =.  blocks.gen  (~(put by blocks.gen) a blob-from(there.t.fin o1))
-    gen
+    gen(blocks (~(put by blocks.gen) a blob-from(there.t.fin o1)))
+  ::  Here the idea is that we materialize the conditional as a register with
+  ::  a loobean, then the lazy needs get forked, and the BB of that need gets
+  ::  code that branches on the conditional register and fulfills the original
+  ::  need with either of the two
   ::
   ++  fork
     |=  [nex=next r-cond=@uvre]
@@ -3021,6 +3027,7 @@
     ::
     =/  laz=need-lazy  laz.nex
     =/  o=@uwoo  there.then.nex
+    ?>  =(~ args.then.nex)
     |-  ^-  [[need-lazy need-lazy] _gen]
     =*  fork-loop  $
     =^  [sure-0=need sure-1=need]  gen
@@ -3033,6 +3040,11 @@
       =*  i  ,[[@uwoo need-lazy] [@uwoo need-lazy]]
       ^-  [[i i] _gen]
       =.  gen  gen-acc
+      ::  -y/n here means y or n child. 0 or 1 means either yes or no branch
+      ::  of this split. Confusing!
+      ::  insert1/2 are used for splicing the code in: o -> x becomes
+      ::  o -> insert1 -> ... -> insert2 -> x. 
+      ::
       =^  o-0-kid-y    gen  oo
       =^  o-1-kid-y    gen  oo
       =^  o-0-kid-n    gen  oo
@@ -3149,6 +3161,10 @@
     ::
     =.  gen  (add-ops o ops)
     [[sure (weld fork.first fork.second) (weld bond.first bond.second)] gen]
+  ::  +split-* and +into-* for autoconses and Nock 10 follow the same pattern:
+  ::  they split a lazy need into two, emitting consing code into the BBs of the
+  ::  children lazy needs. The split needs share the BB label, which should be
+  ::  fine since they operate on disjoint parts of the subject
   ::
   ++  into-need
     |=  [axe=@ ned=need o=@uwoo]
@@ -3157,14 +3173,15 @@
     ?:  =(1 axe)  [[ned none+~] gen]
     =|  tack=(list [h=? n=need])
     =|  ops=(list pole)
-    |^  ^-  [[need need] _gen]
+    |-  ^-  [[need need] _gen]
     ?:  =(1 axe)
       =.  gen  (add-ops o ops)
       =;  big=need  [[ned big] gen]
       %+  roll  tack
       |:  [*[h=? n=need] acc=`need`[%none ~]]
-      ?:  h  (cons acc n)
-      (cons n acc)
+      ^-  need
+      ?:  h  (cons-need acc n)
+      (cons-need n acc)
     =/  [h=? lat=@]  [?=(%2 (cap axe)) (mas axe)]
     ?-    -.ned
         %none  $(tack [[h ned] tack], axe lat)  ::  XX we don't have to descend here
@@ -3187,13 +3204,6 @@
       =+  [new old]=?:(h [q.l q.r] [q.r q.l])
       $(tack [[h old] tack], ned new, ops [pole ops], axe lat)
     ==
-    ::
-    ++  cons
-      |=  [a=need b=need]
-      ^-  need
-      ?:  &(?=(%none -.a) ?=(%none -.b))  none+~
-      [a b]
-    --
   ::
   ++  into
     |=  [nex=next axe=@]
@@ -3284,8 +3294,9 @@
     =^  [fork-h=fork fork-t=fork]  gen
       %^  spin-split  fork.laz  gen
       |=  [[y=[o=@uwoo laz=need-lazy] n=[o=@uwoo laz=need-lazy]] gen-acc=_gen]
-      =*  i  ,[[@uwoo need-lazy] [@uwoo need-lazy]]
-      ^-  [[i i] _gen]
+      ::  (pair of pairs of [@uwoo need-lazy])
+      ::
+      ^-  [_[. .]:[. .]:*[@uwoo need-lazy] _gen]
       =.  gen  gen-acc
       =^  [laz-y-h=need-lazy laz-y-t=need-lazy]  gen
         split-loop(laz laz.y, o o.y)
@@ -3301,7 +3312,7 @@
     =^  [bond-h=bond bond-t=bond]  gen
       %^  spin-split  bond.laz  gen
       |=  [[o-bond=@uwoo laz-bond=need-lazy] gen-acc=_gen]
-      ^-  [[[@uwoo need-lazy] [@uwoo need-lazy]] _gen]
+      ^-  [_[. .]:*[@uwoo need-lazy] _gen]
       =.  gen  gen-acc
       =^  [laz-h=need-lazy laz-t=need-lazy]  gen
         split-loop(laz laz-bond, o o-bond)
@@ -3312,7 +3323,7 @@
     :-  [sure-h fork-h bond-h]
     [sure-t fork-t bond-t]
   ::
-  ++  add-ops  ::  XX order of added ops
+  ++  add-ops
     |=  [o=@uwoo ops=(list pole)]
     ^+  gen
     =/  =blob  (~(got by blocks.gen) o)
@@ -3349,6 +3360,8 @@
       [[i.sout ops] gen]
     ?:  ?=(%& -.i.sin)
       ?>  ?=([* * *] sout)
+      ::  should not need normalization as the shapes are preserved
+      ::
       =/  par  [i.t.sout i.sout]
       %=  $
         sin   t.sin
@@ -3379,7 +3392,7 @@
         ?@(-.r [r gen] =^(x gen re [[%both x r] gen]))
       ~?  =(r.l r.rr)  [%copy-both r.l r.rr]
       %=  $
-        ops   [[%mov r.rr r.l] ops]
+        ops  [[%mov r.rr r.l] ops]
         sin  [|+[h.l h.rr] |+[t.l t.rr] &+`[r.rr] t.sin]
       ==
     ?^  -.r
@@ -3408,15 +3421,42 @@
       ?:  ?=(%none -.ned.nex)
         =^  hed  gen  $(need-pessimized -.need-pessimized)
         =^  tel  gen  $(need-pessimized +.need-pessimized)
+        ?<  &(?=(%none -.hed) ?=(%none -.tel))
         [[hed tel] gen]
       ?@  -.ned.nex  !!
       =^  hed  gen  $(need-pessimized -.need-pessimized, ned.nex -.ned.nex)
       =^  tel  gen  $(need-pessimized +.need-pessimized, ned.nex +.ned.nex)
+      ?<  &(?=(%none -.hed) ?=(%none -.tel))
       [[hed tel] gen]
     ::
         %both
-      =^  r  gen  (kern-r-need then.nex ned.nex)
-      [[%this r] gen]
+      ?-    -.ned.nex
+          %none
+        =^  r  gen  re
+        =^  hed  gen  $(need-pessimized h.need-pessimized)
+        =^  tel  gen  $(need-pessimized t.need-pessimized)
+        ?<  &(?=(%none -.hed) ?=(%none -.tel))
+        [[%both r hed tel] gen]
+      ::
+          %this
+        =^  hed  gen  $(need-pessimized h.need-pessimized, ned.nex [%none ~])
+        =^  tel  gen  $(need-pessimized t.need-pessimized, ned.nex [%none ~])
+        ?<  &(?=(%none -.hed) ?=(%none -.tel))
+        [[%both r.ned.nex hed tel] gen]
+      ::
+          ^
+        =^  r  gen  re
+        =^  hed  gen  $(need-pessimized h.need-pessimized, ned.nex -.ned.nex)
+        =^  tel  gen  $(need-pessimized t.need-pessimized, ned.nex +.ned.nex)
+        ?<  &(?=(%none -.hed) ?=(%none -.tel))
+        [[%both r hed tel] gen]
+      ::
+          %both
+        =^  hed  gen  $(need-pessimized h.need-pessimized, ned.nex h.ned.nex)
+        =^  tel  gen  $(need-pessimized t.need-pessimized, ned.nex t.ned.nex)
+        ?<  &(?=(%none -.hed) ?=(%none -.tel))
+        [[%both r.ned.nex hed tel] gen]
+      ==
     ==
   ++  need-ord-alloc-regs
     |=  ord=need-ordered
@@ -3431,12 +3471,14 @@
         ^
       =^  hed  gen  $(ord -.ord)
       =^  tel  gen  $(ord +.ord)
+      ?<  &(?=(%none -.hed) ?=(%none -.tel))
       [[hed tel] gen]
     ::
         %both
       =^  r  gen  re
       =^  hed  gen  $(ord h.ord)
       =^  tel  gen  $(ord t.ord)
+      ?<  &(?=(%none -.hed) ?=(%none -.tel))
       [[%both r hed tel] gen]
     ==
   ::  With the top level need finally known, emit noun splitting code into
@@ -3505,8 +3547,8 @@
     :-  [%next [ned-final ~ ~] ~ there.then.nex]
     (coerce-lazy ned-final there.then.nex laz.nex)
   ::
-  ::  Renumber the registers so that the input registers are 0-N, set the starting
-  ::  block index to 0w0
+  ::  Renumber the registers so that the input registers are 0-N, set the
+  ::  starting block index to 0w0
   ::
   ++  to-straight
     |=  nex=next-resolved
@@ -3830,7 +3872,7 @@
     %both  [%both (this h.ned) (this t.ned)]
   ==
 ::
-++  cons-need  ::  XX review all need conses for normalization
+++  cons-need
   |*  [a=?([%none ~] ^) b=?([%none ~] ^)]
   ?:  &(?=(%none -.a) ?=(%none -.b))  [%none ~]
   [a b]
