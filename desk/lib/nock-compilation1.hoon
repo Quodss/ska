@@ -2680,7 +2680,7 @@
     ::
         [%6 *]
       ?:  ?&  ?=(%next -.goal)
-              |(?=(^ fork.laz.goal) ?=(^ bond.laz.goal))
+              !(none-equivalent laz.goal)
           ==
         ::  In general case we have to materialize the conditional to handle
         ::  lazy needs. So we check if we really have to do this.
