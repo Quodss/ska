@@ -168,7 +168,7 @@
     !!
   ::
       %nok
-    ::  XX reenter analysis
+    ::  XX reenter analysis (unless jetted? and/or unless %virt?)
     ::
     =/  sub  (get u.op)
     =/  fol  (get f.op)
@@ -212,6 +212,116 @@
   ::
       %csm
     $(op [%csl a s d]:op)
+    ==
+  --
+::
+++  print
+  |=  [prefix=tape =straight]
+  |^  ^-  tape
+  =/  blocks=tape
+    %-  zing
+    %+  join  "\0a"
+    %+  turn  ~(tap by blocks.straight)
+    |=  [k=@uwoo v=blob]
+    `tape`(weld prefix "{<k>}: {(p-blob v)}")
+  ::
+  %:  zing
+    (shape need.straight)
+    "\0a"  prefix
+    (scow %ud n-args.straight)
+    "\0a"  prefix
+    blocks
+    ~
+  ==
+  ::
+  ++  shape
+    |=  need=need-ordered
+    ^-  tape
+    =;  axes=(list @)  <axes>
+    =/  axe=@  1
+    |-  ^-  (list @)
+    ?-    -.need
+        %none
+      ~
+    ::
+        %this
+      ~[axe]
+    ::
+        ^
+      (weld $(need -.need, axe (peg axe 2)) $(need +.need, axe (peg axe 3)))
+    ::
+        %both
+      :-  axe
+      (weld $(need h.need, axe (peg axe 2)) $(need t.need, axe (peg axe 3)))
+    ==
+  ::
+  ++  p-blob
+    |=  b=blob
+    ^-  tape
+    %-  zing
+    %+  join  "\0a"
+    ^-  (list tape)
+    =-  ?:  =(~ par.b)  -
+        :_  -
+        (zing prefix "params: " <par.b> ~)
+    ::
+    ^-  (list tape)
+    =/  body-ops=(list tape)  (turn body.b p-pole)
+    (zing ~["\{"] (join " " body-ops) ~[" "] ~[(p-termin fin.b) "}"] ~)
+  ::
+  ++  p-pole
+    |=  op=pole
+    ^-  tape
+    ?+    -.op  <op>
+        %imm
+      =/  n-tape=tape  <n.op>
+      =?  n-tape  (gth (lent n-tape) 10)  "\{{(scag 10 n-tape)}...}"
+      "[%imm n={n-tape} d={<d.op>}]"
+    ::
+        %hsp  <[%hsp n=n.op]>
+        %hse  <[%hse n=n.op]>
+        %hdp  <[%hsp n=n.op p=p.op]>
+        %hde  <[%hse n=n.op p=p.op]>
+    ::
+        %cal
+      <op(a `@ux`(mug a.op))>
+    ::
+        %caf
+      <op(a `@ux`(mug a.op))>
+    ::
+        %cam
+      <op(a `@ux`(mug a.op))>
+    ::
+        %csl
+      <op(a `@ux`(mug a.op))>
+    ::
+        %csf
+      <op(a `@ux`(mug a.op))>
+    ::
+        %csm
+      <op(a `@ux`(mug a.op))>
+    ==
+  ::
+  ++  p-termin
+    |=  op=termin
+    ^-  tape
+    ?+    -.op  <op>
+        %jmp
+      <op(a `@ux`(mug a.op))>
+    ::
+        %jmf
+      <op(a `@ux`(mug a.op))>
+    ::
+        %jsp
+      <op(a `@ux`(mug a.op))>
+    ::
+        %jsf
+      <op(a `@ux`(mug a.op))>
+    ::
+        %don
+      =/  s-tape=tape  <s.op>
+      =?  s-tape  (gth (lent s-tape) 10)  "\{{(scag 10 s-tape)}...}"
+      "[%don s={s-tape}]"
     ==
   --
 --
