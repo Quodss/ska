@@ -49,19 +49,24 @@
   ?-    -.fin
       %clq
     =/  j=jmp  ?^((get s.fin) z.fin o.fin)
+    ~&  there.j
     bob-loop(bob (got-blocks there.j), params (turn args.j get))
   ::
       %eqq
     =/  j=jmp  ?:(=((get l.fin) (get r.fin)) z.fin o.fin)
+    ~&  there.j
     bob-loop(bob (got-blocks there.j), params (turn args.j get))
   ::
       %brn
     =/  cond  (get s.fin)
     ?.  ?=(? cond)  ~
     =/  j=jmp  ?:(cond z.fin o.fin)
+    ~&  there.j
     bob-loop(bob (got-blocks there.j), params (turn args.j get))
   ::
       %hop
+    ~&  fin
+    ~&  there.t.fin
     bob-loop(bob (got-blocks there.t.fin), params (turn args.t.fin get))
   ::
       %jmp
@@ -106,8 +111,9 @@
     |=  r=@uvre
     ^-  *
     ?^  res=(~(get by regs) r)  u.res
-    ~&  >>  %missing-reg
-    %non-init-reg
+    ~&  >>  [%missing-reg r `@ux`(mug bell)]
+    :: %non-init-reg
+    !!
   ::
   ++  exec-op
     |=  op=pole
@@ -215,7 +221,7 @@
     ==
   --
 ::
-++  print
+++  print-straight
   |=  [prefix=tape =straight]
   |^  ^-  tape
   =/  blocks=tape
@@ -226,10 +232,11 @@
     `tape`(weld prefix "{<k>}: {(p-blob v)}")
   ::
   %:  zing
+    prefix
     (shape need.straight)
     "\0a"  prefix
     (scow %ud n-args.straight)
-    "\0a"  prefix
+    "\0a"
     blocks
     ~
   ==
@@ -266,7 +273,12 @@
         (zing prefix "params: " <par.b> ~)
     ::
     ^-  (list tape)
+    :_  ~
+    ^-  tape
     =/  body-ops=(list tape)  (turn body.b p-pole)
+    %-  zing
+    ?:  =(~ body-ops)
+      (zing ~["\{"] ~[(p-termin fin.b) "}"] ~)
     (zing ~["\{"] (join " " body-ops) ~[" "] ~[(p-termin fin.b) "}"] ~)
   ::
   ++  p-pole

@@ -2293,7 +2293,7 @@
       [%jsp a=bell s=@uvre]                 ::  %jmp but sub is in one reg
       [%jsf a=bell s=@uvre n=ring]          ::  %jmf but sub is in one reg
       [%don s=@uvre]                        ::  return s
-      [%bom ~]                              ::  boom! crash
+      [%bom o=(unit @uwoo)]                 ::  boom! crash. would've gone to o
   ==
 ::
 ++  get-regs
@@ -2374,7 +2374,7 @@
   =/  n-ary-map=(map bell straight)  (compile-scc +.args)
   :_  n-ary-map
   ^-  straight
-  =/  comp  (comp scc rev long-ska scc-map jets-hot n-ary-map)
+  =/  comp  (comp scc rev long-ska scc-map jets-hot n-ary-map func)
   ::  Compile the pessimized version
   ::
   =/  [nex=next gen=line-short]
@@ -2402,12 +2402,13 @@
   =;  [w-new=worklist map-local1=(map bell straight)]
     =.  w-new  (~(int in w-new) scc)
     ?:  =(~ w-new)  map-local1
+    ~&  %fixpoint-compilation
     fixpoint-compilation(w w-new, map-local map-local1)
   ::
   %-  ~(rep in w)
   |=  [b=bell w-new=worklist =_map-local]
   ^+  [w-new map-local]
-  =/  comp  (comp scc rev long-ska scc-map jets-hot map-local)
+  =/  comp  (comp scc rev long-ska scc-map jets-hot map-local b)
   =;  [s=straight nex=next-resolved gen=line-short]
     ::  With a compiled function candidate, requeue callers if the subject split
     ::  did not converge yet, taking MSG of subject splits to avoid divergence.
@@ -2438,6 +2439,7 @@
           scc-map=(map bell (set bell))
           jets-hot=(map ring need-ordered)
           map-local=(map bell straight)
+          b=bell
       ==
   |_  gen=line-short
   ++  run
@@ -2473,7 +2475,7 @@
       ==
     ::
         [%0 *]
-      ?:  =(0 p.nomm)  bomb
+      ?:  =(0 p.nomm)  (bomb ?:(?=(%next -.goal) `there.then.goal ~))
       =^  next  gen  simple-next
       ?:  =(1 p.nomm)  [next gen]
       [[%next (from p.nomm laz.next) then.next] gen]
@@ -2486,7 +2488,7 @@
         [[%next [none+~ ~ ~] ~ o] gen]
       ::
           %pick
-        ?+  p.nomm  bomb
+        ?+  p.nomm  (bomb ~)
           %0  [[%next [none+~ ~ ~] z.goal] gen]
           %1  [[%next [none+~ ~ ~] o.goal] gen]
         ==
@@ -2548,6 +2550,8 @@
       ::  emit call: memoized, or tail call, or head call (w/ or w/out a jet)
       ::
       =*  call-op  $>(?(%cal %cam %caf %jmp %jmf) $%(pole termin))
+      ::  emitted op, block with that op, targeted block
+      ::
       =^  [op=call-op o=@uwoo o-hop=@uwoo]  gen
         ?^  k.u.info.nomm
           =/  key  u.k.u.info.nomm
@@ -2556,8 +2560,8 @@
           =^  next  gen  simple-next
           =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
           =/  op  [%cam b-callee sub-v pro key]
-          =^  o  gen  (emit ~ ~[op] %hop then.next)
-          [[op o there.then.next] gen]
+          =^  o  gen  (emit ~ ~[op] %hop ~ out)
+          [[op o out] gen]
         ?:  ?=(%done -.goal)
           =/  op
             ?~  rin  [%jmp b-callee sub-v]
@@ -2571,8 +2575,8 @@
           ?~  rin  [%cal b-callee sub-v pro]
           [%caf b-callee sub-v pro u.rin]
         ::
-        =^  o  gen  (emit ~ ~[op] %hop then.next)
-        [[op o there.then.next] gen]
+        =^  o  gen  (emit ~ ~[op] %hop ~ out)
+        [[op o out] gen]
       ::  if mono, change `sub-ned` to %this, emit branches to try to decons
       ::  input subject, and change `o` to point to the beginning of the decons
       ::  process
@@ -2680,7 +2684,8 @@
     ::
         [%6 *]
       ?:  ?&  ?=(%next -.goal)
-              !(none-equivalent laz.goal)
+              :: !(none-equivalent laz.goal)
+              |(!=(~ fork.laz.goal) !=(~ bond.laz.goal))
           ==
         ::  In general case we have to materialize the conditional to handle
         ::  lazy needs. So we check if we really have to do this.
@@ -2771,7 +2776,9 @@
     --
   ::
   ++  re  `[@uvre _gen]`[re-gen.gen gen(re-gen +(re-gen.gen))]
-  ++  oo  `[@uwoo _gen]`[bo-gen.gen gen(bo-gen +(bo-gen.gen))]
+  ++  oo
+    :: ?:  &(=(bo-gen.gen 0w3) =((mug b) 0x2eba.5d91))  !!
+    `[@uwoo _gen]`[bo-gen.gen gen(bo-gen +(bo-gen.gen))]
   ++  kerf
     |=  =next
     ^-  [[@uwoo @uvre] _gen]
@@ -3336,8 +3343,9 @@
     gen(blocks (~(put by blocks.gen) o blob))
   ::
   ++  bomb
+    |=  miss=(unit @uwoo)
     ^-  [next _gen]
-    =^  o  gen  (emit ~ ~ %bom ~)
+    =^  o  gen  (emit ~ ~ %bom miss)
     [[%next [[%none ~] ~ ~] ~ o] gen]
   ::
   ++  copy-sure-o
@@ -3778,7 +3786,7 @@
             rin=(unit ring)
             ned=need
             o=@uwoo  ::  BB with succesfull call
-            op=$>(?(%cal %cam %caf %jmp %jmf) $%(pole termin))
+            op=$~([%jmp *bell ~] $>(?(%cal %cam %caf %jmp %jmf) $%(pole termin)))
             o-hop=@uwoo  ::  BB after succesfull call if not tail
         ==
     ^-  [[@uwoo @uvre] _gen]
@@ -3916,9 +3924,9 @@
 ::  Fork collapsing is order-sensitive. If one fork used +2 in both branches,
 ::  and the other used +2 only in one branch, the desired result should contain
 ::  +2. But if we finalized the second fork first and simply unified the results
-::  of all fork collapses, we would have either lost +2 or kept both the root
-::  noun and +2 in %both. So we have to have a fixed point loop to refine the
-::  final shape iteratively.
+::  of all forks collapsed so far, we would have either lost +2 or kept both the
+::  root noun and +2 in %both. So we have to have a fixed point loop to refine
+::  the final shape iteratively.
 ::
 ::  For the fixed point loop to converge the shape needs to grow monotonically.
 ::  However, if we captured the root noun once, like in the example above, we
@@ -3928,59 +3936,75 @@
 ::          the current level of the lazy tree, plus all the collapsed stuff
 ::    fix: the shape we accumulate in the fixed point loop. It contains all the
 ::         axes that were available to us, including in the prior iterations.
-:: 
+::
++$  need-inter
+  $+  need-inter
+  $;  |-
+  $:  sure=need-ordered
+      fork=(list [y=$ n=$])
+  ==
+::  Ignore bounds by unifying sure with bonds
+::
+++  lazy-to-inter
+  |=  laz=need-lazy
+  ^-  need-inter
+  =*  lazy-to-inter  .
+  %+  roll  bond.laz
+  =/  sure-new  (need-to-ordered sure.laz)
+  =/  fork-new=(list [need-inter need-inter])
+    %+  turn  fork.laz
+    |=  [[* laz-y=need-lazy] * laz-n=need-lazy]
+    ^-  [need-inter need-inter]
+    [(lazy-to-inter laz-y) (lazy-to-inter laz-n)]
+  ::
+  |=  [[* i=need-lazy] sure=_sure-new fork=_fork-new]
+  ^+  [sure fork]
+  =/  i  (lazy-to-inter i)
+  :-  (uni-need-ord sure.i sure)
+  (weld fork.i fork)
+::
 ++  shape-collapse
   |=  laz=need-lazy
   ^-  need-ordered
-  =/  sures=[orig=need-ordered fix=need-ordered]
-    [. .]:(need-to-ordered sure.laz)
-  ::
+  (inter-collapse (lazy-to-inter laz))
+::
+++  inter-collapse
+  |=  intr=need-inter
+  ^-  need-ordered
+  =/  sures=[orig=need-ordered fix=need-ordered]  [. .]:sure.intr
   =<  orig
   |-  ^+  sures
   =*  sures-loop  $
   =;  sures1=_sures
-    ?:  =(fix.sures1 fix.sures)  sures
+    ?:  =(fix.sures1 fix.sures)  sures1
     $(fix.sures fix.sures1)
   ::  We propagate fix.sures deeper for correct MSG computations. We don't
   ::  do the same for orig.sures to avoid adding extra information we would like
   ::  to drop.
   ::
-  =.  sures
-    %+  roll  bond.laz
-    |=  [[* laz-bond=need-lazy] =_sures]
-    =/  sure-orig-ord-bond  (need-to-ordered sure.laz-bond)
-    =.  sures
-      %=  sures-loop
-        orig.sures  sure-orig-ord-bond
-        fix.sures   (uni-need-ord fix.sures sure-orig-ord-bond)
-        laz         laz-bond
-      ==
-    ::
-    sures(orig (uni-need-ord orig.sures sure-orig-ord-bond))
-  ::
-  %+  roll  fork.laz
-  |=  [[y=[* laz=need-lazy] n=[* laz=need-lazy]] =_sures]
+  %+  roll  fork.intr
+  |=  [[intr-y=need-inter intr-n=need-inter] =_sures]
   =/  sures-y=_sures
-    =/  sure-orig-ord-y  (need-to-ordered sure.laz.y)
     %=  sures-loop
-      orig.sures  sure-orig-ord-y
-      fix.sures   (uni-need-ord fix.sures sure-orig-ord-y)
-      laz         laz.y
+      orig.sures  sure.intr-y
+      fix.sures   (uni-need-ord fix.sures sure.intr-y)
+      intr        intr-y
     ==
   ::
   =/  sures-n=_sures
-    =/  sure-orig-ord-n  (need-to-ordered sure.laz.n)
     %=  sures-loop
-      orig.sures  sure-orig-ord-n
-      fix.sures   (uni-need-ord fix.sures sure-orig-ord-n)
-      laz         laz.n
+      orig.sures  sure.intr-n
+      fix.sures   (uni-need-ord fix.sures sure.intr-n)
+      intr        intr-n
     ==
+  ::
+  =.  fix.sures  (uni-need-ord fix.sures (msg-need-ord fix.sures-y fix.sures-n))
   ::  We compute simple MSG of fix.sures-y/n as they contain the totality of 
   ::  the shape info. We compute special MSG of orig.sures-y/n that takes
   ::  fix.sures into account without adding it to orig.sures-y/n
   ::
-  =.  fix.sures  (uni-need-ord fix.sures (msg-need-ord fix.sures-y fix.sures-n))
-  sures(orig (msg-need-ord-fix-aware orig.sures-y orig.sures-n fix.sures))
+  =/  msg-special  (msg-need-ord-fix-aware orig.sures-y orig.sures-n fix.sures)
+  sures(orig (uni-need-ord orig.sures msg-special))
 ::
 ++  hed-need-ord
   |=  a=need-ordered

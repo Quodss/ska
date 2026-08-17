@@ -35,6 +35,7 @@
   ::    unsigned decrement by one.
   |=  a=@
   :: ~_  leaf+"decrement-underflow"
+  ~>  %mean.'decrement-underflow'
   ?<  =(0 a)
   =+  b=0
   ::  decremented integer
