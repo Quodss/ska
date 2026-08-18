@@ -2397,11 +2397,13 @@
   ::  Fixed-point loop with a worklist
   ::
   =/  w=worklist  scc
+  =/  done=?  |
   |-  ^+  map-local
   =*  fixpoint-compilation  $
   =;  [w-new=worklist map-local1=(map bell straight)]
+    ?:  done  map-local1
     =.  w-new  (~(int in w-new) scc)
-    ?:  =(~ w-new)  map-local1
+    ?:  =(~ w-new)  fixpoint-compilation(w scc, map-local map-local1, done &)
     ~&  %fixpoint-compilation
     fixpoint-compilation(w w-new, map-local map-local1)
   ::
