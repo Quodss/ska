@@ -24,7 +24,9 @@
     =/  r=@uvre  0v0
     %-  malt
     |-  ^-  (list [@uvre *])
-    ?~  p.args  ~
+    ?~  p.args
+      ?>  =(r n-args.straight)
+      ~
     [[r i.p.args] $(p.args t.p.args, r +(r))]
   ::
   =|  params=(list *)
@@ -49,24 +51,19 @@
   ?-    -.fin
       %clq
     =/  j=jmp  ?^((get s.fin) z.fin o.fin)
-    ~&  there.j
     bob-loop(bob (got-blocks there.j), params (turn args.j get))
   ::
       %eqq
     =/  j=jmp  ?:(=((get l.fin) (get r.fin)) z.fin o.fin)
-    ~&  there.j
     bob-loop(bob (got-blocks there.j), params (turn args.j get))
   ::
       %brn
     =/  cond  (get s.fin)
     ?.  ?=(? cond)  ~
     =/  j=jmp  ?:(cond z.fin o.fin)
-    ~&  there.j
     bob-loop(bob (got-blocks there.j), params (turn args.j get))
   ::
       %hop
-    ~&  fin
-    ~&  there.t.fin
     bob-loop(bob (got-blocks there.t.fin), params (turn args.t.fin get))
   ::
       %jmp
@@ -112,8 +109,8 @@
     ^-  *
     ?^  res=(~(get by regs) r)  u.res
     ~&  >>  [%missing-reg r `@ux`(mug bell)]
-    :: %non-init-reg
-    !!
+    %non-init-reg
+    :: !!
   ::
   ++  exec-op
     |=  op=pole
@@ -156,14 +153,14 @@
     regs
   ::
       %hsp
-    ~&  [%hint n.op]
+    :: ~&  [%hint n.op]
     regs
   ::
       %hse
     regs
   ::
       %hdp
-    ~&  [%hint n.op]
+    :: ~&  [%hint n.op]
     regs
   ::
       %hde
@@ -287,13 +284,13 @@
     ?+    -.op  <op>
         %imm
       =/  n-tape=tape  <n.op>
-      =?  n-tape  (gth (lent n-tape) 10)  "\{{(scag 10 n-tape)}...}"
+      =?  n-tape  (gth (lent n-tape) 100)  "\{{(scag 100 n-tape)}...}"
       "[%imm n={n-tape} d={<d.op>}]"
     ::
         %hsp  <[%hsp n=n.op]>
         %hse  <[%hse n=n.op]>
-        %hdp  <[%hsp n=n.op p=p.op]>
-        %hde  <[%hse n=n.op p=p.op]>
+        %hdp  <[%hdp n=n.op p=p.op]>
+        %hde  <[%hde n=n.op p=p.op]>
     ::
         %cal
       <op(a `@ux`(mug a.op))>
@@ -329,11 +326,6 @@
     ::
         %jsf
       <op(a `@ux`(mug a.op))>
-    ::
-        %don
-      =/  s-tape=tape  <s.op>
-      =?  s-tape  (gth (lent s-tape) 10)  "\{{(scag 10 s-tape)}...}"
-      "[%don s={s-tape}]"
     ==
   --
 --

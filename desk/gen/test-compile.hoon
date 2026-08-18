@@ -4,11 +4,13 @@
 ::
 :-  %say  |=  *
 ::
-=/  subject  [- 42 +>]:dec:hoot-zpdt
-:: =/  formula=^  [%8 [%1 0] %8 [%1 %6 [%5 [%0 7] %4 %0 6] [%0 6] %9 2 [%0 2] [%4 %0 6] %0 7] %9 2 %0 1]
+=/  subject  ..add:hoot-zpdt
 =/  formula=^
+  =>  subject
   ;;  ^
-  -:dec:hoot-zpdt
+  !=
+  =/  a  ?:  =(0 0)  42  !!
+  (add a 1)
 ::
 =/  [func=bell =long-ska]  (ska-poke [&+subject formula] *long-ska)
 =/  [bell-graph=(jug bell bell) rev=(jug bell bell)]
@@ -28,7 +30,9 @@
 ::
 =/  scc-here=(set bell)  (~(gut by scc-map) func [func ~ ~])
 ?:  |
-  noun+(run:li &+~[42] func scc-here rev [code jets]:long-ska scc-map ~)
+  :: =/  args  ~[subject 42]
+  :: noun+(run:li &+args func scc-here rev [code jets]:long-ska scc-map ~)
+  noun+(run:li |+subject func scc-here rev [code jets]:long-ska scc-map ~)
 =/  all-straights=(map bell straight)
   %-  ~(rep by scc-map)
   |=  [[k=* v=(set bell)] acc=(map bell straight)]
@@ -39,6 +43,11 @@
 ^-  tape
 %-  zing
 ^-  (list tape)
+=-  ?:  |  -  :_  -
+    =/  pessimistic=straight
+      -:(compile-unary func scc-here rev [code jets]:long-ska scc-map ~)
+    ::
+    "{<`@ux`(mug func)>} pessimistic:\0a{(print-straight:li "  " pessimistic)}\0a"
 %+  turn  ~(tap by all-straights)
 |=  [k=bell v=straight]
 "{<`@ux`(mug k)>}:\0a{(print-straight:li "  " v)}\0a"

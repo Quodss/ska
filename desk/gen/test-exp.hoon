@@ -56,6 +56,33 @@
   =.  new  (~(put by new) id d(callees (~(run in callees.d) g)))
   $(q (weld t.q callees))
 ::
+++  render-nomm
+  |=  n=nomm
+  ^-  tape
+  =*  render  .
+  ?-  -.n
+    ^  "[{(render -.n)} {(render +.n)}]"
+    %0  <n>
+    %1  =/  imm=tape  <p.n>
+        =?  imm  (gth (lent imm) 10)  (scag 10 imm)
+        "[%1 p={imm}]"
+    %2  =/  info=tape
+          ?~  info.n  "~"
+          <`@ux`(mug b.u.info.n)>
+        ::
+         "[%2 p={(render p.n)} q={(render q.n)} info={info}]"
+    %3   "[%3 p={(render p.n)}]"
+    %4   "[%4 p={(render p.n)}]"
+    %5   "[%5 p={(render p.n)} q={(render q.n)}]"
+    %6   "[%6 p={(render p.n)} q={(render q.n)} r={(render r.n)}]"
+    %7   "[%7 p={(render p.n)} q={(render q.n)}]"
+    %10  "[%10 [p={<p.p.n>} q={(render q.p.n)}] q={(render q.n)}]"
+    %11  ?@  p.n  "[%11 p={<p.n>} q={(render q.n)}]"
+        ::  "[%11 p=[p={<p.p.n>} q={(render q.p.n)}] q={(render q.n)}]"
+         "[%11 ... q={(render q.n)}]"
+    %12  "[%12 p={(render p.n)} q={(render q.n)}]"
+  ==
+::
 ++  render-callgraph
   |=  g=callgraph
   ^-  tang
@@ -85,7 +112,7 @@
       "{<p.u.area.dat>}: <[{(ud p.l)} {(ud q.l)}].[{(ud p.r)} {(ud q.r)}]>"
     ::
     :_  acc
-    leaf+"{(scow %ux num)}: [sock={(scow %ux (mug more.id))} fol={(scow %ux (mug fol.id))}] at {area}; {<indi.dat>}"
+    leaf+"{(scow %ux num)}: [sock={(scow %ux (mug more.id))} fol={(scow %ux (mug fol.id))}] at {area}, bell {(scow %ux (mug less-code.dat fol.id))}; cape indi={<indi.dat>}; nomm={(render-nomm nomm.dat)}"
   ::
   =/  calls-rendered=(list tank)
     %-  ~(rep by g)
@@ -118,7 +145,7 @@
 --
 ::
 :-  %say  |=  *
-=/  sub  our-hoot
+=/  sub  ..add:our-hoot-zpdt
 :: =/  sub  zuse-vendor
 :: =/  sub  ~
 :: =/  sub  ska-experiment1-hoot
@@ -136,10 +163,12 @@
 ::
 =/  fol
   ;;  ^
-  =>  sub  !=
+  =>  sub  !.  !=
+  =/  a  ?:  =(0 0)  42  43
+  (add a 1)
   :: (~(mint ut [%atom %$ ~]) %noun [%dtls $+1])
   :: (ream '42')
-  (ride %noun '42')
+  :: (ride %noun '42')
   :: !.
   :: =/  t  |.(0)
   :: |-  ^-  ~
@@ -180,15 +209,10 @@
 ::
 =/  l=(list callgraph)  ~>  %bout
   (ska-callgraph:nock-compilation1 [&+sub fol] ~)
-:: noun+(lent g)
-:: :-  %noun
-:: =;  l=(list wain)
-::   %-  zing
-::   (join `wain`~['====================='] l)
-:: %+  turn  l
-:: |=  g=callgraph
-:: ~>  %bout
-:: noun+(turn l |=(g=callgraph ~(wyt by (condense g [&+sub fol]))))
-:: =/  g  -.l
-:: (turn `wall`(zing `(list wall)`(turn (flop (render-callgraph (condense g [&+sub fol]))) (cury wash 0 80))) crip)
-noun+(count-bells (condense -:l [&+sub fol]))
+:: ?:  |
+::   noun+(lent l)
+:: ?:  |
+:: noun+(count-bells (condense -:l [&+sub fol]))
+  :-  %noun
+  =/  g  -.l
+  (turn `wall`(zing `(list wall)`(turn (flop (render-callgraph (condense g [&+sub fol]))) (cury wash 0 80))) crip)
