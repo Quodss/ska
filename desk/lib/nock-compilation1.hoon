@@ -2547,50 +2547,81 @@
       ::
       =^  sub-ned=need  gen  (need-ord-alloc-regs b-ned)
       =/  sub-v=(list @uvre)  (flatten-need sub-ned)
-      ::  emit call: memoized, or tail call, or head call (w/ or w/out a jet)
-      ::
-      =*  call-op  $>(?(%cal %cam %caf %jmp %jmf) $%(pole termin))
-      ::  emitted op, block with that op, targeted block
-      ::
-      =^  [op=call-op o=@uwoo o-hop=@uwoo]  gen
+      =^  call-blocks=$@(@uwoo [opt=@uwoo pes=[sub=@uvre o=@uwoo]])  gen
         ?^  k.u.info.nomm
           =/  key  u.k.u.info.nomm
-          ::  Memoized calls are never TCO'd
-          ::
           =^  next  gen  simple-next
           =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
-          =/  op  [%cam b-callee sub-v pro key]
-          =^  o  gen  (emit ~ ~[op] %hop ~ out)
-          [[op o out] gen]
+          ?.  mono  (emit ~ [%cam b-callee sub-v pro key]~ %hop ~ out)
+          =^  merged   gen  re
+          =^  sub-pes  gen  re
+          =^  merge    gen  (emit ~[merged] [%mov merged pro]~ %hop ~ out)
+          =^  pro-opt  gen  re
+          =^  pro-pes  gen  re
+          ::
+          =^  opt  gen
+            (emit ~ [%cam b-callee sub-v pro-opt key]~ %hop ~[pro-opt] merge)
+          ::
+          =^  pes  gen
+            (emit ~ [%csm b-callee sub-pes pro-pes key]~ %hop ~[pro-pes] merge)
+          ::
+          [[opt sub-pes pes] gen]
         ?:  ?=(%done -.goal)
-          =/  op
+          ?.  mono
+            %^  emit  ~  ~
             ?~  rin  [%jmp b-callee sub-v]
             [%jmf b-callee sub-v u.rin]
           ::
-          =^  o  gen  (emit ~ ~ op)
-          [[op o `@uwoo`%invalid] gen]
+          =^  sub-pes  gen  re
+          =^  opt  gen
+            %^  emit  ~  ~
+            ?~  rin  [%jmp b-callee sub-v]
+            [%jmf b-callee sub-v u.rin]
+          ::
+          =^  pes  gen
+            %^  emit  ~  ~
+            ?~  rin  [%jsp b-callee sub-pes]
+            [%jsf b-callee sub-pes u.rin]
+          ::
+          [[opt sub-pes pes] gen]
         =^  next  gen  simple-next
         =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
-        =/  op
-          ?~  rin  [%cal b-callee sub-v pro]
-          [%caf b-callee sub-v pro u.rin]
-        ::
-        =^  o  gen  (emit ~ ~[op] %hop ~ out)
-        [[op o out] gen]
-      ::  if mono, change `sub-ned` to %this, emit branches to try to decons
-      ::  input subject, and change `o` to point to the beginning of the decons
-      ::  process
-      ::
-      =>  =*  dot  .
-          ?.  mono  dot
-          =^  [o-new=@uwoo s=@uvre]  gen
-            (mono-try-call u.info.nomm rin sub-ned o op o-hop)
+        ?.  mono
+          =/  op
+            ?~  rin  [%cal b-callee sub-v pro]
+            [%caf b-callee sub-v pro u.rin]
           ::
-          dot(sub-ned [%this s], o o-new)
+          (emit ~ ~[op] %hop ~ out)
+        =^  merged   gen  re
+        =^  sub-pes  gen  re
+        =^  merge    gen  (emit ~[merged] [%mov merged pro]~ %hop ~ out)
+        =^  pro-opt  gen  re
+        =^  pro-pes  gen  re
+        ::
+        =^  opt  gen
+          =/  op
+            ?~  rin  [%cal b-callee sub-v pro-opt]
+            [%caf b-callee sub-v pro-opt u.rin]
+          ::
+          (emit ~ ~[op] %hop ~[pro-opt] merge)
+        ::
+        =^  pes  gen
+          =/  op
+            ?~  rin  [%csl b-callee sub-pes pro-pes]
+            [%csf b-callee sub-pes pro-pes u.rin]
+          ::
+          (emit ~ ~[op] %hop ~[pro-pes] merge)
+        ::
+        [[opt sub-pes pes] gen]
+      ::
+      =^  [sub-ned=need call-block=@uwoo]  gen
+        ?@  call-blocks  [[sub-ned call-blocks] gen]
+        =^  o=@uwoo  gen  (mono-try-call sub-ned call-blocks)
+        [[this+sub.pes.call-blocks o] gen]
       ::
       =^  nex-fol=next  gen
-        ?:  (safe-fol-fol q.nomm)  [[%next [none+~ ~ ~] ~ o] gen]
-        $(nomm q.nomm, goal [%next [none+~ ~ ~] ~ o])
+        ?:  (safe-fol-fol q.nomm)  [[%next [none+~ ~ ~] ~ call-block] gen]
+        $(nomm q.nomm, goal [%next [none+~ ~ ~] ~ call-block])
       ::
       =^  nex-sub  gen  $(nomm p.nomm, goal [%next [sub-ned ~ ~] then.nex-fol])
       (copy nex-sub laz.nex-fol)
@@ -3780,36 +3811,14 @@
       =^  args1  gen  (rewrite-par args.j)
       [j(args args1) gen]
     --
-  ::  
+  ::  XX sloppy codegen, always both head and tail
+  ::
   ++  mono-try-call
-    |=  $:  [b=bell key=(unit *)]
-            rin=(unit ring)
-            ned=need
-            o=@uwoo  ::  BB with succesfull call
-            op=$~([%jmp *bell ~] $>(?(%cal %cam %caf %jmp %jmf) $%(pole termin)))
-            o-hop=@uwoo  ::  BB after succesfull call if not tail
-        ==
-    ^-  [[@uwoo @uvre] _gen]
-    =^  r  gen  re
-    =^  fail=@uwoo  gen
-      ?-    -.op
-          %jmp
-        (emit ~ ~ %jsp b r)
-      ::
-          %jmf
-        (emit ~ ~ %jsf b r n.op)
-      ::
-          %cal
-        (emit ~ [%csl b r d.op]~ [%hop ~ o-hop])
-      ::
-          %cam
-        (emit ~ [%csm b r d.op n.op]~ %hop ~ o-hop)
-      ::
-          %caf
-        (emit ~ [%csf b r d.op n.op]~ %hop ~ o-hop)
-      ==
-    ::
-    =;  [o=@uwoo gen=_gen]  [[o r] gen]
+    |=  [ned=need opt=@uwoo pes=[sub=@uvre o=@uwoo]]
+    ^-  [@uwoo _gen]
+    =/  r=@uvre  sub.pes
+    =/  fail=@uwoo  o.pes
+    =/  o=@uwoo  opt
     |-  ^-  [@uwoo _gen]
     ?-    -.ned
         %none
@@ -3837,7 +3846,6 @@
       (emit ~ ~ [%clq r ~^o-split ~^fail])
     ==
   --
-::
 ::
 ++  count-args
   |=  args=need-ordered
