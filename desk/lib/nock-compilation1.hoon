@@ -3045,10 +3045,10 @@
     =/  blob-from=blob  (~(got by blocks.gen) a)
     ?>  ?=(%hop -.fin.blob-from)
     ?>  =(~ par.blob-from)
-    ?>  =(~ args.t.fin.blob-from)
-    =/  b=@uwoo  there.t.fin.blob-from
-    =.  gen  (emir o2 ~ ~ %hop ~ b)
-    gen(blocks (~(put by blocks.gen) a blob-from(there.t.fin o1)))
+    :: ?>  =(~ args.t.fin.blob-from)
+    =/  a-to-b=jmp  t.fin.blob-from
+    =.  gen  (emir o2 ~ ~ %hop a-to-b)
+    gen(blocks (~(put by blocks.gen) a blob-from(t.fin [~ o1])))
   ::  Here the idea is that we materialize the conditional as a register with
   ::  a loobean, then the lazy needs get forked, and the BB of that need gets
   ::  code that branches on the conditional register and fulfills the original
