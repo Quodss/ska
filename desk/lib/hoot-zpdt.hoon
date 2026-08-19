@@ -64,7 +64,8 @@
   ::  p: quotient
   ::  q: remainder
   ^-  [p=@ q=@]
-  ~_  leaf+"divide-by-zero"
+  :: ~_  leaf+"divide-by-zero"
+  ~>  %mean.'divide-by-zero'
   ?<  =(0 b)
   =+  c=0
   |-
@@ -175,7 +176,8 @@
   ::  a: minuend
   ::  b: subtrahend
   |=  [a=@ b=@]
-  ~_  leaf+"subtract-underflow"
+  :: ~_  leaf+"subtract-underflow"
+  ~>  %mean.'subtract-underflow'
   ::  difference
   ^-  @
   ?:  =(0 b)  a
