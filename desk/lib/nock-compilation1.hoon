@@ -2769,6 +2769,7 @@
         [[%next laz.next ~ prol] gen]
       ?.  ?=(hint-dynamic p.p.nomm)
         =^  next  gen  $(nomm q.nomm)
+        ?:  (safe-nomm q.p.nomm)  [next gen]
         =^  toke  gen  $(nomm q.p.nomm, goal [%next [none+~ ~ ~] then.next])
         (copy toke laz.next)
       =^  next  gen  simple-next
