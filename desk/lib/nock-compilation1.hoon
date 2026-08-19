@@ -602,7 +602,7 @@
 +$  memo  (map ^ (map sock [id=identity =datum]))
 +$  sock-anno  [=sock src=spring]
 +$  ring  [=path axe=@]
-+$  code-entry  [=nomm pure=?]
++$  code-entry  [=nomm pure=? total=?]
 ::  Persistent SKA state
 ::
 +$  long-ska
@@ -1321,8 +1321,8 @@
     =/  loc1=local
       %-  ~(rep in scc)
       |=  [b=bell acc=_`local`[code.lon fols.lon]]
-      :-  (~(put by code.acc) b [(~(got by just-code) b) &])
-      (put-fols b [(~(got by just-code) b) &] fols.acc)
+      :-  (~(put by code.acc) b [(~(got by just-code) b) & &])
+      (put-fols b [(~(got by just-code) b) & &] fols.acc)
     ::
     |-  ^-  long-ska
     =*  fixpoint-loop  $
@@ -1335,8 +1335,9 @@
     %-  ~(rep in scc)
     |=  [b=bell acc=_loc1]
     ^+  acc
-    =/  [pure=?]  (eval-finalized b code.acc)
-    =/  set-pure  |=(=code-entry code-entry(pure pure))
+    =/  [pure=? total=?]  (eval-finalized b code.acc)
+    =/  set-pure   |=(=code-entry code-entry(pure pure))
+    =/  set-total  |=(=code-entry code-entry(total total))
     =.  code.acc  (~(jab by code.acc) b set-pure)
     =.  fols.acc
       %+  ~(jab by fols.acc)  fol.b
@@ -1364,71 +1365,84 @@
   :-  root-bell
   lon(root.jets root, core.jets core, batt.jets batt)
 ::  produces data about a function
-::  for now it is only purity (no crashes, no hints except %fast)
+::  pure: no crashes + no hints excepts %fast (call to it could be omitted)
+::  total: no crashes (stacktrace boundaries around them could be omitted)
 ::
 ++  eval-finalized
   |=  [b=bell code=(map bell code-entry)]
-  ^-  [pure=?]
+  ^-  [pure=? total=?]
   =/  sub=sock  less.b
   =/  =nomm  nomm:(~(got by code) b)
   =<  +
-  |^  ^-  [s=sock p=?]
+  |^  ^-  [s=sock pure=? total=?]
   =*  nomm-loop  $
   ?-    nomm
       [p=^ q=*]
     =/  p  nomm-loop(nomm p.nomm)
     =/  q  nomm-loop(nomm q.nomm)
     :-  (knit:so s.p s.q)
-    &(p.p p.q)
+    [&(pure.p pure.q) &(total.p total.q)]
   ::
       [%0 *]
-    ?:  =(0 p.nomm)  [|+~ |]
+    ?:  =(0 p.nomm)  [|+~ | |]
     :-  (pull:so sub p.nomm)
-    (have sub p.nomm)
+    [. .]:(have sub p.nomm)
   ::
-      [%1 *]  [&+p.nomm &]
+      [%1 *]  [&+p.nomm & &]
   ::
       [%2 *]
     :-  |+~
-    ?&  p:nomm-loop(nomm p.nomm)
-        p:nomm-loop(nomm q.nomm)
-        |(?=(~ info.nomm) pure:(~(got by code) b.u.info.nomm))
+    :-
+      ?&  pure:nomm-loop(nomm p.nomm)
+          pure:nomm-loop(nomm q.nomm)
+          &(?=(^ info.nomm) pure:(~(got by code) b.u.info.nomm))
+      ==
+    ?&  total:nomm-loop(nomm p.nomm)
+        total:nomm-loop(nomm q.nomm)
+        &(?=(^ info.nomm) total:(~(got by code) b.u.info.nomm))
     ==
   ::
-      [%3 *]  [|+~ p:nomm-loop(nomm p.nomm)]
-      [%4 *]  [|+~ p:nomm-loop(nomm p.nomm)]
-      [%5 *]  [|+~ &(p:nomm-loop(nomm p.nomm) p:nomm-loop(nomm q.nomm))]
+      [%3 *]  [|+~ [pure total]:nomm-loop(nomm p.nomm)]
+      [%4 *]  [|+~ | |]
+      [%5 *]  :+  |+~
+                &(pure:nomm-loop(nomm p.nomm) pure:nomm-loop(nomm q.nomm))
+              &(total:nomm-loop(nomm p.nomm) total:nomm-loop(nomm q.nomm))
   ::
       [%6 *]
     =/  y  nomm-loop(nomm q.nomm)
     =/  n  nomm-loop(nomm r.nomm)
-    :-  (purr:so s.y s.n)
-    ?&  p:nomm-loop(nomm p.nomm)
-        p.y
-        p.n
-    ==
+    [(purr:so s.y s.n) | |]
   ::
       [%7 *]
     =/  p  nomm-loop(nomm p.nomm)
     =/  q  nomm-loop(sub s.p, nomm q.nomm)
-    [s.q &(p.p p.q)]
+    [s.q &(pure.p pure.q) &(total.p total.q)]
   ::
       [%10 *]
     =/  don  nomm-loop(nomm q.p.nomm)
     =/  rec  nomm-loop(nomm q.nomm)
-    :-  (darn:so s.rec p.p.nomm s.don)
-    ?&  p.rec
-        p.don
-        (have s.rec p.p.nomm)
+    =/  got=?  (have s.rec p.p.nomm)
+    :+  (darn:so s.rec p.p.nomm s.don)
+      ?&  pure.rec
+          pure.don
+          got
+      ==
+    ?&  total.rec
+        total.don
+        got
     ==
   ::
       [%11 *]
-    ?@  p.nomm  [s:nomm-loop(nomm q.nomm) |]
+    ?@  p.nomm
+      =/  q  nomm-loop(nomm q.nomm)
+      [s.q | total.q]
     =/  tok  nomm-loop(nomm q.p.nomm)
     =/  fol  nomm-loop(nomm q.nomm)
-    [s.fol &(?=(%fast p.p.nomm) p.tok p.fol)]
+    :+  s.fol
+      &(?=(%fast p.p.nomm) pure.tok pure.fol)
+    &(total.tok total.fol)
   ::
-      [%12 *]  [|+~ |]
+      [%12 *]  [|+~ | |]
   ==
   ::
   ++  have
@@ -2810,9 +2824,7 @@
     --
   ::
   ++  re  `[@uvre _gen]`[re-gen.gen gen(re-gen +(re-gen.gen))]
-  ++  oo
-    :: ?:  &(=(bo-gen.gen 0w3) =((mug b) 0x2eba.5d91))  !!
-    `[@uwoo _gen]`[bo-gen.gen gen(bo-gen +(bo-gen.gen))]
+  ++  oo  `[@uwoo _gen]`[bo-gen.gen gen(bo-gen +(bo-gen.gen))]
   ++  kerf
     |=  =next
     ^-  [[@uwoo @uvre] _gen]
