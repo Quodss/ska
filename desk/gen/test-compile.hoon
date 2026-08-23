@@ -9,9 +9,7 @@
   =>  subject
   ;;  ^
   !=
-  =/  x  (dvr 1 1)
-  =/  a  ?:  =(0 1)  -.x  ?:((lth +.x 1) +.x !!)
-  (add a 1)
+  (lth 1 1)
 ::
 =/  [func=bell =long-ska]  (ska-poke [&+subject formula] *long-ska)
 =/  [bell-graph=(jug bell bell) rev=(jug bell bell)]

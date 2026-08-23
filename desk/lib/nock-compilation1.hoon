@@ -2433,7 +2433,7 @@
       :-  ?:  ?=([%none ~] need.s)  w-new
           (~(uni in w-new) (~(get ju rev) b))
       (~(put by map-local) b s)
-    =/  need-pessimized  (msg-need-ord need.s need.u.s-previous)
+    =/  need-pessimized  (msg-need-ord need.s need.u.s-previous cape.less.b)
     :-  ?:  =(need-pessimized need.u.s-previous)  w-new
         (~(uni in w-new) (~(get ju rev) b))
     %+  ~(put by map-local)  b
@@ -2445,8 +2445,39 @@
   =/  [nex=next gen=line-short]
     (~(run comp *line-short) | nomm:(~(got by code.long-ska) b) [%done ~])
   ::
-  =^  res  gen  (~(next-lazy-collapse comp gen) nex)
+  =^  res  gen  (~(next-lazy-collapse comp gen) nex cape.less.b)
   [(~(to-straight comp gen) res) res gen]
+::
+++  need-normalize
+  |=  ned=need
+  ^-  need
+  =*  this  .
+  ?-    -.ned
+      %none  ned
+      %this  ned
+  ::
+      ^
+    =/  l  (this -.ned)
+    =/  r  (this +.ned)
+    (cons-need l r)
+  ::
+      %both
+    =/  l  (this h.ned)
+    =/  r  (this t.ned)
+    =/  x  (cons-need l r)
+    ?^  -.x  [%both r.ned x]
+    [%this r.ned]
+  ==
+::
+++  norm-need-lazy
+  |=  laz=need-lazy
+  ^-  ?
+  &
+  :: =*  this  .
+  :: ?&  =(sure.laz (need-normalize sure.laz))
+  ::     (levy fork.laz |=([[* y=need-lazy] * n=need-lazy] &((this y) (this n))))
+  ::     (levy bond.laz |=([* laz=need-lazy] (this laz)))
+  :: ==
 ::
 ++  comp
   |=  $:  scc=(set bell)
@@ -2463,6 +2494,10 @@
     |^  ^-  [next _gen]
     ?-    nomm
         [^ *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       =>  =*  dot  .
           ?.  ?=(%done -.goal)  dot
           =^  r  gen  re
@@ -2491,12 +2526,21 @@
       ==
     ::
         [%0 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?:  =(0 p.nomm)  (bomb ?:(?=(%next -.goal) `there.then.goal ~))
       =^  next  gen  simple-next
       ?:  =(1 p.nomm)  [next gen]
-      [[%next (from p.nomm laz.next) then.next] gen]
+      =^  deep=need-lazy  gen  (from p.nomm laz.next)
+      [[%next deep then.next] gen]
     ::
         [%1 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?-    -.goal
           %done
         =^  r  gen  re
@@ -2515,6 +2559,10 @@
       ==
     ::
         [%2 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?~  info.nomm
         ::  indirect call
         ::
@@ -2643,6 +2691,10 @@
       (copy nex-sub laz.nex-fol)
     ::
         [%3 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?:  &(?=(%next -.goal) (none-equivalent laz.goal))
         ::  Don't care about the product
         ::
@@ -2670,6 +2722,10 @@
       $(nomm p.nomm, goal [%next [this+r ~ ~] ~ o])
     ::
         [%4 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?-    -.goal
           %done
         =^  pro  gen  re
@@ -2697,6 +2753,10 @@
       ==
     ::
         [%5 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       =>  =*  dot  .
           ?-    -.goal
               %pick  dot
@@ -2730,6 +2790,10 @@
       (copy next-p laz.next-q)
     ::
         [%6 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?:  ?&  ?=(%next -.goal)
               :: !(none-equivalent laz.goal)
               |(!=(~ fork.laz.goal) !=(~ bond.laz.goal))
@@ -2763,10 +2827,18 @@
       (copy cond lazy)
     ::
         [%7 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       =^  next  gen  $(nomm q.nomm)
       $(nomm p.nomm, goal next)
     ::
         [%10 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       =^  next  gen  simple-next
       =^  [don=need-lazy rec=need-lazy o=@uwoo]  gen  (into next p.p.nomm)
       =^  next-rec  gen  $(nomm q.nomm, goal [%next rec ~ o])
@@ -2774,6 +2846,10 @@
       (copy next-don laz.next-rec)
     ::
         [%11 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       ?@  p.nomm
         ?.  ?=(hint-static p.nomm)  $(nomm q.nomm)
         =^  next  gen  simple-next
@@ -2799,6 +2875,10 @@
       (copy dyna laz.next)
     ::
         [%12 *]
+      =;  [=next =_gen]
+        ?>  (norm-need-lazy laz.next)
+        [next gen]
+      ::
       =^  next  gen  simple-next
       =^  [out=@uwoo pro=@uvre]  gen  (kerf next)
       =^  r-path     gen  re
@@ -2836,6 +2916,7 @@
     |=  [o=@uwoo laz=need-lazy f=$-([@uwoo need _gen] _gen)]
     ^+  gen
     =*  walk  $
+    !.
     =.  gen  (f o sure.laz gen)
     =.  gen
       %+  roll  fork.laz
@@ -2872,6 +2953,10 @@
     |=  [r=@uvre ned=need]
     ^-  [(list pole) _gen]
     =|  ops=(list pole)
+    :: =;  [ops=(list pole) gen=_gen]
+      :: ~?  (lien ops |=(op=pole ?=(%cel -.op)))  [ops ned]
+      :: [ops gen]
+    ::
     |-  ^-  [(list pole) _gen]
     ?-    -.ned
         %none  [ops gen]
@@ -2920,6 +3005,7 @@
   ++  mede
     |=  [then=jmp som=* laz=need-lazy]
     ^-  [@uwoo _gen]
+    :: ~?  =(som 42)  laz
     =^  o=@uwoo  gen  (emit ~ ~ %hop then)
     :-  o
     %^  walk-lazy  o  laz
@@ -2983,13 +3069,15 @@
       ==
     ::
     :-  `[r there.then.nex]
-    ::  add crashes wherever lazy needs need more than an atom
+    ::  add moves wherever lazy needs need one noun, crashes wherever lazy needs
+    ::  need more than an atom
     ::
     %^  walk-lazy  there.then.nex  [this+r fork.laz.nex bond.laz.nex]
     |=  [o=@uwoo ned=need gen-init=_gen]
     ^+  gen
     =.  gen  gen-init
-    ?:  ?=(?(%this %none) -.ned)  gen
+    ?:  ?=(%none -.ned)  gen
+    ?:  ?=(%this -.ned)  (add-ops o [%mov r r.ned]~)
     (emir o ~ ~ %bom ~)
   ::
   ++  flatten-need
@@ -3176,8 +3264,14 @@
   ::
   ++  from-need
     |=  [axe=@ ned=need]
-    ^-  need
+    ^-  [need _gen]
     ?<  =(0 axe)
+    =^  ned=need  gen
+      ?.  ?=(%none -.ned)  [ned gen]
+      =^  r  gen  re
+      [[%this r] gen]
+    ::
+    :_  gen
     |-  ^-  need
     ?:  =(1 axe)  ned
     ?-  (cap axe)
@@ -3187,17 +3281,27 @@
   ::
   ++  from
     |=  [axe=@ laz=need-lazy]
-    ^-  need-lazy
+    ^-  [need-lazy _gen]
     =*  from  .
-    :+  (from-need axe sure.laz)
-      %+  turn  fork.laz
-      |=  [y=[there=@uwoo laz=need-lazy] n=[there=@uwoo laz=need-lazy]]
-      =.  laz.y  (from axe laz.y)
-      =.  laz.n  (from axe laz.n)
-      [y n]
-    %+  turn  bond.laz
-    |=  [o=@uwoo laz=need-lazy]
-    [o (from axe laz)]
+    =^  sure-deep  gen  (from-need axe sure.laz)
+    =^  fork-deep  gen
+      %^  spin  fork.laz  gen
+      |=  [[y=[@uwoo laz=need-lazy] n=[@uwoo laz=need-lazy]] gen-init=_gen]
+      =.  gen  gen-init
+      =^  y-deep  gen  (from axe laz.y)
+      =^  n-deep  gen  (from axe laz.n)
+      :_  gen
+      [y(laz y-deep) n(laz n-deep)]
+    ::
+    =^  bond-deep  gen
+      %^  spin  bond.laz  gen
+      |=  [[o=@uwoo laz=need-lazy] gen-init=_gen]
+      =.  gen  gen-init
+      =^  deep  gen  (from axe laz)
+      [[o deep] gen]
+    ::
+    :_  gen
+    [sure-deep fork-deep bond-deep]
   ::
   ++  copy
     |=  [first=next second=need-lazy]
@@ -3420,7 +3524,9 @@
       %=  $
         sin   t.sin
         sout  :_  t.t.sout
-                ?~  p.i.sin  par
+                ?~  p.i.sin
+                  %-  cons-need  ::  XX
+                  par
                 =*  both  u.p.i.sin
                 [%both r.both par]
       ==
@@ -3594,10 +3700,10 @@
   ::  the disassembly code
   ::
   ++  next-lazy-collapse
-    |=  nex=next
+    |=  [nex=next less=cape]
     ^-  [next-resolved _gen]
     ?>  =(~ args.then.nex)
-    =^  ned-final=need  gen  (need-ord-alloc-regs (shape-collapse laz.nex))
+    =^  ned-final=need  gen  (need-ord-alloc-regs (shape-collapse laz.nex less))
     :-  [%next [ned-final ~ ~] ~ there.then.nex]
     (coerce-lazy ned-final there.then.nex laz.nex)
   ::
@@ -3873,23 +3979,60 @@
   ==
 ::
 ++  msg-need-ord
-  |=  [a=need-ordered b=need-ordered]
+  |=  [a=need-ordered b=need-ordered less=cape]
   ^-  need-ordered
   =*  msg  .
   ?:  =(a b)  a
+  ::  none are cells
+  ::
+  ?:  ?&  |(?=(%this -.a) ?=(%none -.a))
+          |(?=(%this -.b) ?=(%none -.b))
+      ==
+    this+~
+  ::  one is maybe atom, can't refine with `less`
+  ::
+  ?:  ?&  ?=(@ less)
+          ?|  ?=(%this -.a)
+              ?=(%none -.a)
+              ?=(%this -.b)
+              ?=(%none -.b)
+      ==  ==
+    this+~
+  ::  one is still this/none: `less` is a cell
+  ::
   ?:  ?|  ?=(%this -.a)
           ?=(%none -.a)
           ?=(%this -.b)
           ?=(%none -.b)
       ==
-    this+~
+    =/  [single=need-ordered double=need-ordered]
+      ?:  |(?=(%this -.a) ?=(%none -.a))  [a b]
+      [b a]
+    ::
+    =/  h-double
+      ?:  ?=(%both -.double)  h.double
+      ?>  ?=(^ -.double)
+      -.double
+    ::
+    =/  t-double
+      ?:  ?=(%both -.double)  t.double
+      ?>  ?=(^ -.double)
+      +.double
+    ::
+    =/  l  (msg none+~ h-double -.less)
+    =/  r  (msg none+~ t-double +.less)
+    ?:  |(?=(%this -.single) ?=(%both -.double))  [%both l r]
+    %-  cons-need  ::  XX 
+    [l r]
+  ::
   ?:  ?=(%both -.a)
     ?:  ?=(%both -.b)
-      [%both (msg h.a h.b) (msg t.a t.b)]
-    [%both (msg h.a p.b) (msg t.a q.b)]
+      [%both (msg h.a h.b (hed:ca less)) (msg t.a t.b (tel:ca less))]
+    [%both (msg h.a p.b (hed:ca less)) (msg t.a q.b (tel:ca less))]
   ?:  ?=(%both -.b)
-    [%both (msg p.a h.b) (msg q.a t.b)]
-  [(msg p.a p.b) (msg q.a q.b)]
+    [%both (msg p.a h.b (hed:ca less)) (msg q.a t.b (tel:ca less))]
+  %-  cons-need  ::  XX
+  [(msg p.a p.b (hed:ca less)) (msg q.a q.b (tel:ca less))]
 ::
 ++  need-to-ordered
   |=  ned=need
@@ -3987,12 +4130,12 @@
   (weld fork.i fork)
 ::
 ++  shape-collapse
-  |=  laz=need-lazy
+  |=  [laz=need-lazy less=cape]
   ^-  need-ordered
-  (inter-collapse (lazy-to-inter laz))
+  (inter-collapse (lazy-to-inter laz) less)
 ::
 ++  inter-collapse
-  |=  intr=need-inter
+  |=  [intr=need-inter less=cape]
   ^-  need-ordered
   =/  sures=[orig=need-ordered fix=need-ordered]  [. .]:sure.intr
   =<  orig
@@ -4021,12 +4164,16 @@
       intr        intr-n
     ==
   ::
-  =.  fix.sures  (uni-need-ord fix.sures (msg-need-ord fix.sures-y fix.sures-n))
+  =.  fix.sures
+    (uni-need-ord fix.sures (msg-need-ord fix.sures-y fix.sures-n less))
+  ::
   ::  We compute simple MSG of fix.sures-y/n as they contain the totality of 
   ::  the shape info. We compute special MSG of orig.sures-y/n that takes
   ::  fix.sures into account without adding it to orig.sures-y/n
   ::
-  =/  msg-special  (msg-need-ord-fix-aware orig.sures-y orig.sures-n fix.sures)
+  =/  msg-special
+    (msg-need-ord-fix-aware orig.sures-y orig.sures-n fix.sures less)
+  ::
   sures(orig (uni-need-ord orig.sures msg-special))
 ::
 ++  hed-need-ord
@@ -4052,20 +4199,20 @@
 ::  MSG of `a` and `b` while knowing that axes in `fix` exist
 ::
 ++  msg-need-ord-fix-aware
-  |=  [a=need-ordered b=need-ordered fix=need-ordered]
+  |=  [a=need-ordered b=need-ordered fix=need-ordered less=cape]
   ^-  need-ordered
   ~+
   =*  msg  .
   ?:  =(a b)  a
   ?:  |(?=(%this -.fix) ?=(%none -.fix))
-    (msg-need-ord a b)
+    (msg-need-ord a b less)
   ?:  &(?=(%none -.a) =(b fix))  b
   ?:  &(?=(%none -.b) =(a fix))  a
   =/  need-here=?  |(?=(%this -.a) ?=(%this -.b) ?=(%both -.a) ?=(%both -.b))
   =/  x
     %+  cons-need
-      (msg (hed-need-ord a) (hed-need-ord b) (hed-need-ord fix))
-    (msg (tel-need-ord a) (tel-need-ord b) (tel-need-ord fix))
+      (msg (hed-need-ord a) (hed-need-ord b) (hed-need-ord fix) (hed:ca less))
+    (msg (tel-need-ord a) (tel-need-ord b) (tel-need-ord fix) (tel:ca less))
   ::
   ?-  -.x
     %none  ?:(need-here [%this ~] [%none ~])
