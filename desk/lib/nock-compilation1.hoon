@@ -3375,6 +3375,11 @@
       =^  [ned-don=need ned-rec=need]  gen  (into-need axe ned.sur o)
       [[[ned-don lok-don] [ned-rec lok-rec]] gen]
     ::
+    =;  [lok-don=(set @) lok-rec=(set @)]
+      :-  lok-don
+      ?:  =(1 axe)  lok-rec
+      (~(put in lok-rec) axe)
+    ::
     %-  ~(rep in lok.sur)
     |=  [axe-lok=@ lok-don=(set @) lok-rec=(set @)]
     ?<  =(0 axe)
@@ -4264,14 +4269,29 @@
   =*  this-buc  $
   :-  %-  ~(rep in lok.sure.intr)
       |=  [axe=@ new=_ned.sure.intr]
+      ?:  =(1 axe)  new
       ?:  (axe-in-less-cape axe less)  new
-      %+  uni-need-ord  new
       |-  ^-  need-ordered
-      ?:  =(1 axe)  [%this ~]
-      ?-  (cap axe)
-        %2  [$(axe (mas axe)) none+~]
-        %3  [none+~ $(axe (mas axe))]
-      ==
+      ?:  =(1 axe)
+        ?.  ?=(%none -.new)  new
+        [%this ~]
+      =/  [h=need-ordered t=need-ordered]
+        ?-  -.new
+          ?(%none %this)  [. .]:[%none ~]
+          ^               new
+          %both           [h t]:new
+        ==
+      ::
+      =/  [h-new=need-ordered t-new=need-ordered]
+        ?-  (cap axe)
+          %2  [$(axe (mas axe), new h) t]
+          %3  [h $(axe (mas axe), new t)]
+        ==
+      ::
+      =/  x  (cons-need h-new t-new)
+      ?:  ?=(?(%none ^) -.new)  x
+      ?@  -.x  [%this ~]
+      [%both x]
   %+  turn  fork.intr
   |=  [y=need-inter1 n=need-inter1]
   [this-buc(intr y) this-buc(intr n)]
@@ -4374,41 +4394,25 @@
   ?~  a  [[(flop p.acc) (flop q.acc)] b]
   =^  res  b  (c i.a b)
   $(acc [[-.res p.acc] [+.res q.acc]], a t.a)
-::  if axis b in in axis a, return [~ c] such that (peg a c) == b
+::  if axis b is in axis a, return [~ c] such that (peg a c) == b
 ::  else return ~
 ::
 ++  gep
   |=  [a=@ b=@]
   ^-  (unit @)
-  =/  res1  (gep1 a b)
-  =/  res2  (gep2 a b)
-  ?>  =(res1 res2)
-  res1
-::
-++  gep1
-  |=  [a=@ b=@]
-  ^-  (unit @)
   ?<  =(0 a)
   ?<  =(0 b)
   ?:  =(a b)  `1
   ?:  (lth b a)  ~
-  |-  ^-  (unit @)
-  ?:  =(a 1)  `b
-  ?.  =((cap a) (cap b))  ~
-  $(a (mas a), b (mas b))
-::
-++  gep2
-  |=  [a=@ b=@]
-  ^-  (unit @)
-  ?<  =(0 a)
-  ?<  =(0 b)
-  ?:  =(a b)  `1
-  ?:  (lth b a)  ~
-  =/  wid-a  (met 0 a)
-  =/  wid-b  (met 0 b)
-  =/  top-b  (rsh [0 (sub wid-b wid-a)] b)
+  :: |-  ^-  (unit @)
+  :: ?:  =(a 1)  `b
+  :: ?.  =((cap a) (cap b))  ~
+  :: $(a (mas a), b (mas b))
+  ::
+  =/  dif-wid  (sub (met 0 b) (met 0 a))
+  =/  top-b  (rsh [0 dif-wid] b)
   ?.  =(top-b a)  ~
-  =/  x  (lsh [0 (sub wid-b wid-a)] 1)
+  =/  x  (bex dif-wid)
   =/  low-b  (dis b (dec x))
   `(con low-b x)
 --
