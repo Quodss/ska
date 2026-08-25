@@ -8,8 +8,12 @@
 =/  formula=^
   =>  subject
   ;;  ^
-  !=
-  (lth 1 1)
+  !.  !=
+  %.  42
+  |=  n=@
+  =/  b  ?:  =(1 1)  n  n
+  =/  a  ?:  =(1 1)  n  42
+  (add a b)
 ::
 =/  [func=bell =long-ska]  (ska-poke [&+subject formula] *long-ska)
 =/  [bell-graph=(jug bell bell) rev=(jug bell bell)]
@@ -46,7 +50,9 @@
     =/  pessimistic=straight
       -:(compile-unary func scc-here rev [code jets]:long-ska scc-map ~)
     ::
+    =.  pessimistic  (optimize pessimistic)
     "{<`@ux`(mug func)>} pessimistic:\0a{(print-straight:li "  " pessimistic)}\0a"
 %+  turn  ~(tap by all-straights)
 |=  [k=bell v=straight]
+=.  v  (optimize v)
 "{<`@ux`(mug k)>}:\0a{(print-straight:li "  " v)}\0a"
