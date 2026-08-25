@@ -4440,13 +4440,13 @@
     |-  ^-  [(list @uwoo) (set @uwoo)]
     =*  dfs-buc  $
     =.  saw  (~(put in saw) o)
-    =/  [l=(list @) s=(set @uwoo)]
-      %+  roll  (get-jmps fin:(~(got by blocks) o))
-      |=  [[* o1=@uwoo] =_out =_saw]
-      ?:  (~(has in saw) o1)  [out saw]
-      dfs-buc(o o1, out out, saw saw)
-    ::
-    [[o l] s]
+    =<  [[o out] saw]
+    ^-  [o=@uwoo out=(list @uwoo) saw=(set @uwoo)]
+    :-  o
+    %+  roll  (get-jmps fin:(~(got by blocks) o))
+    |=  [[* o1=@uwoo] =_out =_saw]
+    ?:  (~(has in saw) o1)  [out saw]
+    dfs-buc(o o1, out out, saw saw)
   ::
   =*  next  $%([%done ~] [%one p=@uwoo] [%two z=@uwoo o=@uwoo])
   =/  succ=(map @uwoo next)
