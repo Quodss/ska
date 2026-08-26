@@ -3326,7 +3326,7 @@
       ?<  =(1 axe)
       ?:  =(~ lok.sur)  [axe ~ ~]
       (~(run in lok.sur) |=(x=@ (peg axe x)))
-    :_  lok.sur
+    :_  (~(run in lok.sur) |=(x=@ (peg axe x)))
     |-  ^-  need
     ?:  =(1 axe)  ned.sur
     ?-  (cap axe)
