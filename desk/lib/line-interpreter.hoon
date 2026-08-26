@@ -13,8 +13,13 @@
       ==
   =*  sam  +<
   ^-  (unit *)
-  =/  straight
-    ?:  -.args
+  =/  =straight
+    =*  sam  +<
+    =*  con  +>
+    =/  f  -.args
+    =>  [=_f +.sam con]  ~+
+    %-  optimize
+    ?:  f
       (~(got by (compile-scc scc rev long-ska scc-map jets-hot)) bell)
     -:(compile-unary bell scc rev long-ska scc-map jets-hot)
   ::

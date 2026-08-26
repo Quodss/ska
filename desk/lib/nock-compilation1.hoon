@@ -2340,40 +2340,66 @@
       [%don s=@uvre]                        ::  return s
       [%bom o=(unit @uwoo)]                 ::  boom! crash. would've gone to o
   ==
+::  get assignment register of the op if exists and does not crash
+::  XX pure/safe function calls
 ::
+++  get-reg-safe-assignment
+  |=  op=pole
+  ^-  (unit @uvre)
+  =>  op
+  ?-  -
+    %imm  `d
+    %mov  `d
+    %inc  ~
+    %con  `d
+    %hed  `d
+    %tal  `d
+    %cel  ~
+    %hsp  ~
+    %hse  ~
+    %hdp  ~
+    %hde  ~
+    %spy  ~
+    %nok  ~
+    %cal  ~
+    %caf  ~
+    %cam  ~
+    %csl  ~
+    %csf  ~
+    %csm  ~
+  ==
 ++  get-regs
   |=  op=$%(pole termin)
   ^-  (list @uvre)
-  =>  op
-  ?-  -
-    %imm  ~[d]
-    %mov  ~[s d]
-    %inc  ~[s d]
-    %con  ~[h t d]
-    %hed  ~[s d]
-    %tal  ~[s d]
-    %cel  ~[p]
+  ?-  -.op
+    %imm  ~[d]:op
+    %mov  ~[s d]:op
+    %inc  ~[s d]:op
+    %con  ~[h t d]:op
+    %hed  ~[s d]:op
+    %tal  ~[s d]:op
+    %cel  ~[p]:op
     %hsp  ~
     %hse  ~
-    %hdp  ~[p]
-    %hde  ~[p]
-    %spy  ~[e p d]
-    %nok  ~[u f d]
-    %cal  [d v]
-    %caf  [d v]
-    %cam  [d v]
-    %csl  ~[s d]
-    %csf  ~[s d]
-    %csm  ~[s d]
-    %clq  ~[s]
-    %eqq  ~[l r]
-    %brn  ~[s]
-    %hop  ~
-    %jmp  v
-    %jmf  v
-    %jsp  ~[s]
-    %jsf  ~[s]
-    %don  ~[s]
+    %hdp  ~[p]:op
+    %hde  ~[p]:op
+    %spy  ~[e p d]:op
+    %nok  ~[u f d]:op
+    %cal  [d v]:op
+    %caf  [d v]:op
+    %cam  [d v]:op
+    %csl  ~[s d]:op
+    %csf  ~[s d]:op
+    %csm  ~[s d]:op
+    %clq  [s.op (weld args.z.op args.o.op)]
+    %eqq  [l.op r.op (weld args.z.op args.o.op)]
+    %brn  [s.op (weld args.z.op args.o.op)]
+    %hop  args.t.op
+    %jmp  v:op
+    %jmf  v:op
+    %jsp  ~[s]:op
+    %jsf  ~[s]:op
+    %don  ~[s]:op
     %bom  ~
   ==
 ::
@@ -3008,7 +3034,7 @@
     |-  ^-  [(list pole) _gen]
     ?-    -.ned
         %none  [ops gen]
-        %this  [[[%mov r r.ned] ops] gen]
+        %this  ?<  =(r r.ned)  [[[%mov r r.ned] ops] gen]
     ::
         ^
       =^  r-ned  gen  re
@@ -3028,6 +3054,7 @@
       ::
       =.  ops  ops-1
       =.  ops  [[%cel r.ned] ops]
+      ?<  =(r r.ned)
       [[[%mov r r.ned] ops] gen]
     ==
   ::
@@ -3128,7 +3155,9 @@
     =.  gen  gen-init
     =^  ned-sure=need  gen  (sure-require-look sur)
     ?:  ?=(%none -.ned-sure)  gen
-    ?:  ?=(%this -.ned-sure)  (add-ops o [%mov r r.ned-sure]~)
+    ?:  ?=(%this -.ned-sure)
+      ?:  =(r r.ned-sure)  gen
+      (add-ops o [%mov r r.ned-sure]~)
     (emir o ~ ~ %bom ~)
   ::
   ++  flatten-need
@@ -3745,13 +3774,16 @@
           %both
         ?-    -.ned-target
             %none  gen
-            %this  (add-ops o [%mov r.ned r.ned-target]~)
+            %this
+          ?<  =(r.ned r.ned-target)
+          (add-ops o [%mov r.ned r.ned-target]~)
         ::
             ^
           =.  gen  sure-loop(ned h.ned, ned-target -.ned-target)
           sure-loop(ned t.ned, ned-target +.ned-target)
         ::
             %both
+          ?<  =(r.ned r.ned-target)
           =.  gen  (add-ops o [%mov r.ned r.ned-target]~)
           =.  gen  sure-loop(ned h.ned, ned-target h.ned-target)
           sure-loop(ned t.ned, ned-target t.ned-target)
@@ -4022,6 +4054,7 @@
       [o gen]
     ::
         %this
+      ?<  =(r r.ned)
       (emit ~ [%mov r r.ned]~ %hop ~ o)
     ::
         ^
@@ -4038,6 +4071,7 @@
       =^  o-t=@uwoo  gen  $(ned t.ned, r r-t)
       =^  o-h=@uwoo  gen  $(ned h.ned, o o-t, r r-h)
       =^  o-split  gen
+        ?<  =(r r.ned)
         (emit ~ ~[[%hed r r-h] [%tal r r-t] [%mov r r.ned]] %hop ~ o-h)
       ::
       (emit ~ ~ [%clq r ~^o-split ~^fail])
@@ -4422,76 +4456,114 @@
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 |%
-::  For each vertex with out-degree > 1 find the immediate postdominator, if
-::  exists.
-::  That is, for each branching BB find the successor BB where the branches
-::  converge, if they converge
+::  BBs in topological order
 ::
-++  merge-map
+++  bb-topo
   |=  blocks=(map @uwoo blob)
+  ^-  (list @uwoo)
+  =|  saw=(set @uwoo)
+  =|  out=(list @)
+  =/  o=@uwoo  `@`0
+  =<  -
+  |-  ^-  [(list @uwoo) (set @uwoo)]
+  =*  dfs-buc  $
+  =.  saw  (~(put in saw) o)
+  =<  [[o out] saw]
+  ^-  [o=@uwoo out=(list @uwoo) saw=(set @uwoo)]
+  :-  o
+  %+  roll  (get-jmps fin:(~(got by blocks) o))
+  |=  [[* o1=@uwoo] =_out =_saw]
+  ?:  (~(has in saw) o1)  [out saw]
+  dfs-buc(o o1, out out, saw saw)
+::  For each vertex find the immediate dominator, if exists.
+::  That is, for each BB find either the predecessor if it is not
+::  the merge block, or the corresponing branching ancestor
+::
+++  get-idom
+  |=  [blocks=(map @uwoo blob) topo=(list @uwoo)]
   ^-  (map @uwoo @uwoo)
-  ::  BBs in reversed topological order
+  =/  topo-set=(set @uwoo)  (sy topo)
+  =/  rev=(jar @uwoo @uwoo)
+    %-  ~(rep by blocks)
+    |=  [[o=@uwoo v=blob] acc=(jar @uwoo @uwoo)]
+    ?.  (~(has in topo-set) o)  acc
+    %+  roll  (get-jmps fin.v)
+    |=  [[* o1=@uwoo] =_acc]
+    (~(add ja acc) o1 o)
   ::
-  =/  rev-topo=(list @uwoo)
-    =|  saw=(set @uwoo)
-    =|  out=(list @)
-    =/  o=@uwoo  `@`0
-    =-  (flop -<)
-    |-  ^-  [(list @uwoo) (set @uwoo)]
-    =*  dfs-buc  $
-    =.  saw  (~(put in saw) o)
-    =<  [[o out] saw]
-    ^-  [o=@uwoo out=(list @uwoo) saw=(set @uwoo)]
-    :-  o
-    %+  roll  (get-jmps fin:(~(got by blocks) o))
-    |=  [[* o1=@uwoo] =_out =_saw]
-    ?:  (~(has in saw) o1)  [out saw]
-    dfs-buc(o o1, out out, saw saw)
+  =|  idom=(map @uwoo @uwoo)
+  =|  depf=(map @uwoo @)
+  |^  ^+  idom
+  ?~  topo  idom
+  =/  pre  (~(get ja rev) i.topo)
+  ?~  pre
+    =.  depf  (~(put by depf) i.topo 1)
+    $(topo t.topo)
+  =/  dom  (roll t.pre |=([i=@uwoo acc=_i.pre] (nca i acc)))
+  ~|  dom
+  =.  depf  (~(put by depf) i.topo +((~(got by depf) dom)))
+  =.  idom  (~(put by idom) i.topo dom)
+  $(topo t.topo)
+  ::  nearest common ancestor
   ::
-  =*  next  $%([%done ~] [%one p=@uwoo] [%two z=@uwoo o=@uwoo])
-  =/  succ=(map @uwoo next)
-    %-  ~(rep in blocks)
-    |=  [[k=@uwoo v=blob] acc=(map @uwoo next)]
-    =/  jmps=(^pole jmp)  (get-jmps fin.v)
-    %+  ~(put by acc)  k
-    ?+  jmps  ~|(%impossible !!)
-      ~            [%done ~]
-      [a=* ~]      [%one there.a.jmps]
-      [a=* b=* ~]  [%two there.a.jmps there.b.jmps]
+  ++  nca
+    |=  [a=@uwoo b=@uwoo]
+    ^-  @uwoo
+    ?:  =(a b)  a
+    =/  [[deeper=@uwoo dep-deeper=@] [shallow=@uwoo dep-shallow=@]]
+      ~|  [=_a =_b =_rev]
+      =/  dep-a  (~(got by depf) a)
+      =/  dep-b  (~(got by depf) b)
+      ?:  (lth dep-a dep-b)  [[b dep-b] a dep-a]
+      [[a dep-a] b dep-b]
+    ::
+    |-  ^-  @uwoo
+    ?:  =(deeper shallow)  deeper
+    =/  nex  (~(got by idom) deeper)
+    =/  dep-nex  (~(got by depf) nex)
+    ?:  (lth dep-shallow dep-nex)
+      $(deeper nex, dep-deeper dep-nex)
+    %=  $
+      shallow      nex
+      dep-shallow  dep-nex
+      deeper       shallow
+      dep-deeper   dep-shallow
     ==
-  ::
-  =;  ipdom=(map @uwoo @uwoo)
-    %-  ~(rep by ipdom)
-    |=  [[k=@uwoo v=@uwoo] acc=(map @uwoo @uwoo)]
-    =/  nex  (~(got by succ) k)
-    ?.  ?=(%two -.nex)  acc
-    (~(put by acc) k v)
-  ::
+  --
+::  For each vertex find the immediate postdominator, if exists.
+::  That is, for each BB find either the immediate successor if it does not
+::  branch, or the successor where the branches merge.
+::
+++  get-ipdom
+  |=  [blocks=(map @uwoo blob) rev-topo=(list @uwoo)]
+  ^-  (map @uwoo @uwoo)
   =|  ipdom=(map @uwoo @uwoo)
   =|  depth=(map @uwoo @)
   |^  ^+  ipdom
   ?~  rev-topo  ipdom
-  =/  nex  (~(got by succ) i.rev-topo)
-  ?-    -.nex
-      %done
+  =/  nex=(^pole jmp)  (get-jmps fin:(~(got by blocks) i.rev-topo))
+  ?+    nex  ~|(%impossible !!)
+      ~
     =.  depth  (~(put by depth) i.rev-topo 1)
     $(rev-topo t.rev-topo)
   ::
-      %one
-    =.  depth  (~(put by depth) i.rev-topo +((~(got by depth) p.nex)))
-    =.  ipdom  (~(put by ipdom) i.rev-topo p.nex)
+      [a=* ~]
+    =.  depth  (~(put by depth) i.rev-topo +((~(got by depth) there.a.nex)))
+    =.  ipdom  (~(put by ipdom) i.rev-topo there.a.nex)
     $(rev-topo t.rev-topo)
   ::
-      %two
-    ?~  x=(nearest-common-successor [z o]:nex)
+      [a=* b=* ~]
+    =/  [z=@uwoo o=@uwoo]  [there.a.nex there.b.nex]
+    ?~  x=(ncs z o)
       =.  depth  (~(put by depth) i.rev-topo 1)
       $(rev-topo t.rev-topo)
     =.  depth  (~(put by depth) i.rev-topo +((~(got by depth) u.x)))
     =.  ipdom  (~(put by ipdom) i.rev-topo u.x)
     $(rev-topo t.rev-topo)
   ==
+  ::  nearest common successor
   ::
-  ++  nearest-common-successor
+  ++  ncs
     |=  [a=@uwoo b=@uwoo]
     ^-  (unit @uwoo)
     ?:  =(a b)  `a
@@ -4524,6 +4596,10 @@
       dec-of=(unit @uvre)
       has-imm=(unit *)
   ==
+::  Removes %mov's and other unnecessary instructions by symbolicly executing
+::  IR, keeping track of noun aliasing and cellness. Also removes branches
+::  if the noun is known to be a cell in %clq,  or if the register is compared
+::  to itself in eqq, or if the noun is known in %brn
 ::
 ++  alias
   |=  [n-args=@ud blocks=(map @uwoo blob) branch-merges=(map @uwoo @uwoo)]
@@ -4536,7 +4612,7 @@
           imms=(map * @uvre)
       ==
   ::
-  |^
+  |^  ^-  (map @uwoo blob)
   =/  o-cur=@uwoo  `@`0
   =/  o-end=(unit @uwoo)  ~
   =.  gen
@@ -4558,6 +4634,7 @@
     ?<  (~(has by old.gen) i.par.bob)
     =^  new  gen  re
     =.  old.gen  (~(put by old.gen) i.par.bob new)
+    =.  info.gen  (~(put by info.gen) new *info-reg)
     =.  out  [new out]
     $(par.bob t.par.bob)
   ::
@@ -4788,18 +4865,30 @@
           %clq
         ?>  =(~ args.z.fin.bob)
         ?>  =(~ args.o.fin.bob)
-        fin.bob(s (~(got by old.gen) s.fin.bob))
+        =/  cond-new  (~(got by old.gen) s.fin.bob)
+        =/  info-cond  (~(got by info.gen) cond-new)
+        ?.  is-cell.info-cond  fin.bob(s cond-new)
+        [%hop ~ there.z.fin.bob]
       ::
           %eqq
         ?>  =(~ args.z.fin.bob)
         ?>  =(~ args.o.fin.bob)
-        =/  got-by-old  ~(got by old.gen)
-        fin.bob(l (got-by-old l.fin.bob), r (got-by-old r.fin.bob))
+        =/  l-new  (~(got by old.gen) l.fin.bob)
+        =/  r-new  (~(got by old.gen) r.fin.bob)
+        ?.  =(l-new r-new)  fin.bob(l l-new, r r-new)
+        [%hop ~ there.z.fin.bob]
       ::
           %brn
         ?>  =(~ args.z.fin.bob)
         ?>  =(~ args.o.fin.bob)
-        fin.bob(s (~(got by old.gen) s.fin.bob))
+        =/  cond-new  (~(got by old.gen) s.fin.bob)
+        =/  info-cond  (~(got by info.gen) cond-new)
+        ?~  has-imm.info-cond  fin.bob(s (~(got by old.gen) s.fin.bob))
+        ?-  u.has-imm.info-cond
+          %&  [%hop ~ there.z.fin.bob]
+          %|  [%hop ~ there.o.fin.bob]
+          *   [%bom ~]
+        ==
       ==
     ::
     =.  new.gen  (~(put by new.gen) o-cur [par-new body-new fin-new])
@@ -4831,13 +4920,96 @@
       ?:  =(has-imm.v-a has-imm.v-b)  has-imm.v-a  ~
     ]
   --
+::  If blocks are each others ipdom and idom respectively, we can merge them
+::  into one. This requires the predecessor block to have %hop as the final
+::  instruction
 ::
-:: ++  remove-hops
-:: ++  remove-dead-code
-:: ++  trim-branches
-:: ++  tco
+++  remove-hops
+  |=  $:  blocks=(map @uwoo blob)
+          ipdom=(map @uwoo @uwoo)
+          idom=(map @uwoo @uwoo)
+          topo=(list @uwoo)
+      ==
+  ^-  (map @uwoo blob)
+  =*  gen  ,[new=(map @uwoo blob) saw=(set @uwoo)]
+  =<  new
+  ^-  gen
+  %+  roll  topo
+  |=  [o=@uwoo =gen]
+  ^+  gen
+  ?:  (~(has in saw.gen) o)  gen
+  =/  o-new=@uwoo  o
+  =/  b-new=blob  (~(got by blocks) o)
+  |-  ^+  gen
+  ?.  ?=(%hop -.fin.b-new)
+    gen(new (~(put by new.gen) o-new b-new))
+  =/  o1=@uwoo  there.t.fin.b-new
+  ?.  &(=(`o1 (~(get by ipdom) o)) =(`o (~(get by idom) o1)))
+    gen(new (~(put by new.gen) o-new b-new))
+  =.  saw.gen  (~(put in saw.gen) o1)
+  =/  b1  (~(got by blocks) o1)
+  =/  body-merge=(list pole)
+    %+  weld  body.b-new
+    =/  args-a  args.t.fin.b-new
+    =/  args-b  par.b1
+    =/  ops=(list pole)  body.b1
+    |-  ^-  (list pole)
+    ?~  args-a
+      ?^  args-b  !!
+      ops
+    ?~  args-b  !!
+    $(args-a t.args-a, args-b t.args-b, ops [[%mov i.args-a i.args-b] ops])
+  ::
+  $(o o1, body.b-new body-merge, fin.b-new fin.b1)
+::  If a non-crashing op assigns to a register which is never used, we can
+::  omit the op.
+::  XX non-crashing direct calls, hdp/hde elimination
+::
+++  remove-dead-code
+  |=  [blocks=(map @uwoo blob) rev-topo=(list @uwoo)]
+  ^-  (map @uwoo blob)
+  =|  new=(map @uwoo blob)
+  =|  saw=(set @uvre)
+  |-  ^+  new
+  ?~  rev-topo  new
+  =/  b  (~(got by blocks) i.rev-topo)
+  =;  [new-body=(list pole) saw1=(set @uvre)]
+    =.  new  (~(put by new) i.rev-topo b(body new-body))
+    $(rev-topo t.rev-topo, saw saw1)
+  ::
+  =/  old-body=(list pole)  (flop body.b)
+  ::  register in the BB arguments (par.b) are only used, never assigned to.
+  ::  so we don't have to save them
+  ::
+  =.  saw  (~(gas in saw) (get-regs fin.b))
+  =|  new-body=(list pole)
+  |-  ^+  [new-body saw]
+  ?~  old-body  [new-body saw]
+  =/  dest=(unit @uvre)  (get-reg-safe-assignment i.old-body)
+  ?:  &(?=(^ dest) !(~(has in saw) u.dest))  $(old-body t.old-body)
+  %=  $
+    old-body  t.old-body
+    new-body  [i.old-body new-body]
+    saw       (~(gas in saw) (get-regs i.old-body))
+  ==
 ++  optimize
   |=  s=straight
   ^-  straight
-  s(blocks (alias n-args.s blocks.s (merge-map blocks.s)))
+  =;  s1=straight
+    ?:  =(s s1)  s1
+    $(s s1)
+  =/  topo  (bb-topo blocks.s)
+  =/  ipdom  (get-ipdom blocks.s (flop topo))
+  =/  idom  (get-idom blocks.s topo)
+  =.  blocks.s  (remove-hops blocks.s ipdom idom topo)
+  ::
+  =.  topo  (bb-topo blocks.s)
+  =.  ipdom  (get-ipdom blocks.s (flop topo))
+  =.  idom  (get-idom blocks.s topo)
+  =.  blocks.s  (alias n-args.s blocks.s ipdom)
+  ::
+  =.  topo  (bb-topo blocks.s)
+  =.  blocks.s  (remove-dead-code blocks.s (flop topo))
+  ::
+  s
 --
