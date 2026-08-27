@@ -1369,6 +1369,7 @@
 ::  total: no crashes (stacktrace boundaries around them could be omitted)
 ::
 ++  eval-finalized
+  =*  hint-pure  ,?(%fast %spot %mean)
   |=  [b=bell code=(map bell code-entry)]
   ^-  [pure=? total=?]
   =/  sub=sock  less.b
@@ -1439,7 +1440,7 @@
     =/  tok  nomm-loop(nomm q.p.nomm)
     =/  fol  nomm-loop(nomm q.nomm)
     :+  s.fol
-      &(?=(%fast p.p.nomm) pure.tok pure.fol)
+      &(?=(hint-pure p.p.nomm) pure.tok pure.fol)
     &(total.tok total.fol)
   ::
       [%12 *]  [|+~ | |]
@@ -4475,22 +4476,23 @@
   |=  [[* o1=@uwoo] =_out =_saw]
   ?:  (~(has in saw) o1)  [out saw]
   dfs-buc(o o1, out out, saw saw)
+::
+++  rev-cfg
+  |=  [blocks=(map @uwoo blob) topo-set=(set @uwoo)]
+  ^-  (jar @uwoo @uwoo)
+  %-  ~(rep by blocks)
+  |=  [[o=@uwoo v=blob] acc=(jar @uwoo @uwoo)]
+  ?.  (~(has in topo-set) o)  acc
+  %+  roll  (get-jmps fin.v)
+  |=  [[* o1=@uwoo] =_acc]
+  (~(add ja acc) o1 o)
 ::  For each vertex find the immediate dominator, if exists.
 ::  That is, for each BB find either the predecessor if it is not
 ::  the merge block, or the corresponing branching ancestor
 ::
 ++  get-idom
-  |=  [blocks=(map @uwoo blob) topo=(list @uwoo)]
+  |=  [blocks=(map @uwoo blob) topo=(list @uwoo) rev=(jar @uwoo @uwoo)]
   ^-  (map @uwoo @uwoo)
-  =/  topo-set=(set @uwoo)  (sy topo)
-  =/  rev=(jar @uwoo @uwoo)
-    %-  ~(rep by blocks)
-    |=  [[o=@uwoo v=blob] acc=(jar @uwoo @uwoo)]
-    ?.  (~(has in topo-set) o)  acc
-    %+  roll  (get-jmps fin.v)
-    |=  [[* o1=@uwoo] =_acc]
-    (~(add ja acc) o1 o)
-  ::
   =|  idom=(map @uwoo @uwoo)
   =|  depf=(map @uwoo @)
   |^  ^+  idom
@@ -4602,31 +4604,68 @@
 ::  to itself in eqq, or if the noun is known in %brn
 ::
 ++  alias
-  |=  [n-args=@ud blocks=(map @uwoo blob) branch-merges=(map @uwoo @uwoo)]
-  ^-  (map @uwoo blob)
+  |=  $:  n-args=@ud
+          blocks=(map @uwoo blob)
+          rev=(jar @uwoo @uwoo)
+          topo=(list @uwoo)
+      ==
+  ^+  blocks
   =|  $=  gen
       $:  new=(map @uwoo blob)
           re-gen=@uvre
           old=(map @uvre @uvre)  ::  old -> new
-          info=(map @uvre info-reg)
-          imms=(map * @uvre)
+          info=(map @uwoo (map @uvre info-reg))
+          imms=(map @uwoo (map * @uvre))
+          info-local=(map @uvre info-reg)
+          imms-local=(map * @uvre)
       ==
-  ::
-  |^  ^-  (map @uwoo blob)
-  =/  o-cur=@uwoo  `@`0
-  =/  o-end=(unit @uwoo)  ~
-  =.  gen
-    |-  ^+  gen
-    ?:  =(n-args 0)  gen
+  ::  
+  |^  ^+  blocks
+  ?~  topo  new.gen
+  =*  o  i.topo
+  =/  pre  (~(get ja rev) o)
+  =^  info=(map @uvre info-reg)  gen
+    ?^  pre
+      :-  %+  roll  t.pre
+        |=  [o1=@uwoo acc=_(~(got by info.gen) i.pre)]
+        (join-info acc (~(got by info.gen) o1))
+      ::  if previous block only %brn/%clq - refine info-local
+      ::
+      ^+  gen
+      ?^  t.pre  gen
+      =/  pre-b  (~(got by new.gen) i.pre)
+      ?:  ?=(%brn -.fin.pre-b)
+        ?:  =(`_o`there.z.fin.pre-b o)
+          =/  lens  |=(info-reg +<(has-imm `&))
+          gen(info-local (~(jab by info-local.gen) s.fin.pre-b lens))
+        ?:  =(`_o`there.o.fin.pre-b o)
+          =/  lens  |=(info-reg +<(has-imm `|))
+          gen(info-local (~(jab by info-local.gen) s.fin.pre-b lens))
+        ~|(%brn-successor-lost !!)
+      ?:  ?=(%clq -.fin.pre-b)
+        ?:  =(`_o`there.z.fin.pre-b o)
+          =/  lens  |=(info-reg +<(is-cell &))
+          gen(info-local (~(jab by info-local.gen) s.fin.pre-b lens))
+        ?:  =(`_o`there.o.fin.pre-b o)  gen
+        ~|(%clq-successor-lost !!)
+      gen
+    =|  out=(map @uvre info-reg)
+    |-  ^+  [out gen]
+    ?:  =(n-args 0)  [out gen]
     =^  r  gen  re
-    =.  info.gen  (~(put by info.gen) r *info-reg)
+    =.  out  (~(put by out) r *info-reg)
     =.  old.gen  (~(put by old.gen) r r)
     $(n-args (dec n-args))
   ::
-  =<  new
-  |-  ^+  gen
-  =*  eval-loop  $
-  =/  bob  (~(got by blocks) o-cur)
+  =/  imms=(map * @uvre)
+    ?~  pre  ~
+    %+  roll  t.pre
+    |=  [o1=@uwoo acc=_(~(got by imms.gen) i.pre)]
+    (~(int by acc) (~(got by imms.gen) o1))
+  ::
+  =.  info-local.gen  info
+  =.  imms-local.gen  imms
+  =/  bob  (~(got by blocks) o)
   =^  par-new=(list @uvre)  gen
     =|  out=(list @uvre)
     |-  ^-  [(list @uvre) _gen]
@@ -4634,7 +4673,7 @@
     ?<  (~(has by old.gen) i.par.bob)
     =^  new  gen  re
     =.  old.gen  (~(put by old.gen) i.par.bob new)
-    =.  info.gen  (~(put by info.gen) new *info-reg)
+    =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
     =.  out  [new out]
     $(par.bob t.par.bob)
   ::
@@ -4647,16 +4686,16 @@
     =.  gen  gen-init
     ?-    -.op
         %imm
-      ?^  res=(~(get by imms.gen) n.op)
+      ?^  res=(~(get by imms-local.gen) n.op)
         =.  old.gen  (~(put by old.gen) d.op u.res)
         [body-new gen]
       =^  new=@uvre  gen
         ?<  (~(has by old.gen) d.op)
         =^  new  gen  re
         =|  info=info-reg
-        =.  info.gen  (~(put by info.gen) new info(has-imm `n.op))
+        =.  info-local.gen  (~(put by info-local.gen) new info(has-imm `n.op))
         =.  old.gen   (~(put by old.gen) d.op new)
-        =.  imms.gen  (~(put by imms.gen) n.op new)
+        =.  imms-local.gen  (~(put by imms-local.gen) n.op new)
         [new gen]
       ::
       [[[%imm n.op new] body-new] gen]
@@ -4667,74 +4706,84 @@
     ::
         %inc
       =/  arg  (~(got by old.gen) s.op)
-      =/  arg-info  (~(got by info.gen) arg)
+      =/  arg-info  (~(got by info-local.gen) arg)
       ?^  dec-of.arg-info
         =.  old.gen  (~(put by old.gen) d.op u.dec-of.arg-info)
         [body-new gen]
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
-      =.  info.gen  (~(jab by info.gen) arg |=(info-reg +<(dec-of `new)))
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
+      =.  info-local.gen
+        (~(jab by info-local.gen) arg |=(info-reg +<(dec-of `new)))
+      ::
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%inc arg new] body-new] gen]
     ::
         %con
       =/  h  (~(got by old.gen) h.op)
       =/  t  (~(got by old.gen) t.op)
-      =/  h-info  (~(got by info.gen) h)
-      =/  t-info  (~(got by info.gen) t)
+      =/  h-info  (~(got by info-local.gen) h)
+      =/  t-info  (~(got by info-local.gen) t)
       ?^  intersect=(~(int in hed-of.h-info) tel-of.t-info)
         =.  old.gen  (~(put by old.gen) d.op n.intersect)
         [body-new gen]
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
       =|  info=info-reg
-      =.  info.gen
-        (~(put by info.gen) new info(has-hed `h, has-tel `t, is-cell &))
+      =.  info-local.gen
+        (~(put by info-local.gen) new info(has-hed `h, has-tel `t, is-cell &))
       ::
-      =.  info.gen
-        (~(jab by info.gen) h |=(info-reg +<(hed-of (~(put in hed-of) new))))
+      =.  info-local.gen
+        =/  lens  |=(info-reg +<(hed-of (~(put in hed-of) new)))
+        (~(jab by info-local.gen) h lens)
       ::
-      =.  info.gen
-        (~(jab by info.gen) t |=(info-reg +<(tel-of (~(put in tel-of) new))))
+      =.  info-local.gen
+        =/  lens  |=(info-reg +<(tel-of (~(put in tel-of) new)))
+        (~(jab by info-local.gen) t lens)
       ::
       =.  old.gen  (~(put by old.gen) d.op new)
       [[[%con h t new] body-new] gen]
     ::
         %hed
       =/  arg  (~(got by old.gen) s.op)
-      =/  arg-info  (~(got by info.gen) arg)
+      =/  arg-info  (~(got by info-local.gen) arg)
       ?^  has-hed.arg-info
         =.  old.gen  (~(put by old.gen) d.op u.has-hed.arg-info)
         [body-new gen]
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
       =|  info=info-reg
-      =.  info.gen  (~(put by info.gen) new info(hed-of [arg ~ ~]))
-      =.  info.gen  (~(jab by info.gen) arg |=(info-reg +<(has-hed `new)))
+      =.  info-local.gen  (~(put by info-local.gen) new info(hed-of [arg ~ ~]))
+      =.  info-local.gen
+        (~(jab by info-local.gen) arg |=(info-reg +<(has-hed `new)))
+      ::
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%hed arg new] body-new] gen]
     ::
         %tal
       =/  arg  (~(got by old.gen) s.op)
-      =/  arg-info  (~(got by info.gen) arg)
+      =/  arg-info  (~(got by info-local.gen) arg)
       ?^  has-tel.arg-info
         =.  old.gen  (~(put by old.gen) d.op u.has-tel.arg-info)
         [body-new gen]
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
       =|  info=info-reg
-      =.  info.gen  (~(put by info.gen) new info(tel-of [arg ~ ~]))
-      =.  info.gen  (~(jab by info.gen) arg |=(info-reg +<(has-tel `new)))
+      =.  info-local.gen  (~(put by info-local.gen) new info(tel-of [arg ~ ~]))
+      =.  info-local.gen
+        (~(jab by info-local.gen) arg |=(info-reg +<(has-tel `new)))
+      ::
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%tal arg new] body-new] gen]
     ::
         %cel
       =/  arg  (~(got by old.gen) p.op)
-      =/  arg-info  (~(got by info.gen) arg)
+      =/  arg-info  (~(got by info-local.gen) arg)
       ?:  is-cell.arg-info
         [body-new gen]
-      =.  info.gen  (~(jab by info.gen) arg |=(info-reg +<(is-cell &)))
+      =.  info-local.gen
+        (~(jab by info-local.gen) arg |=(info-reg +<(is-cell &)))
+      ::
       [[[%cel arg] body-new] gen]
     ::
         %hsp
@@ -4749,14 +4798,14 @@
     ::
         %hde
       =/  arg  (~(got by old.gen) p.op)
-      [[[%hdp n.op arg f.op] body-new] gen]
+      [[[%hde n.op arg f.op] body-new] gen]
     ::
         %spy
       =/  e  (~(got by old.gen) e.op)
       =/  p  (~(got by old.gen) p.op)
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%spy e p new] body-new] gen]
     ::
@@ -4765,7 +4814,7 @@
       =/  f  (~(got by old.gen) f.op)
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%nok u f new] body-new] gen]
     ::
@@ -4773,7 +4822,7 @@
       =/  v  (turn v.op ~(got by old.gen))
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%cal a.op v new] body-new] gen]
     ::
@@ -4781,7 +4830,7 @@
       =/  v  (turn v.op ~(got by old.gen))
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%caf a.op v new n.op] body-new] gen]
     ::
@@ -4789,15 +4838,16 @@
       =/  v  (turn v.op ~(got by old.gen))
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%cam a.op v new k.op] body-new] gen]
     ::
         %csl
       =/  s  (~(got by old.gen) s.op)
+      ~|  d.op
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%csl a.op s new] body-new] gen]
     ::
@@ -4805,7 +4855,7 @@
       =/  s  (~(got by old.gen) s.op)
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%csf a.op s new n.op] body-new] gen]
     ::
@@ -4813,94 +4863,67 @@
       =/  s  (~(got by old.gen) s.op)
       ?<  (~(has by old.gen) d.op)
       =^  new  gen  re
-      =.  info.gen  (~(put by info.gen) new *info-reg)
+      =.  info-local.gen  (~(put by info-local.gen) new *info-reg)
       =.  old.gen   (~(put by old.gen) d.op new)
       [[[%csm a.op s new k.op] body-new] gen]
     ==
   ::
-  ?:  &(?=(%hop -.fin.bob) =(o-end `_o-end`[~ there.t.fin.bob]))
-    =/  fin-new=termin
-      [%hop (turn args.t.fin.bob ~(got by old.gen)) there.t.fin.bob]
+  =/  fin-new=termin
+    ?-    -.fin.bob
+        %clq
+      ?>  =(~ args.z.fin.bob)
+      ?>  =(~ args.o.fin.bob)
+      =/  cond-new  (~(got by old.gen) s.fin.bob)
+      =/  info-cond  (~(got by info-local.gen) cond-new)
+      ?.  is-cell.info-cond  fin.bob(s cond-new)
+      [%hop ~ there.z.fin.bob]
     ::
-    =.  new.gen  (~(put by new.gen) o-cur [par-new body-new fin-new])
-    gen
-  =/  jmps=(^pole jmp)  (get-jmps fin.bob)
-  ?+    jmps  ~|(%impossible !!)
-      ~
-    =/  fin-new=termin
-      ?+    -.fin.bob  ~|(%impossible !!)
-          %jmp
-        fin.bob(v (turn v.fin.bob ~(got by old.gen)))
-      ::
-          %jmf
-        fin.bob(v (turn v.fin.bob ~(got by old.gen)))
-      ::
-          %jsp
-        fin.bob(s (~(got by old.gen) s.fin.bob))
-      ::
-          %jsf
-        fin.bob(s (~(got by old.gen) s.fin.bob))
-      ::
-          %don
-        fin.bob(s (~(got by old.gen) s.fin.bob))
-      ::
-          %bom
-        fin.bob
+        %eqq
+      ?>  =(~ args.z.fin.bob)
+      ?>  =(~ args.o.fin.bob)
+      =/  l-new  (~(got by old.gen) l.fin.bob)
+      =/  r-new  (~(got by old.gen) r.fin.bob)
+      ?.  =(l-new r-new)  fin.bob(l l-new, r r-new)
+      [%hop ~ there.z.fin.bob]
+    ::
+        %brn
+      ?>  =(~ args.z.fin.bob)
+      ?>  =(~ args.o.fin.bob)
+      =/  cond-new  (~(got by old.gen) s.fin.bob)
+      =/  info-cond  (~(got by info-local.gen) cond-new)
+      ?~  has-imm.info-cond  fin.bob(s cond-new)
+      ?-  u.has-imm.info-cond
+        %&  [%hop ~ there.z.fin.bob]
+        %|  [%hop ~ there.o.fin.bob]
+        *   [%bom ~]
       ==
     ::
-    =.  new.gen  (~(put by new.gen) o-cur [par-new body-new fin-new])
-    gen
-  ::
-      [a=* ~]
-    ?>  ?=(%hop -.fin.bob)
-    =/  fin-new=termin
-      [%hop (turn args.t.fin.bob ~(got by old.gen)) there.t.fin.bob]
+        %hop
+      fin.bob(args.t (turn args.t.fin.bob ~(got by old.gen)))
     ::
-    =.  new.gen  (~(put by new.gen) o-cur [par-new body-new fin-new])
-    eval-loop(o-cur there.t.fin.bob)
-  ::
-      [a=* b=* ~]
-    =/  fin-new=termin
-      ?+    -.fin.bob  ~|(%impossible !!)
-          %clq
-        ?>  =(~ args.z.fin.bob)
-        ?>  =(~ args.o.fin.bob)
-        =/  cond-new  (~(got by old.gen) s.fin.bob)
-        =/  info-cond  (~(got by info.gen) cond-new)
-        ?.  is-cell.info-cond  fin.bob(s cond-new)
-        [%hop ~ there.z.fin.bob]
-      ::
-          %eqq
-        ?>  =(~ args.z.fin.bob)
-        ?>  =(~ args.o.fin.bob)
-        =/  l-new  (~(got by old.gen) l.fin.bob)
-        =/  r-new  (~(got by old.gen) r.fin.bob)
-        ?.  =(l-new r-new)  fin.bob(l l-new, r r-new)
-        [%hop ~ there.z.fin.bob]
-      ::
-          %brn
-        ?>  =(~ args.z.fin.bob)
-        ?>  =(~ args.o.fin.bob)
-        =/  cond-new  (~(got by old.gen) s.fin.bob)
-        =/  info-cond  (~(got by info.gen) cond-new)
-        ?~  has-imm.info-cond  fin.bob(s (~(got by old.gen) s.fin.bob))
-        ?-  u.has-imm.info-cond
-          %&  [%hop ~ there.z.fin.bob]
-          %|  [%hop ~ there.o.fin.bob]
-          *   [%bom ~]
-        ==
-      ==
+        %jmp
+      fin.bob(v (turn v.fin.bob ~(got by old.gen)))
     ::
-    =.  new.gen  (~(put by new.gen) o-cur [par-new body-new fin-new])
-    =/  [a=@uwoo b=@uwoo]  [there.a.jmps there.b.jmps]
-    ?~  ipdom=(~(get by branch-merges) o-cur)
-      =/  gen-a  $(o-cur a, o-end ~)
-      $(o-cur b, o-end ~, gen gen-a(info info.gen, imms imms.gen))
-    =/  gen-a  $(o-cur a, o-end ipdom)
-    =/  gen-b  $(o-cur b, o-end ipdom, gen gen-a(info info.gen, imms imms.gen))
-    =/  gen-next  gen-b(imms imms.gen, info (join-info info.gen-a info.gen-b))
-    eval-loop(o-cur u.ipdom, gen gen-next)
-  ==
+        %jmf
+      fin.bob(v (turn v.fin.bob ~(got by old.gen)))
+    ::
+        %jsp
+      fin.bob(s (~(got by old.gen) s.fin.bob))
+    ::
+        %jsf
+      fin.bob(s (~(got by old.gen) s.fin.bob))
+    ::
+        %don
+      fin.bob(s (~(got by old.gen) s.fin.bob))
+    ::
+        %bom
+      fin.bob
+    ==
+  ::
+  =.  new.gen  (~(put by new.gen) o [par-new body-new fin-new])
+  =.  info.gen  (~(put by info.gen) o info-local.gen)
+  =.  imms.gen  (~(put by imms.gen) o imms-local.gen)
+  $(topo t.topo)
   ::
   ++  re  `[@uvre _gen]`[re-gen.gen gen(re-gen +(re-gen.gen))]
   ++  join-info
@@ -4926,8 +4949,7 @@
 ::
 ++  remove-hops
   |=  $:  blocks=(map @uwoo blob)
-          ipdom=(map @uwoo @uwoo)
-          idom=(map @uwoo @uwoo)
+          rev=(jar @uwoo @uwoo)
           topo=(list @uwoo)
       ==
   ^-  (map @uwoo blob)
@@ -4944,7 +4966,9 @@
   ?.  ?=(%hop -.fin.b-new)
     gen(new (~(put by new.gen) o-new b-new))
   =/  o1=@uwoo  there.t.fin.b-new
-  ?.  &(=(`o1 (~(get by ipdom) o)) =(`o (~(get by idom) o1)))
+  =/  pre-o1=(list @uwoo)  (~(get ja rev) o1)
+  ?<  =(~ pre-o1)
+  ?.  =(pre-o1 ~[o])
     gen(new (~(put by new.gen) o-new b-new))
   =.  saw.gen  (~(put in saw.gen) o1)
   =/  b1  (~(got by blocks) o1)
@@ -4963,7 +4987,7 @@
   $(o o1, body.b-new body-merge, fin.b-new fin.b1)
 ::  If a non-crashing op assigns to a register which is never used, we can
 ::  omit the op.
-::  XX non-crashing direct calls, hdp/hde elimination
+::  XX non-crashing direct calls
 ::
 ++  remove-dead-code
   |=  [blocks=(map @uwoo blob) rev-topo=(list @uwoo)]
@@ -4992,24 +5016,64 @@
     new-body  [i.old-body new-body]
     saw       (~(gas in saw) (get-regs i.old-body))
   ==
+::
+++  trim-trace-hints
+  |=  blocks=(map @uwoo blob)
+  ^+  blocks
+  %-  ~(run by blocks)
+  |=  b=blob
+  ^+  b
+  =/  safe=(set [hint=?(%spot %mean) reg=@uvre])
+    =*  set-hints  ,(set [hint=?(%spot %mean) reg=@uvre])
+    =|  gen=[safe=set-hints tack=set-hints]
+    |-  ^+  safe.gen
+    ?~  body.b  safe.gen
+    =/  op  i.body.b
+    =.  gen
+      ?:  &(?=(%hdp -.op) ?=(?(%spot %mean) n.op))
+        gen(tack (~(put in tack.gen) [n.op p.op]))
+      ?:  &(?=(%hde -.op) ?=(?(%spot %mean) n.op))
+        ?.  (~(has in tack.gen) [n.op p.op])  gen
+        =.  tack.gen  (~(del in tack.gen) [n.op p.op])
+        =.  safe.gen  (~(put in safe.gen) [n.op p.op])
+        gen
+      ?.  ?=(?(%inc %cel %spy %nok %cal %caf %cam %csl %csf %csm) -.op)
+        gen
+      ::  op could crash, remove all pending stacktrace hints from removal
+      ::  candidates
+      ::  XX check calling ops for crash safety
+      ::
+      gen(tack ~)
+    ::
+    $(body.b t.body.b)
+  ::
+  =;  new=(list pole)  b(body new)
+  %+  murn  body.b
+  |=  op=pole
+  ^-  (unit pole)
+  ?:  &(?=(?(%hdp %hde) -.op) ?=(?(%spot %mean) n.op) (~(has in safe) [n p]:op))
+    ~
+  `op
+::
 ++  optimize
   |=  s=straight
   ^-  straight
+  ?:  |  s
   =;  s1=straight
     ?:  =(s s1)  s1
     $(s s1)
   =/  topo  (bb-topo blocks.s)
-  =/  ipdom  (get-ipdom blocks.s (flop topo))
-  =/  idom  (get-idom blocks.s topo)
-  =.  blocks.s  (remove-hops blocks.s ipdom idom topo)
+  =/  rev  (rev-cfg blocks.s (sy topo))
+  =.  blocks.s  (remove-hops blocks.s rev topo)
   ::
   =.  topo  (bb-topo blocks.s)
-  =.  ipdom  (get-ipdom blocks.s (flop topo))
-  =.  idom  (get-idom blocks.s topo)
-  =.  blocks.s  (alias n-args.s blocks.s ipdom)
+  =.  rev  (rev-cfg blocks.s (sy topo))
+  =.  blocks.s  (alias n-args.s blocks.s rev topo)
   ::
   =.  topo  (bb-topo blocks.s)
   =.  blocks.s  (remove-dead-code blocks.s (flop topo))
+  ::
+  =.  blocks.s  (trim-trace-hints blocks.s)
   ::
   s
 --
