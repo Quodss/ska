@@ -1367,6 +1367,7 @@
 ::  produces data about a function
 ::  pure: no crashes + no hints excepts %fast (call to it could be omitted)
 ::  total: no crashes (stacktrace boundaries around them could be omitted)
+::  XX cycle divergence!
 ::
 ++  eval-finalized
   =*  hint-pure  ,?(%fast %spot %mean)
@@ -2314,6 +2315,7 @@
       [%hed s=@uvre d=@uvre]                      ::  -.s -> d, does not crash
       [%tal s=@uvre d=@uvre]                      ::  +.s -> d, does not crash
       [%cel p=@uvre]                              ::  ?>  ?=(^ p)
+      [%lob p=@uvre]                              ::  ?>  ?=(? p)
       [%hsp n=hint-static f=*]                    ::  prologue of a static hint
       [%hse n=hint-static f=*]                    ::  epilogue of a static hint
       [%hdp n=hint-dynamic p=@uvre f=*]           ::  prologue of a dynamic hint
@@ -2356,6 +2358,7 @@
     %hed  `d
     %tal  `d
     %cel  ~
+    %lob  ~
     %hsp  ~
     %hse  ~
     %hdp  ~
@@ -2380,6 +2383,7 @@
     %hed  ~[s d]:op
     %tal  ~[s d]:op
     %cel  ~[p]:op
+    %lob  ~[p]:op
     %hsp  ~
     %hse  ~
     %hdp  ~[p]:op
@@ -3930,6 +3934,10 @@
         =^  p1  gen  (rer p.op)
         [op(p p1) gen]
       ::
+          %lob
+        =^  p1  gen  (rer p.op)
+        [op(p p1) gen]
+      ::
           %hsp  [op gen]
           %hse  [op gen]
       ::
@@ -4591,6 +4599,7 @@
 ::
 +$  info-reg
   $:  is-cell=$~(| ?)
+      is-loob=$~(| ?)
       hed-of=(set @uvre)
       tel-of=(set @uvre)
       has-hed=(unit @uvre)
@@ -4625,37 +4634,41 @@
   =*  o  i.topo
   =/  pre  (~(get ja rev) o)
   =^  info=(map @uvre info-reg)  gen
-    ?^  pre
-      :-  %+  roll  t.pre
-        |=  [o1=@uwoo acc=_(~(got by info.gen) i.pre)]
-        (join-info acc (~(got by info.gen) o1))
-      ::  if previous block only %brn/%clq - refine info-local
+    ?~  pre
+      ::  entry block: initialize input registers
       ::
-      ^+  gen
-      ?^  t.pre  gen
-      =/  pre-b  (~(got by new.gen) i.pre)
-      ?:  ?=(%brn -.fin.pre-b)
-        ?:  =(`_o`there.z.fin.pre-b o)
-          =/  lens  |=(info-reg +<(has-imm `&))
-          gen(info-local (~(jab by info-local.gen) s.fin.pre-b lens))
-        ?:  =(`_o`there.o.fin.pre-b o)
-          =/  lens  |=(info-reg +<(has-imm `|))
-          gen(info-local (~(jab by info-local.gen) s.fin.pre-b lens))
-        ~|(%brn-successor-lost !!)
-      ?:  ?=(%clq -.fin.pre-b)
-        ?:  =(`_o`there.z.fin.pre-b o)
-          =/  lens  |=(info-reg +<(is-cell &))
-          gen(info-local (~(jab by info-local.gen) s.fin.pre-b lens))
-        ?:  =(`_o`there.o.fin.pre-b o)  gen
-        ~|(%clq-successor-lost !!)
-      gen
-    =|  out=(map @uvre info-reg)
-    |-  ^+  [out gen]
-    ?:  =(n-args 0)  [out gen]
-    =^  r  gen  re
-    =.  out  (~(put by out) r *info-reg)
-    =.  old.gen  (~(put by old.gen) r r)
-    $(n-args (dec n-args))
+      =|  info=(map @uvre info-reg)
+      |-  ^+  [info gen]
+      ?:  =(n-args 0)  [info gen]
+      =^  r  gen  re
+      =.  info  (~(put by info) r *info-reg)
+      =.  old.gen  (~(put by old.gen) r r)
+      $(n-args (dec n-args))
+    :_  gen
+    =/  info=(map @uvre info-reg)
+      %+  roll  t.pre
+      |=  [o1=@uwoo acc=_(~(got by info.gen) i.pre)]
+      (join-info acc (~(got by info.gen) o1))
+    ::  if previous block only %brn/%clq - refine info-local
+    ::
+    ^+  info
+    ?^  t.pre  info
+    =/  pre-b  (~(got by new.gen) i.pre)
+    ?:  ?=(%brn -.fin.pre-b)
+      ?:  =(`_o`there.z.fin.pre-b o)
+        =/  lens  |=(info-reg +<(has-imm `&))
+        (~(jab by info) s.fin.pre-b lens)
+      ?:  =(`_o`there.o.fin.pre-b o)
+        =/  lens  |=(info-reg +<(has-imm `|))
+        (~(jab by info) s.fin.pre-b lens)
+      ~|(%brn-successor-lost !!)
+    ?:  ?=(%clq -.fin.pre-b)
+      ?:  =(`_o`there.z.fin.pre-b o)
+        =/  lens  |=(info-reg +<(is-cell &))
+        (~(jab by info) s.fin.pre-b lens)
+      ?:  =(`_o`there.o.fin.pre-b o)  info
+      ~|(%clq-successor-lost !!)
+    info
   ::
   =/  imms=(map * @uvre)
     ?~  pre  ~
@@ -4785,6 +4798,16 @@
         (~(jab by info-local.gen) arg |=(info-reg +<(is-cell &)))
       ::
       [[[%cel arg] body-new] gen]
+    ::
+        %lob
+      =/  arg  (~(got by old.gen) p.op)
+      =/  arg-info  (~(got by info-local.gen) arg)
+      ?:  |(is-loob.arg-info ?=([~ ?] has-imm.arg-info))
+        [body-new gen]
+      =.  info-local.gen
+        (~(jab by info-local.gen) arg |=(info-reg +<(is-loob &)))
+      ::
+      [[[%lob arg] body-new] gen]
     ::
         %hsp
       [[op body-new] gen]
@@ -4935,6 +4958,11 @@
     =/  v-b  u.v-b
     %+  ~(put by acc)  k
     [ &(is-cell.v-a is-cell.v-b)
+    ::
+      ?&  |(is-loob.v-a ?=([~ ?] has-imm.v-a))
+          |(is-loob.v-b ?=([~ ?] has-imm.v-b))
+      ==
+    ::
       (~(int in hed-of.v-a) hed-of.v-b)
       (~(int in tel-of.v-a) tel-of.v-b)
       ?:  =(has-hed.v-a has-hed.v-b)  has-hed.v-a  ~
@@ -5037,7 +5065,7 @@
         =.  tack.gen  (~(del in tack.gen) [n.op p.op])
         =.  safe.gen  (~(put in safe.gen) [n.op p.op])
         gen
-      ?.  ?=(?(%inc %cel %spy %nok %cal %caf %cam %csl %csf %csm) -.op)
+      ?.  ?=(?(%inc %cel %lob %spy %nok %cal %caf %cam %csl %csf %csm) -.op)
         gen
       ::  op could crash, remove all pending stacktrace hints from removal
       ::  candidates
@@ -5054,6 +5082,70 @@
   ?:  &(?=(?(%hdp %hde) -.op) ?=(?(%spot %mean) n.op) (~(has in safe) [n p]:op))
     ~
   `op
+::
+++  remove-useless-branching
+  |=  blocks=(map @uwoo blob)
+  ^+  blocks
+  %-  ~(run by blocks)
+  |=  b=blob
+  ^+  b
+  =;  [epilogue=(list pole) new-fin=termin]
+    b(body (weld body.b epilogue), fin new-fin)
+  ::
+  ?+    -.fin.b  `fin.b
+      %clq
+    :-  ~
+    ?>  =(~ args.z.fin.b)
+    ?>  =(~ args.o.fin.b)
+    =/  nex-z=blob  (~(got by blocks) there.z.fin.b)
+    =/  nex-o=blob  (~(got by blocks) there.o.fin.b)
+    ?.  =(nex-z nex-o)  fin.b
+    [%hop ~ there.z.fin.b]
+  ::
+      %eqq
+    :-  ~
+    ?>  =(~ args.z.fin.b)
+    ?>  =(~ args.o.fin.b)
+    =/  nex-z=blob  (~(got by blocks) there.z.fin.b)
+    =/  nex-o=blob  (~(got by blocks) there.o.fin.b)
+    ?.  =(nex-z nex-o)  fin.b
+    [%hop ~ there.z.fin.b]
+  ::
+      %brn
+    ?>  =(~ args.z.fin.b)
+    ?>  =(~ args.o.fin.b)
+    =/  nex-z=blob  (~(got by blocks) there.z.fin.b)
+    =/  nex-o=blob  (~(got by blocks) there.o.fin.b)
+    ?.  =(nex-z nex-o)  `fin.b
+    :-  [%lob s.fin.b]~
+    [%hop ~ there.z.fin.b]
+  ==
+::
+++  remove-empty-middle
+  |=  blocks=(map @uwoo blob)
+  |^  ^+  blocks
+  %-  ~(run by blocks)
+  |=  b=blob
+  ^+  b
+  =;  new-fin=termin  b(fin new-fin)
+  ?+    -.fin.b  fin.b
+      %clq  fin.b(z (rewrite-jump z.fin.b), o (rewrite-jump o.fin.b))
+      %eqq  fin.b(z (rewrite-jump z.fin.b), o (rewrite-jump o.fin.b))
+      %brn  fin.b(z (rewrite-jump z.fin.b), o (rewrite-jump o.fin.b))
+      %hop  fin.b(t (rewrite-jump t.fin.b))
+  ==
+  ::
+  ++  rewrite-jump
+    |=  j=jmp
+    ^-  jmp
+    ?.  =(~ args.j)  j
+    =/  nex  (~(got by blocks) there.j)
+    ?>  =(~ par.nex)
+    ?.  =(~ body.nex)        j
+    ?.  ?=(%hop -.fin.nex)   j
+    ?.  =(~ args.t.fin.nex)  j
+    t.fin.nex
+  --
 ::
 ++  optimize
   |=  s=straight
@@ -5074,6 +5166,7 @@
   =.  blocks.s  (remove-dead-code blocks.s (flop topo))
   ::
   =.  blocks.s  (trim-trace-hints blocks.s)
-  ::
+  =.  blocks.s  (remove-useless-branching blocks.s)
+  =.  blocks.s  (remove-empty-middle blocks.s)
   s
 --

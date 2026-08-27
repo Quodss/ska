@@ -48,7 +48,9 @@
   ::
   |-  ^-  (unit *)
   =*  body-loop  $
-  ?:  ?=(^ body.bob)  body-loop(regs (exec-op i.body.bob), body.bob t.body.bob)
+  ?:  ?=(^ body.bob)
+    ?~  nex=(exec-op i.body.bob)  ~
+    body-loop(regs u.nex, body.bob t.body.bob)
   =*  got-blocks  ~(got by blocks.straight)
   =/  fin  fin.bob
   |-  ^-  (unit *)
@@ -119,21 +121,21 @@
   ::
   ++  exec-op
     |=  op=pole
-    ^+  regs
+    ^-  (unit _regs)
     ?-    -.op
       %imm
-    (put d.op n.op)
+    `(put d.op n.op)
   ::
       %mov
-    (put d.op (get s.op))
+    `(put d.op (get s.op))
   ::
       %inc
     =/  a=*  (get s.op)
     ?^  a  ~
-    (put d.op +(a))
+    `(put d.op +(a))
   ::
       %con
-    (put d.op [(get h.op) (get t.op)])
+    `(put d.op [(get h.op) (get t.op)])
   ::
       %hed
     =/  a=*  (get s.op)
@@ -142,7 +144,7 @@
       ~&  >>  %missing-head
       %missing-head
     ::
-    (put d.op hed)
+    `(put d.op hed)
   ::
       %tal
     =/  a=*  (get s.op)
@@ -151,25 +153,29 @@
       ~&  >>  %missing-tail
       %missing-tail
     ::
-    (put d.op tal)
+    `(put d.op tal)
   ::
       %cel
     ?@  (get p.op)  ~
-    regs
+    `regs
+  ::
+      %lob
+    ?.  ?=(? (get p.op))  ~
+    `regs
   ::
       %hsp
     :: ~&  [%hint n.op]
-    regs
+    `regs
   ::
       %hse
-    regs
+    `regs
   ::
       %hdp
     :: ~&  [%hint n.op]
-    regs
+    `regs
   ::
       %hde
-    regs
+    `regs
   ::
       %spy
     ~|  %scry-not-yet-implemented
@@ -181,7 +187,7 @@
     =/  sub  (get u.op)
     =/  fol  (get f.op)
     ?~  res=(mole |.(.*(sub fol)))  ~
-    (put d.op u.res)
+    `(put d.op u.res)
   ::
       %cal
     =/  sam-callee
@@ -192,7 +198,7 @@
       ==
     ::
     ?~  res=(run sam-callee)  ~
-    (put d.op u.res)
+    `(put d.op u.res)
   ::
       %caf
     ::  no jets yet
@@ -213,7 +219,7 @@
       ==
     ::
     ?~  res=(run sam-callee)  ~
-    (put d.op u.res)
+    `(put d.op u.res)
   ::
       %csf
     $(op [%csl a s d]:op)

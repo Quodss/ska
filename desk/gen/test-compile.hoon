@@ -11,8 +11,8 @@
   !=
   %.  42
   |=  n=@
-  =/  b  ?:  =(1 1)  n  n
-  =/  a  ?:  =(1 1)  n  42
+  =/  b  ?:  (lth 0 1)  n  n
+  =/  a  ?:  (lth 0 1)  n  42
   (add a b)
 ::
 =/  [func=bell =long-ska]  (ska-poke [&+subject formula] *long-ska)
