@@ -4627,12 +4627,21 @@
           imms=(map @uwoo (map * @uvre))
           info-local=(map @uvre info-reg)
           imms-local=(map * @uvre)
+          rev=(jug @uwoo @uwoo)
       ==
-  ::  
+  ::
+  =.  rev.gen  (~(run by rev) (bake silt (list @uwoo)))
   |^  ^+  blocks
   ?~  topo  new.gen
   =*  o  i.topo
-  =/  pre  (~(get ja rev) o)
+  =/  pre=(list @uwoo)  ~(tap in (~(get ju rev.gen) o))
+  ?:  &(=(~ pre) !=(0w0 o))
+    =.  rev.gen
+      %+  roll  (get-jmps fin:(~(got by blocks) o))
+      |=  [j=jmp acc=_rev.gen]
+      (~(del ju acc) there.j o)
+    ::
+    $(topo t.topo)
   =^  info=(map @uvre info-reg)  gen
     ?~  pre
       ::  entry block: initialize input registers
@@ -4655,19 +4664,28 @@
     ?^  t.pre  info
     =/  pre-b  (~(got by new.gen) i.pre)
     ?:  ?=(%brn -.fin.pre-b)
-      ?:  =(`_o`there.z.fin.pre-b o)
+      =/  pre-z=@uwoo  there.z.fin.pre-b
+      =/  pre-o=@uwoo  there.o.fin.pre-b
+      ?:  &(=(pre-z o) !=(pre-o o))
         =/  lens  |=(info-reg +<(has-imm `&))
         (~(jab by info) s.fin.pre-b lens)
-      ?:  =(`_o`there.o.fin.pre-b o)
+      ?:  &(=(pre-o o) !=(pre-z o))
         =/  lens  |=(info-reg +<(has-imm `|))
         (~(jab by info) s.fin.pre-b lens)
-      ~|(%brn-successor-lost !!)
+      ~|  %brn-successor-lost
+      ?>  =(pre-z pre-o)
+      ?>  =(pre-z o)
+      =/  lens  |=(info-reg +<(is-loob &))
+      (~(jab by info) s.fin.pre-b lens)
     ?:  ?=(%clq -.fin.pre-b)
-      ?:  =(`_o`there.z.fin.pre-b o)
+      =/  pre-z=@uwoo  there.z.fin.pre-b
+      =/  pre-o=@uwoo  there.o.fin.pre-b
+      ?:  &(=(pre-z o) !=(pre-o o))
         =/  lens  |=(info-reg +<(is-cell &))
         (~(jab by info) s.fin.pre-b lens)
-      ?:  =(`_o`there.o.fin.pre-b o)  info
-      ~|(%clq-successor-lost !!)
+      ~|  %clq-successor-lost
+      ?>  =(pre-o o)
+      info
     info
   ::
   =/  imms=(map * @uvre)
@@ -4891,56 +4909,79 @@
       [[[%csm a.op s new k.op] body-new] gen]
     ==
   ::
-  =/  fin-new=termin
+  =^  fin-new=termin  gen
     ?-    -.fin.bob
         %clq
       ?>  =(~ args.z.fin.bob)
       ?>  =(~ args.o.fin.bob)
       =/  cond-new  (~(got by old.gen) s.fin.bob)
       =/  info-cond  (~(got by info-local.gen) cond-new)
-      ?.  is-cell.info-cond  fin.bob(s cond-new)
-      [%hop ~ there.z.fin.bob]
+      ?:  |(is-cell.info-cond ?=([~ ^] has-imm.info-cond))
+        :-  [%hop ~ there.z.fin.bob]
+        ?:  =(there.o.fin.bob there.z.fin.bob)  gen
+        gen(rev (~(del ju rev.gen) there.o.fin.bob o))
+      ?:  |(is-loob.info-cond ?=([~ @] has-imm.info-cond))
+        :-  [%hop ~ there.o.fin.bob]
+        ?:  =(there.o.fin.bob there.z.fin.bob)  gen
+        gen(rev (~(del ju rev.gen) there.z.fin.bob o))
+      [fin.bob(s cond-new) gen]
     ::
         %eqq
       ?>  =(~ args.z.fin.bob)
       ?>  =(~ args.o.fin.bob)
       =/  l-new  (~(got by old.gen) l.fin.bob)
       =/  r-new  (~(got by old.gen) r.fin.bob)
-      ?.  =(l-new r-new)  fin.bob(l l-new, r r-new)
-      [%hop ~ there.z.fin.bob]
+      ?.  =(l-new r-new)  [fin.bob(l l-new, r r-new) gen]
+      :-  [%hop ~ there.z.fin.bob]
+      ?:  =(there.o.fin.bob there.z.fin.bob)  gen
+      gen(rev (~(del ju rev.gen) there.o.fin.bob o))
     ::
         %brn
+      =-  ~?  =(i.topo 0wP)  [0wP fin.bob -<]  -
       ?>  =(~ args.z.fin.bob)
       ?>  =(~ args.o.fin.bob)
       =/  cond-new  (~(got by old.gen) s.fin.bob)
       =/  info-cond  (~(got by info-local.gen) cond-new)
-      ?~  has-imm.info-cond  fin.bob(s cond-new)
-      ?-  u.has-imm.info-cond
-        %&  [%hop ~ there.z.fin.bob]
-        %|  [%hop ~ there.o.fin.bob]
-        *   [%bom ~]
+      ?~  has-imm.info-cond  [fin.bob(s cond-new) gen]
+      ~?  =(o 0wP)  [cond-new has-imm.info-cond]
+      ?-    u.has-imm.info-cond
+          %&
+        :-  [%hop ~ there.z.fin.bob]
+        ?:  =(there.o.fin.bob there.z.fin.bob)  gen
+        gen(rev (~(del ju rev.gen) there.o.fin.bob o))
+      ::
+          %|
+        :-  [%hop ~ there.o.fin.bob]
+        ?:  =(there.o.fin.bob there.z.fin.bob)  gen
+        gen(rev (~(del ju rev.gen) there.z.fin.bob o))
+      ::
+          * 
+        :-  [%bom ~]
+        =.  rev.gen  (~(del ju rev.gen) there.o.fin.bob o)
+        =.  rev.gen  (~(del ju rev.gen) there.z.fin.bob o)
+        gen
       ==
     ::
         %hop
-      fin.bob(args.t (turn args.t.fin.bob ~(got by old.gen)))
+      [fin.bob(args.t (turn args.t.fin.bob ~(got by old.gen))) gen]
     ::
         %jmp
-      fin.bob(v (turn v.fin.bob ~(got by old.gen)))
+      [fin.bob(v (turn v.fin.bob ~(got by old.gen))) gen]
     ::
         %jmf
-      fin.bob(v (turn v.fin.bob ~(got by old.gen)))
+      [fin.bob(v (turn v.fin.bob ~(got by old.gen))) gen]
     ::
         %jsp
-      fin.bob(s (~(got by old.gen) s.fin.bob))
+      [fin.bob(s (~(got by old.gen) s.fin.bob)) gen]
     ::
         %jsf
-      fin.bob(s (~(got by old.gen) s.fin.bob))
+      [fin.bob(s (~(got by old.gen) s.fin.bob)) gen]
     ::
         %don
-      fin.bob(s (~(got by old.gen) s.fin.bob))
+      [fin.bob(s (~(got by old.gen) s.fin.bob)) gen]
     ::
         %bom
-      fin.bob
+      [fin.bob gen]
     ==
   ::
   =.  new.gen  (~(put by new.gen) o [par-new body-new fin-new])
