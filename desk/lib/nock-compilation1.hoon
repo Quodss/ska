@@ -1,62 +1,63 @@
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
-::    This document is an implementation of the Subject Knowledge Analysis (SKA)
-::    pipeline in Hoon, first described by Edward Amsden ~ritpub-sipsyl. It
+::    This file is an implementation of the Subject Knowledge Analysis (SKA)
+::    pipeline in Hoon, first described by Edward Amsden (~ritpub-sipsyl).  It
 ::    took inspiration from an unfinished implementation by him and Joe Bryan
-::    ~master-morzod, which can be found on GitHub in the "sword" repository.
+::    (~master-morzod), which can be found on GitHub in the "sword" repository.
 ::    It also serves as a documentation and explanation piece: the problem being
-::    solved here is unusual and in my opinion quite complicated, and developing
+::    solved here is unusual and, in my opinion, quite complicated.  Developing
 ::    the implementation took a lot of experimentation, and it would be a waste
 ::    not to describe why certain design choices were made, as some of them are
-::    crucial for the algorithm to work at reasonable speed.
+::    crucial for the algorithm to work at a reasonable speed.
 ::
-::    Large blocks of comments can be found interspersed in code below.  At the
-::    end of this section you will find a table of contents with chapters and
-::    the line number.
+::    Large blocks of comments can be found interspersed in the code below.  At
+::    the end of this section you will find a table of contents with the
+::    chapters and their line numbers.
 ::
 ::    But first of all, what kind of problem is being solved here?
 ::
 ::    Nock, unlike conventional languages, does not have a notion of a "code
-::    object", or a "function", or any other construct that corresponds to known
-::    callable code.  Nock 2 formula [2 b c], and Nock 9 by extension as it is
-::    just a macro for Nock 2, is equivalent to "eval" in other languages and is
-::    reduced like this:
+::    object", a "function", or any other construct that corresponds to known
+::    callable code.  The Nock 2 formula [2 b c] (and Nock 9 by extension, as it
+::    is just a macro for Nock 2) is equivalent to "eval" in other languages and
+::    is reduced like this:
 ::
 ::      *[a 2 b c]          *[*[a b] *[a c]]
 ::
 ::    That is, we evaluate `c` against the original subject `a`, and reduce the
 ::    product of that reduction with *[a b] as our new subject.  Nock is
 ::    expressive enough for *[a c] to be unknowable in the general case without
-::    actually running the code. 
+::    actually running the code.
 ::
 ::    But while it is unknowable in the general case, in practice we can almost
-::    always know in advance what formula will be evaluated.  That is because
+::    always know in advance which formula will be evaluated.  That is because
 ::    in practice the formula-formula `c` is almost always:
 ::      - a Nock 0, with the formula being pulled from the known subject (think
-::        desugaring of Nock 9),
-::      - or a Nock 1, with the formula being a constant/quoted value (think |-
-::        loops, where the formula does not come from the subject but is instead
-::        quoted into the outer formula).
+::        of the desugaring of Nock 9),
+::      - or a Nock 1, with the formula being a constant/quoted value (think of
+::        |- loops, where the formula does not come from the subject but is
+::        instead quoted into the outer formula).
 ::
 ::    This fact allows us to introduce the notion of a *SKA function* object,
 ::    which is identified by a Nock formula and a masked subject.  The mask
-::    includes only the code that could be used by the SKA function, either by
-::    itself or transitively by its callees.  A SKA function can use any Nock
-::    operations, including raw Nock 2 when *[a c] could not be deduced (an
+::    includes only the code that could be used by the SKA function, either
+::    directly or transitively through its callees.  A SKA function can use any
+::    Nock operation, including raw Nock 2 when *[a c] cannot be deduced (an
 ::    indirect Nock call), but it can also call other SKA functions.
 ::
-::    When the call graph is known, each function can be compiled to a linear
+::    Once the call graph is known, each function can be compiled to a linear
 ::    SSA form, allowing further optimizations and eventually efficient
 ::    execution.  The compilation also performs data flow analysis, discovering
-::    which axes of the input subject are used by a function, allowing us to get
-::    rid of core consing-deconsing busywork that usually happens with gate
-::    slamming.  Since we need to know the subject split for callee functions to
-::    compile a SKA-function, we will have to perform linearization in a fixed
-::    point loop for callees that are in the same SCC as the caller.
+::    which axes of the input subject are used by a function, which allows us to
+::    get rid of the core consing/deconsing busywork that usually happens with
+::    gate slamming.  Since we need to know the subject split of the callee
+::    functions to compile a SKA function, we have to perform linearization in a
+::    fixed point loop for callees that are in the same SCC as the caller.
 ::
 ::  Table of contents:
-::    Call graph construction:  line 507
-::    Compilation:              line 2138
+::    Call graph construction:  line 508
+::    Compilation:              line 2143
+::    IR optimization passes:   line 4469
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
@@ -506,37 +507,39 @@
 ::
 ::  Call graph construction
 ::
-::    With partial noun logic defined, we can move to the description of call
-::    graph construction. The overall goal is, given a pair of a subject and a
+::    With partial noun logic defined, we can move on to the description of call
+::    graph construction.  The overall goal is, given a pair of a subject and a
 ::    formula, to construct:
-::      - a code subject mask, which describes code requirements of the SKA
+::      - a code subject mask, which describes the code requirements of the SKA
 ::        function,
-::      - a call graph, with that SKA function being the root.
-::      - a code + data subject mask, which would be used to cache the analysis
-::        result. Data mask is necessary due to potential subject capture by the
-::        function.
+::      - a call graph, with that SKA function as the root,
+::      - a code + data subject mask, which is used to cache the analysis
+::        result.  The data mask is necessary due to potential subject capture
+::        by the function.
 ::
 ::    The implementation below works by finding a fixed point of a function F
 ::    that maps a set of SKA function calls onto itself by, formally, partially
 ::    evaluating each callsite in the set, using the information from the
-::    previous set for Nock 2 handling.  De facto this means breadth-first
-::    iteration over the call graph with back-propagation of changes. This
-::    appears to be the same thing as "chaotic iteration over a lattice" in
+::    previous set for Nock 2 handling.  In practice this means breadth-first
+::    iteration over the call graph with back-propagation of changes.  This
+::    appears to be the same thing as "chaotic iteration over a lattice" in the
 ::    literature.
 ::
 ::    The algorithm assumes that the set of SKA function calls forms a complete
 ::    lattice, and the fixed point is found via Kleene iteration, starting from
 ::    the least element of the lattice that contains the root call.
 ::
-::    Proving that F is monotonic for some ordering of the lattice, for which
-::    [[[&+sub fol] *datum] ~ ~] is the least element of the lattice which
-::    contains [&+sub fol] is left as an exercise for the reader. The hardest
-::    part IMO is taking into account recursive calls. The rest is trivial:
-::    socks for a given noun form a complete lattice with huge:so as partial
-::    ordering, and we only grow products and code requirements. The only place
-::    where the code requirement shrinks is going from a recursive call to a new
-::    non-recursive call. However, a non-recursive call can never become recur-
-::    sive again, which appears to bring some other kind of monotonicity.
+::    Proving that F is monotonic for some ordering of the lattice, in which
+::    [[[&+sub fol] *datum] ~ ~] is the least element that contains [&+sub fol],
+::    is left as an exercise for the reader.  The hardest part, in my opinion,
+::    is taking recursive calls into account.  The rest is trivial: socks for a
+::    given noun form a complete lattice with huge:so as the partial ordering,
+::    and we only ever grow products and code requirements.  The only place
+::    where the code requirement shrinks is when going from a recursive call to
+::    a new non-recursive call.  However, a non-recursive call can never become
+::    recursive again, and since the set of all transitive callers of a function
+::    is finite, this shrinkage can only happen a finite amount of times, so
+::    eventually the iteration will converge on a fixed point.
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
@@ -2139,65 +2142,67 @@
 ::
 ::  Compilation
 ::
-::    Previous iterations of SKA pipeline design included a data-flow analysis
-::    step between call graph construction and compilation.  The motivation for
-::    that was the reduction of work performed to compile a given function,
-::    since the data-flow analysis required a fixed point iteration for a given
-::    SCC.  Once data-flow analysis was complete the compilation itself could
-::    have been done lazily per each function.  In the current approach the
-::    compilation and the data-flow analysis are performed together, to avoid
-::    having to sync these two steps together, reducing the complexity of the
-::    algorithm. Maybe there is a way to add the intermediate step without too
-::    much headache, but one would have to take into account register allocation
-::    and code emission for branches and hints, which would have to be synced
-::    with the subject shape prescribed by that intermediate step.
+::    Previous iterations of the SKA pipeline design included a data-flow
+::    analysis step between call graph construction and compilation.  The
+::    motivation for that was to reduce the work performed to compile a given
+::    function, since the data-flow analysis requires a fixed point iteration
+::    over a given SCC.  Once the data-flow analysis was complete, the
+::    compilation itself could be done lazily, per function.  In the current
+::    approach the compilation and the data-flow analysis are performed
+::    together, to avoid having to keep these two steps in sync, which reduces
+::    the complexity of the algorithm.  Maybe there is a way to add the
+::    intermediate step without too much headache, but one would have to take
+::    into account register allocation and code emission for branches and hints,
+::    which would have to be synced with the subject shape prescribed by that
+::    intermediate step.
 ::
-::    Here we compile a SKA-function with a destination-driven code generation
-::    (DDCG) approach, except that for Nock 6 forks and some hints we produce
-::    a lazy destination, which is collapsed when we satisfy it, either with a
-::    Nock 1 literal, or Nock 2/12 product, or with the input subject, once the
-::    goal bubbled up all the way to the root Nock formula of the SKA-function.
+::    Here we compile a SKA function with a destination-driven code generation
+::    (DDCG) approach, except that for Nock 6 forks and some hints we produce a
+::    lazy destination, which is collapsed when we satisfy it: either with a
+::    Nock 1 literal, with a Nock 2/12 product, or with the input subject, once
+::    the goal has bubbled up all the way to the root Nock formula of the SKA
+::    function.
 ::
-::    The motivation for the lazy destination approach here, is the same as the
-::    motivation for the poisoned register semantics and later %cel assertions
-::    in `sword` implementation: preventing crash relocation.  For the compiler
-::    output to be at least correct, +mink semantics have to be preserved, and
-::    +mink materializes the stack trace as a product of the computation.  This
-::    means that, if a function is called with a subject that does not fit its
-::    argument shape, we can't just crash in the caller or somewhere in the
-::    callee: we have to match the stack trace that we would have had if we ran
-::    +mink unjetted. In the general case of %mean hints with traps that capture
-::    the subject inside of the callee, it would mean entering the callee and
-::    crashing in the right place.
+::    The motivation for the lazy destination approach here is the same as the
+::    motivation for the poisoned register semantics and, later, %cel assertions
+::    in the `sword` implementation: preventing crash relocation.  For the
+::    compiler output to be at least correct, +mink semantics have to be
+::    preserved, and +mink materializes the stack trace as a product of the
+::    computation.  This means that if a function is called with a subject that
+::    does not fit its argument shape, we can't just crash in the caller or
+::    somewhere in the callee: we have to match the stack trace that we would
+::    have had if we ran +mink unjetted.  In the general case of %mean hints
+::    with traps that capture the subject inside of the callee, this means
+::    entering the callee and crashing in the right place.
 ::
-::    Further, for better UX it would make sense to prevent crash relocation
-::    for other hints as well that are used in debugging. If I put a ~& before
-::    a crash site, I would like to see the printout even though it would be
-::    formally correct to relocate the crash before the hint, as %slog hints
-::    are not recognised by +mink.
+::    Furthermore, for better UX it makes sense to prevent crash relocation for
+::    other hints used in debugging as well.  If I put a ~& before a crash site,
+::    I would like to see the printout, even though it would be formally correct
+::    to relocate the crash before the hint, as %slog hints are not recognized
+::    by +mink.
 ::
 ::    This implementation achieves crash correctness by carrying basic block
-::    labels together with the data requirements, represented with $need type,
-::    inside of a recursive data structure $need-lazy. Whenever the lazy need
+::    labels together with the data requirements, represented by the $need type,
+::    inside of a recursive data structure, $need-lazy.  Whenever the lazy need
 ::    is collapsed, the splitting code is emitted into the relevant labels.
 ::
 ::    Collapsing needs to a single atom (Nock 3/4/5, via +collapse-lazy-atom) or
-::    to an arbitrary noun (Nock 2/12, via +kern and friends) is easy. Doing the
-::    same for the top-level subject is a lot more harder since we also want to
+::    to an arbitrary noun (Nock 2/12, via +kern and friends) is easy.  Doing
+::    the same for the top-level subject is a lot harder, since we also want to
 ::    find the shape of the argument subject without pessimizing it too much.
-::    This is why we accumulate needs of branches lazily: collapsing them pro-
-::    perly requires knowing what data got accessed by the code before and after
-::    the fork. Futhermore, branch collapsing is order sensitive, so we do it in
-::    a fixed point loop, retrying shape collapses while accumulating knowledge
-::    about the axes available outside of the branches.
+::    This is why we accumulate the needs of branches lazily: collapsing them
+::    properly requires knowing what data gets accessed by the code before and
+::    after the fork.  Furthermore, branch collapsing is order sensitive, so we
+::    do it in a fixed point loop, retrying shape collapses while accumulating
+::    knowledge about the axes available outside of the branches.
 ::
-::    Compiling a pessimized version of a function. with the entire subject as a
-::    sinlge argument, requires compiling the function normally, then compiling
-::    that function in a pessimized mode, where code is emitted to try to split
-::    the input subject for callees and call the optimizied version, and the
-::    pessimized version of the callee is called if any of the checks failed.
-::    That way optimized functions are only calling optimized functions, and
-::    pessimized functions try to enter optimized functions.
+::    Compiling a pessimized version of a function, with the entire subject as a
+::    single argument, requires compiling the function normally, then compiling
+::    that function in pessimized mode, where code is emitted before each
+::    callsite to try to split the input subject for the callee and call the
+::    optimized version; the pessimized version of the callee is called if any
+::    of the checks fail.  That way optimized functions only ever call optimized
+::    functions, and pessimized functions try to enter optimized functions.
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 |%
@@ -4462,6 +4467,25 @@
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
 ::  IR optimization passes
+::
+::    The code emitted by the compilation step is correct but rather bloated.
+::    Deconsing code gets emitted into every BB that needs something from the
+::    subject, a lot of branches are produced that do not do anything useful,
+::    etc.  Each of the optimization passes below addresses a gripe I had with
+::    the shape of the produced control flow graph.
+::
+::    The biggest pass is +alias: it partially executes the code in BBs, getting
+::    rid of unnecessary %mov's, as these are just an artifact of DDCG: we know
+::    which registers correspond to the same noun once we have compiled the
+::    whole function.  It also keeps track of information about the values in
+::    registers, eliminating branches when the shape or the value of a given
+::    register is known.
+::
+::    Other passes remove dead code, trim stack trace hints, etc.  All of them
+::    are applied in sequence in a fixed point loop, which is a recurring theme,
+::    for better or for worse.  Doing so introduces unnecessary iterations over
+::    the CFG, so at some point these passes should be merged into one, with the
+::    one-pass-at-a-time version kept around for parity checks in debug mode.
 ::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 |%
