@@ -1,19 +1,16 @@
 /+  *nock-compilation1
 /+  li=line-interpreter
 /+  hoot-zpdt
+/+  hoot
 ::
 :-  %say  |=  *
 ::
-=/  subject  ..add:hoot-zpdt
+=/  subject  ..scow:hoot-zpdt
 =/  formula=^
   =>  subject
   ;;  ^
   !=
-  %.  42
-  |=  n=@
-  =/  b  ?:  (lth 0 1)  n  n
-  =/  a  ?:  (lth 0 1)  n  42
-  (add a b)
+  (mul 2 5)
 ::
 =/  [func=bell =long-ska]  (ska-poke [&+subject formula] *long-ska)
 =/  [bell-graph=(jug bell bell) rev=(jug bell bell)]
@@ -42,7 +39,9 @@
   (~(uni by acc) (compile-scc v rev [code jets]:long-ska scc-map ~))
 ::
 :-  %tang
-%-  flop  %-  to-wain:format  %-  crip
+%-  flop
+:: :-  %noun
+%-  to-wain:format  %-  crip
 ^-  tape
 %-  zing
 ^-  (list tape)

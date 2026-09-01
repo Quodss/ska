@@ -2,6 +2,201 @@
 ::
 =*  stub  ~|(%stub !!)
 |%
+++  jet-driver-array
+  |=  =ring
+  ^-  (unit $-((list *) (unit *)))
+  ?.  =(2 axe.ring)  ~
+  =>  [=_ring ..zuse]
+  ?+    path.ring  ~
+      [%add %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(add a.l b.l)
+  ::
+      [%dec %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ ~] l)
+    `(dec a.l)
+  ::
+      [%div %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(div a.l b.l)
+  ::
+      [%dvr %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(dvr a.l b.l)
+  ::
+      [%gte %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(gte a.l b.l)
+  ::
+      [%gth %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(gth a.l b.l)
+  ::
+      [%lte %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(lte a.l b.l)
+  ::
+      [%lth %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(lth a.l b.l)
+  ::
+      [%max %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(max a.l b.l)
+  ::
+      [%min %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(min a.l b.l)
+  ::
+      [%mod %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(mod a.l b.l)
+  ::
+      [%mul %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(mul a.l b.l)
+  ::
+      [%sub %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ b=@ ~] l)
+    `(sub a.l b.l)
+  ::
+      [%bex %two %one %k135 ~]
+    :-  ~
+    |=  l=(pole *)
+    ^-  (unit *)
+    ?>  ?=([a=@ ~] l)
+    `(bex a.l)
+  ==
+::
+++  jet-driver-mono
+  |=  =ring
+  ^-  (unit $-(* (unit *)))
+  ?.  =(2 axe.ring)  ~
+  ?+    path.ring  ~
+      [%add %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(add a.s b.s)
+  ::
+      [%dec %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* a=@ *] s)
+    `(dec a.s)
+  ::
+      [%div %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(div a.s b.s)
+  ::
+      [%dvr %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(dvr a.s b.s)
+  ::
+      [%gte %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(gte a.s b.s)
+  ::
+      [%gth %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(gth a.s b.s)
+  ::
+      [%lte %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(lte a.s b.s)
+  ::
+      [%lth %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(lth a.s b.s)
+  ::
+      [%max %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(max a.s b.s)
+  ::
+      [%min %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(min a.s b.s)
+  ::
+      [%mod %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(mod a.s b.s)
+  ::
+      [%mul %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(mul a.s b.s)
+  ::
+      [%sub %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* [a=@ b=@] *] s)
+    `(sub a.s b.s)
+  ::
+      [%bex %two %one %k135 ~]
+    :-  ~
+    |=  s=*
+    ?>  ?=([* a=@ *] s)
+    `(bex a.s)
+  ==
+::
 ++  run
   |=  $:  args=(each (list *) *)  ::  optimized/pessimized call
           =bell
@@ -18,10 +213,17 @@
     =*  con  +>
     =/  f  -.args
     =>  [=_f +.sam con]  ~+
-    %-  optimize
-    ?:  f
-      (~(got by (compile-scc scc rev long-ska scc-map jets-hot)) bell)
-    -:(compile-unary bell scc rev long-ska scc-map jets-hot)
+    =/  =straight
+      ~>  %bout.[0 %compile]
+      ~&  %compile-start
+      ?:  f
+        (~(got by (compile-scc scc rev long-ska scc-map jets-hot)) bell)
+      -:(compile-unary bell scc rev long-ska scc-map jets-hot)
+    ::
+    ~&  %optimize-start
+    ~&  `@ux`(mug bell)
+    ~>  %bout.[0 %optimize]
+    (optimize -)
   ::
   =/  bob  (~(got by blocks.straight) 0w0)
   =/  regs=(map @uvre *)
@@ -84,7 +286,8 @@
     (run sam-callee)
   ::
       %jmf
-    fin-retry(fin [%jmp a v]:fin)
+    ?~  j=(jet-driver-array n.fin)  fin-retry(fin [%jmp a v]:fin)
+    (u.j (turn v.fin get))
   ::
       %jsp
     =/  sam-callee
@@ -97,7 +300,8 @@
     (run sam-callee)
   ::
       %jsf
-    fin-retry(fin [%jsp a s]:fin)
+    ?~  j=(jet-driver-mono n.fin)  fin-retry(fin [%jsp a s]:fin)
+    (u.j (get s.fin))
   ::
       %don
     `(get s.fin)
@@ -184,10 +388,11 @@
       %nok
     ::  XX reenter analysis (unless jetted? and/or unless %virt?)
     ::
-    =/  sub  (get u.op)
-    =/  fol  (get f.op)
-    ?~  res=(mole |.(.*(sub fol)))  ~
-    `(put d.op u.res)
+    !!
+    :: =/  sub  (get u.op)
+    :: =/  fol  (get f.op)
+    :: ?~  res=(mole |.(.*(sub fol)))  ~
+    :: `(put d.op u.res)
   ::
       %cal
     =/  sam-callee
@@ -201,9 +406,9 @@
     `(put d.op u.res)
   ::
       %caf
-    ::  no jets yet
-    ::
-    $(op [%cal a v d]:op)
+    ?~  j=(jet-driver-array n.op)  $(op [%cal a v d]:op)
+    ?~  res=(u.j (turn v.op get))  ~
+    `(put d.op u.res)
   ::
       %cam
     ::  no memo yet
@@ -222,7 +427,9 @@
     `(put d.op u.res)
   ::
       %csf
-    $(op [%csl a s d]:op)
+    ?~  j=(jet-driver-mono n.op)  $(op [%csl a s d]:op)
+    ?~  res=(u.j (get s.op))  ~
+    `(put d.op u.res)
   ::
       %csm
     $(op [%csl a s d]:op)
@@ -232,6 +439,7 @@
 ++  print-straight
   |=  [prefix=tape =straight]
   |^  ^-  tape
+  ~>  %bout.[0 %print-straight]
   =/  blocks=tape
     %-  zing
     %+  join  "\0a"
@@ -289,12 +497,39 @@
       (zing ~["\{"] ~[(p-termin fin.b) "}"] ~)
     (zing ~["\{"] (join " " body-ops) ~[" "] ~[(p-termin fin.b) "}"] ~)
   ::
+  ++  print-noun
+    |=  n=*
+    ^-  tape
+    =/  fuel=@  200
+    =<  -
+    |-  ^-  [tape @]
+    =*  top-loop  $
+    ?@  n
+      =/  len  +((div (xeb n) 4))
+      ?:  (gth len (mul 2 fuel))  ["..." 0]
+      [(scow %ud n) (sub fuel (min fuel len))]
+    ?:  (lth fuel 2)  ["..." 0]
+    =<  [['[' -] +]
+    =>  .(n `*`n)
+    =.  fuel  (sub fuel 2)
+    |-  ^-  [tape @]
+    =*  cell-loop  $
+    ?@  n
+      =/  len  +((div (xeb n) 4))
+      ?:  (gth len (mul 2 fuel))  ["...]" 0]
+      ["{(scow %ud n)}]" (sub fuel (min fuel len))]
+    ?:  =(0 fuel)  ["...]" 0]
+    =.  fuel  (dec fuel)
+    =^  h  fuel  top-loop(n -.n)
+    =^  t  fuel  cell-loop(n +.n)
+    ["{h} {t}" fuel]
+  ::
   ++  p-pole
     |=  op=pole
     ^-  tape
     ?+    -.op  <op>
         %imm
-      =/  n-tape=tape  <n.op>
+      =/  n-tape=tape  (print-noun n.op)
       =?  n-tape  (gth (lent n-tape) 100)  "\{{(scag 100 n-tape)}...}"
       "[%imm n={n-tape} d={<d.op>}]"
     ::

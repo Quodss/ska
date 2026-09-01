@@ -1324,28 +1324,39 @@
     =/  loc1=local
       %-  ~(rep in scc)
       |=  [b=bell acc=_`local`[code.lon fols.lon]]
-      :-  (~(put by code.acc) b [(~(got by just-code) b) & &])
-      (put-fols b [(~(got by just-code) b) & &] fols.acc)
+      =/  entry  [(~(got by just-code) b) | |]
+      :-  (~(put by code.acc) b entry)
+      (put-fols b entry fols.acc)
+    ::  Previously there was a fixed point loop that could mark potentially
+    ::  diverging computations as pure/total. While it is correct from the POV
+    ::  of +mink correctness, it would make stacktraces obtained in a non-
+    ::  deterministic way (e.g. ^C interrupt) less verbose. Ultimately both ways
+    ::  are fine when it comes to strict Nock correctness. If you want to go
+    ::  back to the previous behavior, set entry's flags above to [& &] and turn
+    ::  on the fixed point loop below.
+    ::  Otherwise the fixed point loop is not necessary: we start of with the
+    ::  worst assumption, calls within SCC will keep that assumption, and going
+    ::  over SCCs in reversed topo order makes sure that non-recursive callees
+    ::  are checked before the callers.
     ::
-    |-  ^-  long-ska
-    =*  fixpoint-loop  $
+    :: |-  ^-  long-ska
+    :: =*  fixpoint-loop  $
     =;  loc2=local
-      ?.  =(loc1 loc2)  fixpoint-loop(loc1 loc2)
-      =.  code.lon  code.loc1
-      =.  fols.lon  fols.loc1
+      :: ?.  =(loc1 loc2)  fixpoint-loop(loc1 loc2)
+      =.  code.lon  code.loc2
+      =.  fols.lon  fols.loc2
       scc-loop(sccs t.sccs)
     ::
     %-  ~(rep in scc)
     |=  [b=bell acc=_loc1]
     ^+  acc
     =/  [pure=? total=?]  (eval-finalized b code.acc)
-    =/  set-pure   |=(=code-entry code-entry(pure pure))
-    =/  set-total  |=(=code-entry code-entry(total total))
-    =.  code.acc  (~(jab by code.acc) b set-pure)
+    =/  lens  |=(=code-entry code-entry(pure pure, total total))
+    =.  code.acc  (~(jab by code.acc) b lens)
     =.  fols.acc
       %+  ~(jab by fols.acc)  fol.b
       |=  m=(map bell code-entry)
-      (~(jab by m) b set-pure)
+      (~(jab by m) b lens)
     ::
     acc
   =.  graph.final.lon  (~(uni by graph.final.lon) pruned)
@@ -1370,7 +1381,6 @@
 ::  produces data about a function
 ::  pure: no crashes + no hints excepts %fast (call to it could be omitted)
 ::  total: no crashes (stacktrace boundaries around them could be omitted)
-::  XX cycle divergence!
 ::
 ++  eval-finalized
   =*  hint-pure  ,?(%fast %spot %mean)
@@ -3114,16 +3124,6 @@
       $(som +.som, ned t.ned)
     ==
   ::
-  ++  none-equivalent
-    |=  laz=need-lazy
-    ^-  ?
-    =*  none  .
-    ?&  ?=([%none ~] ned.sure.laz)
-        ?:  ?=(?(~ [%1 ~ ~]) lok.sure.laz)
-        (levy fork.laz |=([[* a=need-lazy] * b=need-lazy] &((none a) (none b))))
-        (levy bond.laz |=([* n=need-lazy] (none n)))
-    ==
-  ::
   ::  ~: nothing needed
   ::  [~ @uvre @uwoo]: something is needed (an atom or whatever + crash)
   ::
@@ -3133,7 +3133,7 @@
     ?>  =(~ args.then.nex)
     ?:  (none-equivalent laz.nex)  [~ gen]
     =^  ned-sure=need  gen  (sure-require-look sure.laz.nex)
-    =^  r  .
+    =^  r=@uvre  .
       =*  dot  .
       ?-    -.ned-sure
           %this
@@ -3236,6 +3236,9 @@
   ::  o' and o'' are assumed to be linked somehow. Right now they are linked
   ::  with a control flow fork and join.
   ::
+  ::  It also moves code from a to o''! That way the fork between o' and o''
+  ::  precedes the code that uses the product of the fork.
+  ::
   ++  insert-hop
     |=  [a=@uwoo o1=@uwoo o2=@uwoo]
     ^+  gen
@@ -3244,8 +3247,8 @@
     ?>  =(~ par.blob-from)
     :: ?>  =(~ args.t.fin.blob-from)
     =/  a-to-b=jmp  t.fin.blob-from
-    =.  gen  (emir o2 ~ ~ %hop a-to-b)
-    gen(blocks (~(put by blocks.gen) a blob-from(t.fin [~ o1])))
+    =.  gen  (emir o2 ~ body.blob-from fin.blob-from)
+    gen(blocks (~(put by blocks.gen) a blob-from(body ~, t.fin [~ o1])))
   ::  Here the idea is that we materialize the conditional as a register with
   ::  a loobean, then the lazy needs get forked, and the BB of that need gets
   ::  code that branches on the conditional register and fulfills the original
@@ -4463,6 +4466,16 @@
   =/  x  (bex dif-wid)
   =/  low-b  (dis b (dec x))
   `(con low-b x)
+::
+++  none-equivalent
+  |=  laz=need-lazy
+  ^-  ?
+  =*  none  .
+  ?&  ?=([%none ~] ned.sure.laz)
+      ?=(?(~ [%1 ~ ~]) lok.sure.laz)
+      (levy fork.laz |=([[* a=need-lazy] * b=need-lazy] &((none a) (none b))))
+      (levy bond.laz |=([* n=need-lazy] (none n)))
+  ==
 --
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
@@ -4633,8 +4646,8 @@
   ==
 ::  Removes %mov's and other unnecessary instructions by symbolicly executing
 ::  IR, keeping track of noun aliasing and cellness. Also removes branches
-::  if the noun is known to be a cell in %clq,  or if the register is compared
-::  to itself in eqq, or if the noun is known in %brn
+::  if the noun is known to be a cell in %clq, or if the register is compared
+::  to itself in %eqq, or if the noun is known in %brn
 ::
 ++  alias
   |=  $:  n-args=@ud
@@ -4660,6 +4673,8 @@
   =*  o  i.topo
   =/  pre=(list @uwoo)  ~(tap in (~(get ju rev.gen) o))
   ?:  &(=(~ pre) !=(0w0 o))
+    ::  this block became unreachable: delete its descendants from reversed CFG
+    ::
     =.  rev.gen
       %+  roll  (get-jmps fin:(~(got by blocks) o))
       |=  [j=jmp acc=_rev.gen]
@@ -4942,6 +4957,10 @@
       =/  info-cond  (~(got by info-local.gen) cond-new)
       ?:  |(is-cell.info-cond ?=([~ ^] has-imm.info-cond))
         :-  [%hop ~ there.z.fin.bob]
+        ::  if the branching instruction points to a block twice then we can't
+        ::  delete the edge from the reversed graph since it still points to it
+        ::  after the branch elimination
+        ::
         ?:  =(there.o.fin.bob there.z.fin.bob)  gen
         gen(rev (~(del ju rev.gen) there.o.fin.bob o))
       ?:  |(is-loob.info-cond ?=([~ @] has-imm.info-cond))
@@ -4961,13 +4980,11 @@
       gen(rev (~(del ju rev.gen) there.o.fin.bob o))
     ::
         %brn
-      =-  ~?  =(i.topo 0wP)  [0wP fin.bob -<]  -
       ?>  =(~ args.z.fin.bob)
       ?>  =(~ args.o.fin.bob)
       =/  cond-new  (~(got by old.gen) s.fin.bob)
       =/  info-cond  (~(got by info-local.gen) cond-new)
       ?~  has-imm.info-cond  [fin.bob(s cond-new) gen]
-      ~?  =(o 0wP)  [cond-new has-imm.info-cond]
       ?-    u.has-imm.info-cond
           %&
         :-  [%hop ~ there.z.fin.bob]
@@ -5215,7 +5232,7 @@
 ++  optimize
   |=  s=straight
   ^-  straight
-  ?:  |  s
+  ?:  &  s
   =;  s1=straight
     ?:  =(s s1)  s1
     $(s s1)
